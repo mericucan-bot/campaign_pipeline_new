@@ -124,6 +124,7 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
 }
 @media (max-width: 640px) {
   .nav { align-items: stretch; flex-direction: column; }
+  .toolbar { position: static; }
   .snapshot, .campaigns { grid-template-columns: 1fr; }
   h1 { font-size: 34px; }
 }
