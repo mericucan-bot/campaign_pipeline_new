@@ -56,6 +56,20 @@ Sonrasinda GitHub size su formda bir internet adresi verir:
 
 Not: GitHub Pages statik calisir. Bu nedenle internetteki versiyonda `Simdi Tara` butonu yoktur; veriler GitHub Actions calistikca guncellenir. Favoriler tarayici hafizasinda saklanir.
 
+### Telegram hata bildirimi
+
+Workflow hata verirse Telegram mesaji gonderebilir. Basarili calismalarda mesaj atmaz.
+
+GitHub repo icinde:
+
+1. `Settings > Secrets and variables > Actions`
+2. `New repository secret`
+3. Su iki secret'i ekleyin:
+   - `TELEGRAM_BOT_TOKEN`
+   - `TELEGRAM_CHAT_ID`
+
+Secret isimleri tam bu sekilde olmalidir. Token ve chat id dosyalara yazilmaz, sadece GitHub Secrets icinde saklanir.
+
 ## Elle calistirma
 
 ```powershell
