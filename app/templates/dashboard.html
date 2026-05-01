@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kampanya Radar</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav">
+      <a class="brand" href="{{ url_for('index') }}" aria-label="Kampanya Radar">
+        <span class="brand-mark">KR</span>
+        <span>Kampanya Radar</span>
+      </a>
+      <form action="{{ url_for('run_now') }}" method="post" class="scan-form">
+        <button class="primary" type="submit">
+          <span class="button-icon" aria-hidden="true">&#8635;</span>
+          <span>&#350;imdi Tara</span>
+        </button>
+      </form>
+    </nav>
+
+    <div class="hero-grid">
+      <section class="intro">
+        <p class="eyebrow">Campaign intelligence <span>Created by MeRiC</span></p>
+        <h1>T&#252;m Kampanyalar TeK Ekranda</h1>
+        <p class="lead">Kart f&#305;rsatlar&#305;n&#305; filtrele, favorilerine al ve g&#252;ncel kaynaklardan h&#305;zl&#305;ca takip et.</p>
+      </section>
+
+      <section class="stats-panel" aria-label="Ozet">
+        <div class="snapshot">
+          <div class="stat-card">
+            <span>Aktif Kampanya</span>
+            <strong>{{ stats.active }}</strong>
+            <i aria-hidden="true">&#9679;</i>
+          </div>
+          <div class="stat-card">
+            <span>Banka/Kart</span>
+            <strong>{{ stats.bank_count }}</strong>
+            <i aria-hidden="true">&#9638;</i>
+          </div>
+          <div class="stat-card">
+            <span>Favori</span>
+            <strong>{{ stats.favorites }}</strong>
+            <i aria-hidden="true">&#9733;</i>
+          </div>
+          <div class="stat-card">
+            <span>Veri Deposu</span>
+            <strong>{{ stats.storage }}</strong>
+            <i aria-hidden="true">&#9678;</i>
+          </div>
+        </div>
+        <div class="hero-results">{{ campaigns|length }} sonu&#231; · {{ stats.total }} kay&#305;t · {{ stats.inactive }} pasif</div>
+      </section>
+    </div>
+  </header>
+
+  <main>
+    <section class="toolbar">
+      <form class="filters" method="get">
+        <label class="{% if selected_bank %}field-active{% endif %}">
+          <span>Banka</span>
+          <select name="bank">
+            <option value="">T&#252;m&#252;</option>
+            {% for bank in stats.banks %}
+              <option value="{{ bank }}" {% if bank == selected_bank %}selected{% endif %}>{{ bank }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label class="{% if selected_category %}field-active{% endif %}">
+          <span>Kategori</span>
+          <select name="category">
+            <option value="">T&#252;m kategoriler</option>
+            {% for category in categories %}
+              <option value="{{ category }}" {% if category == selected_category %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label class="{% if selected_reward %}field-active{% endif %}">
+          <span>Kazan&#305;m</span>
+          <select name="reward">
+            <option value="">T&#252;m kazan&#305;mlar</option>
+            {% for reward in reward_types %}
+              <option value="{{ reward }}" {% if reward == selected_reward %}selected{% endif %}>{{ reward }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label class="{% if selected_sort != 'updated' %}field-active{% endif %}">
+          <span>S&#305;ralama</span>
+          <select name="sort">
+            <option value="updated" {% if selected_sort == 'updated' %}selected{% endif %}>Y&#252;kleme tarihine g&#246;re</option>
+            <option value="deadline" {% if selected_sort == 'deadline' %}selected{% endif %}>Biti&#351; tarihine g&#246;re</option>
+            <option value="gain" {% if selected_sort == 'gain' %}selected{% endif %}>Kazanca g&#246;re</option>
+            <option value="bank" {% if selected_sort == 'bank' %}selected{% endif %}>Bankaya g&#246;re</option>
+          </select>
+        </label>
+
+        <label class="search-field {% if search %}field-active{% endif %}">
+          <span>Arama</span>
+          <input name="q" value="{{ search }}" placeholder="market, yak&#305;t, yurt d&#305;&#351;&#305;, taksit...">
+        </label>
+
+        <div class="filter-switches">
+          <label class="toggle {% if active_only %}field-active{% endif %}" title="Sadece aktif kampanyalari goster">
+            <input type="hidden" name="active" value="0">
+            <input type="checkbox" name="active" value="1" {% if active_only %}checked{% endif %}>
+            <span>Aktif</span>
+          </label>
+
+          <label class="toggle {% if favorites_only %}field-active{% endif %}" title="Favori kampanyalarim">
+            <input type="checkbox" name="favorites" value="1" {% if favorites_only %}checked{% endif %}>
+            <span>Favoriler</span>
+          </label>
+        </div>
+
+        <button class="apply-button" type="submit">Uygula</button>
+      </form>
+      <div class="bank-rail" aria-label="Bankalar">
+        <a href="{{ url_for('index', q=search, active='1' if active_only else '0', category=selected_category, reward=selected_reward, sort=selected_sort, favorites='1' if favorites_only else None) }}" class="bank-chip {% if not selected_bank %}selected{% endif %}">T&#252;m&#252;</a>
+        {% for bank in stats.banks %}
+          <a href="{{ url_for('index', bank=bank, q=search, active='1' if active_only else '0', category=selected_category, reward=selected_reward, sort=selected_sort, favorites='1' if favorites_only else None) }}" class="bank-chip {% if bank == selected_bank %}selected{% endif %}" title="{{ bank }}">{{ bank_label(bank) }}</a>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="campaigns">
+      <div class="skeleton-grid" aria-hidden="true">
+        {% for _ in range(6) %}
+          <div class="skeleton-card"><span></span><b></b><i></i><i></i></div>
+        {% endfor %}
+      </div>
+
+      {% for campaign in campaigns %}
+        <article class="campaign-card">
+          <a class="media" href="{{ campaign.url or '#' }}" target="_blank" rel="noreferrer">
+            {% if campaign.image_url %}
+              <img src="{{ campaign.image_url }}" alt="" loading="lazy">
+            {% else %}
+              <span>{{ campaign.brand_code }}</span>
+            {% endif %}
+          </a>
+
+          <div class="campaign-body">
+            <div class="campaign-topline">
+              <span class="brand-badge">{{ campaign.brand_code }}</span>
+              <div class="campaign-meta">
+                <span class="bank-name">{{ campaign.bank }}</span>
+                <span class="status {{ 'active' if campaign.is_active else 'inactive' }}">
+                  {{ 'Aktif' if campaign.is_active else 'Pasif' }}
+                </span>
+              </div>
+              <form action="{{ url_for('favorite', campaign_id=campaign.id) }}" method="post" class="favorite-form">
+                <button class="favorite-button {% if campaign.favorite %}selected{% endif %}" title="Favorilere ekle" aria-label="Favorilere ekle">
+                  &#9733;
+                </button>
+              </form>
+            </div>
+
+            <div class="badges">
+              <span class="category-badge category-{{ campaign.category|lower }}">{{ campaign.category }}</span>
+              <span class="reward-badge reward-{{ campaign.reward_type|lower }}">{{ campaign.reward_type }}</span>
+              <span class="date-badge">{{ campaign.deadline_label }}</span>
+              {% if campaign.deadline_urgent %}
+                <span class="urgent-badge">Bitiyor</span>
+              {% endif %}
+            </div>
+
+            <h2>{{ campaign.title }}</h2>
+            {% if campaign.highlight %}
+              <strong class="campaign-highlight">{{ campaign.highlight }}</strong>
+            {% endif %}
+            {% if campaign.description %}
+              <p>{{ campaign.description }}</p>
+            {% endif %}
+
+            <div class="campaign-footer">
+              <span>v{{ campaign.version }} · {{ campaign.last_seen[:10] }}</span>
+              {% if campaign.url %}
+                <a href="{{ campaign.url }}" target="_blank" rel="noreferrer">Detay</a>
+              {% endif %}
+            </div>
+          </div>
+        </article>
+      {% else %}
+        <div class="empty {% if favorites_only %}empty-favorites{% endif %}">
+          <div class="empty-icon" aria-hidden="true">&#9733;</div>
+          {% if favorites_only %}
+            <h2>Hen&#252;z favori kampanyan yok</h2>
+            <p>Be&#287;endi&#287;in kampanyalar&#305;n y&#305;ld&#305;z&#305;na bas; sonra burada sadece takip ettiklerini g&#246;r.</p>
+          {% else %}
+            <h2>Kay&#305;t yok</h2>
+            <p>Filtreleri gev&#351;et veya &#350;imdi Tara ile verileri yenile.</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </section>
+  </main>
+
+  <script>
+    const scanForm = document.querySelector(".scan-form");
+    if (scanForm) {
+      scanForm.addEventListener("submit", () => {
+        document.body.classList.add("is-loading");
+      });
+    }
+  </script>
+</body>
+</html>

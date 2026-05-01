@@ -1,0 +1,5 @@
+supabase
+requests
+python-dotenv
+flask
+beautifulsoup4

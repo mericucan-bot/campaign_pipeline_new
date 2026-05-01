@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kampanya Radar</title>
+  <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body>
+  <header class="hero">
+    <nav class="nav">
+      <a class="brand" href="./" aria-label="Kampanya Radar">
+        <span class="brand-mark">KR</span>
+        <span>Kampanya Radar</span>
+      </a>
+      <span class="sync" id="generatedAt">Veri hazirlaniyor</span>
+    </nav>
+
+    <div class="hero-grid">
+      <section class="intro">
+        <p class="eyebrow">Campaign intelligence <span>Created by MeRiC</span></p>
+        <h1>T&#252;m Kampanyalar TeK Ekranda</h1>
+        <p class="lead">GitHub Actions taraf&#305;ndan otomatik g&#252;ncellenen statik kampanya paneli.</p>
+      </section>
+
+      <section class="stats-panel" aria-label="Ozet">
+        <div class="snapshot">
+          <div><span>Aktif Kampanya</span><strong id="activeCount">0</strong><i aria-hidden="true">&#9679;</i></div>
+          <div><span>Banka/Kart</span><strong id="bankCount">0</strong><i aria-hidden="true">&#9638;</i></div>
+          <div><span>Favori</span><strong id="favoriteCount">0</strong><i aria-hidden="true">&#9733;</i></div>
+          <div><span>Veri</span><strong>Pages</strong><i aria-hidden="true">&#9678;</i></div>
+        </div>
+        <div class="hero-results" id="statSubline">0 sonuc · 0 kayit · 0 pasif</div>
+      </section>
+    </div>
+  </header>
+
+  <main>
+    <section class="toolbar">
+      <form class="filters" id="filters">
+        <label>
+          <span>Banka</span>
+          <select id="bankFilter"></select>
+        </label>
+        <label>
+          <span>Kategori</span>
+          <select id="categoryFilter"></select>
+        </label>
+        <label>
+          <span>Kazan&#305;m</span>
+          <select id="rewardFilter"></select>
+        </label>
+        <label>
+          <span>S&#305;ralama</span>
+          <select id="sortFilter">
+            <option value="updated">Y&#252;kleme tarihine g&#246;re</option>
+            <option value="deadline">Biti&#351; tarihine g&#246;re</option>
+            <option value="gain">Kazanca g&#246;re</option>
+            <option value="bank">Bankaya g&#246;re</option>
+          </select>
+        </label>
+        <label class="search-field">
+          <span>Arama</span>
+          <input id="searchInput" placeholder="market, yakit, yurt disi, taksit...">
+        </label>
+        <div class="filter-switches">
+          <label class="toggle"><input id="activeOnly" type="checkbox" checked><span>Aktif</span></label>
+          <label class="toggle"><input id="favoritesOnly" type="checkbox"><span>Favoriler</span></label>
+        </div>
+      </form>
+      <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
+    </section>
+
+    <section class="campaigns" id="campaigns">
+      <div class="empty"><div class="empty-icon" aria-hidden="true">&#9678;</div><h2>Yukleniyor</h2><p>Kampanya verisi okunuyor.</p></div>
+    </section>
+  </main>
+
+  <script src="./assets/app.js"></script>
+</body>
+</html>

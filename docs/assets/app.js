@@ -1,0 +1,229 @@
+const state = {
+  campaigns: [],
+  filtered: [],
+  selectedBank: "",
+  favorites: new Set(JSON.parse(localStorage.getItem("campaignFavorites") || "[]")),
+};
+
+const labels = {
+  "Akbank Axess": "Axess",
+  "DenizBank Bonus": "DenizBank",
+  "Garanti BBVA Bonus": "Garanti",
+  "Is Bankasi Maximum": "Maximum",
+  "Kuveyt Turk Saglam Kart": "Kuveyt",
+  "N Kolay": "N Kolay",
+  "On Kart": "On",
+  "Paraf": "Paraf",
+  "Paraf Premium": "Paraf Premium",
+  "QNB CardFinans": "QNB",
+  "TEB Bonus": "TEB",
+  "VakifBank": "Vakif",
+  "Yapi Kredi World": "YKB",
+  "Ziraat Bankkart": "Ziraat",
+};
+
+const els = {
+  campaigns: document.querySelector("#campaigns"),
+  bankFilter: document.querySelector("#bankFilter"),
+  categoryFilter: document.querySelector("#categoryFilter"),
+  rewardFilter: document.querySelector("#rewardFilter"),
+  sortFilter: document.querySelector("#sortFilter"),
+  searchInput: document.querySelector("#searchInput"),
+  activeOnly: document.querySelector("#activeOnly"),
+  favoritesOnly: document.querySelector("#favoritesOnly"),
+  bankRail: document.querySelector("#bankRail"),
+  statSubline: document.querySelector("#statSubline"),
+  activeCount: document.querySelector("#activeCount"),
+  bankCount: document.querySelector("#bankCount"),
+  favoriteCount: document.querySelector("#favoriteCount"),
+  generatedAt: document.querySelector("#generatedAt"),
+};
+
+fetch("./data/campaigns.json", { cache: "no-store" })
+  .then((response) => response.json())
+  .then((payload) => {
+    state.campaigns = payload.campaigns || [];
+    hydrateStats(payload);
+    hydrateFilters();
+    bindEvents();
+    applyFilters();
+  })
+  .catch(() => {
+    els.campaigns.innerHTML = emptyState("Veri okunamadi", "GitHub Actions henuz kampanya verisini uretmemis olabilir.");
+  });
+
+function hydrateStats(payload) {
+  const stats = payload.stats || {};
+  els.activeCount.textContent = stats.active || 0;
+  els.bankCount.textContent = stats.bank_count || unique(state.campaigns.map((item) => item.bank)).length;
+  els.favoriteCount.textContent = state.favorites.size;
+  if (payload.generated_at) {
+    els.generatedAt.textContent = `Son guncelleme: ${new Date(payload.generated_at).toLocaleString("tr-TR")}`;
+  }
+}
+
+function hydrateFilters() {
+  fillSelect(els.bankFilter, "Tumu", unique(state.campaigns.map((item) => item.bank)), (bank) => bankLabel(bank));
+  fillSelect(els.categoryFilter, "Tum kategoriler", unique(state.campaigns.map((item) => item.category)));
+  fillSelect(els.rewardFilter, "Tum kazanimlar", unique(state.campaigns.map((item) => item.reward_type)));
+  renderBankRail();
+}
+
+function bindEvents() {
+  [els.bankFilter, els.categoryFilter, els.rewardFilter, els.sortFilter, els.searchInput, els.activeOnly, els.favoritesOnly].forEach((el) => {
+    el.addEventListener("input", applyFilters);
+    el.addEventListener("change", applyFilters);
+  });
+}
+
+function applyFilters() {
+  state.selectedBank = els.bankFilter.value;
+  const query = normalize(els.searchInput.value);
+  const category = els.categoryFilter.value;
+  const reward = els.rewardFilter.value;
+  const activeOnly = els.activeOnly.checked;
+  const favoritesOnly = els.favoritesOnly.checked;
+
+  let rows = state.campaigns.filter((item) => {
+    const haystack = normalize(`${item.title || ""} ${item.description || ""} ${item.bank || ""}`);
+    return (!state.selectedBank || item.bank === state.selectedBank)
+      && (!category || item.category === category)
+      && (!reward || item.reward_type === reward)
+      && (!activeOnly || item.is_active)
+      && (!favoritesOnly || state.favorites.has(String(item.id)))
+      && (!query || haystack.includes(query));
+  });
+
+  rows = sortRows(rows, els.sortFilter.value);
+  state.filtered = rows;
+  renderBankRail();
+  renderCampaigns();
+  const total = state.campaigns.length;
+  const inactive = state.campaigns.filter((item) => !item.is_active).length;
+  els.statSubline.textContent = `${rows.length} sonuc · ${total} kayit · ${inactive} pasif`;
+  els.favoriteCount.textContent = state.favorites.size;
+}
+
+function sortRows(rows, sort) {
+  const clone = [...rows];
+  if (sort === "deadline") {
+    return clone.sort((a, b) => (a.deadline || "9999-12-31").localeCompare(b.deadline || "9999-12-31"));
+  }
+  if (sort === "gain") {
+    return clone.sort((a, b) => gainScore(b) - gainScore(a));
+  }
+  if (sort === "bank") {
+    return clone.sort((a, b) => `${a.bank}${a.title}`.localeCompare(`${b.bank}${b.title}`));
+  }
+  return clone.sort((a, b) => String(b.last_seen || "").localeCompare(String(a.last_seen || "")));
+}
+
+function renderBankRail() {
+  const banks = unique(state.campaigns.map((item) => item.bank));
+  els.bankRail.innerHTML = [
+    chip("", "Tumu", !state.selectedBank),
+    ...banks.map((bank) => chip(bank, bankLabel(bank), bank === state.selectedBank)),
+  ].join("");
+  els.bankRail.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", () => {
+      els.bankFilter.value = button.dataset.bank;
+      applyFilters();
+    });
+  });
+}
+
+function renderCampaigns() {
+  if (!state.filtered.length) {
+    els.campaigns.innerHTML = els.favoritesOnly.checked
+      ? emptyState("Henuz favori kampanyan yok", "Begendigin kampanyalarin yildizina bas; sonra burada sadece takip ettiklerini gor.")
+      : emptyState("Kayit yok", "Filtreleri gevselt veya aramani degistir.");
+    return;
+  }
+
+  els.campaigns.innerHTML = state.filtered.map((item) => card(item)).join("");
+  els.campaigns.querySelectorAll(".favorite-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.id;
+      if (state.favorites.has(id)) state.favorites.delete(id);
+      else state.favorites.add(id);
+      localStorage.setItem("campaignFavorites", JSON.stringify([...state.favorites]));
+      applyFilters();
+    });
+  });
+}
+
+function card(item) {
+  const favorite = state.favorites.has(String(item.id));
+  return `
+    <article class="campaign-card">
+      <a class="media" href="${escapeAttr(item.url || "#")}" target="_blank" rel="noreferrer">
+        ${item.image_url ? `<img src="${escapeAttr(item.image_url)}" alt="" loading="lazy">` : `<span>${escapeHtml(item.brand_code || "KR")}</span>`}
+      </a>
+      <div class="campaign-body">
+        <div class="campaign-topline">
+          <span class="brand-badge">${escapeHtml(item.brand_code || "KR")}</span>
+          <div class="campaign-meta">
+            <span class="bank-name">${escapeHtml(item.bank || "")}</span>
+            <span class="status ${item.is_active ? "active" : "inactive"}">${item.is_active ? "Aktif" : "Pasif"}</span>
+          </div>
+          <button class="favorite-button ${favorite ? "selected" : ""}" data-id="${item.id}" title="Favorilere ekle">&#9733;</button>
+        </div>
+        <div class="badges">
+          <span class="category-badge category-${slug(item.category)}">${escapeHtml(item.category || "Genel")}</span>
+          <span class="reward-badge reward-${slug(item.reward_type)}">${escapeHtml(item.reward_type || "Firsat")}</span>
+          <span class="date-badge">${escapeHtml(item.deadline_label || "Tarih kaynakta")}</span>
+          ${item.deadline_urgent ? `<span class="urgent-badge">Bitiyor</span>` : ""}
+        </div>
+        <h2>${escapeHtml(item.title || "")}</h2>
+        ${item.highlight ? `<strong class="campaign-highlight">${escapeHtml(item.highlight)}</strong>` : ""}
+        ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
+        <div class="campaign-footer">
+          <span>v${item.version || 1} · ${String(item.last_seen || "").slice(0, 10)}</span>
+          ${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noreferrer">Detay</a>` : ""}
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function fillSelect(select, allLabel, values, labeler = (value) => value) {
+  select.innerHTML = `<option value="">${allLabel}</option>` + values.map((value) => `<option value="${escapeAttr(value)}">${escapeHtml(labeler(value))}</option>`).join("");
+}
+
+function chip(value, label, selected) {
+  return `<button type="button" class="bank-chip ${selected ? "selected" : ""}" data-bank="${escapeAttr(value)}" title="${escapeAttr(value || "Tumu")}">${escapeHtml(label)}</button>`;
+}
+
+function emptyState(title, text) {
+  return `<div class="empty"><div class="empty-icon" aria-hidden="true">&#9733;</div><h2>${title}</h2><p>${text}</p></div>`;
+}
+
+function unique(values) {
+  return [...new Set(values.filter(Boolean))].sort((a, b) => bankLabel(a).localeCompare(bankLabel(b), "tr"));
+}
+
+function bankLabel(bank) {
+  return labels[bank] || bank;
+}
+
+function gainScore(item) {
+  const text = `${item.title || ""} ${item.description || ""}`;
+  const numbers = [...text.matchAll(/\b\d{2,5}\b/g)].map((match) => Number(match[0]));
+  return Math.max(0, ...numbers);
+}
+
+function normalize(value) {
+  return String(value || "").toLocaleLowerCase("tr-TR").replaceAll("ı", "i").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ğ/g, "g").replace(/ş/g, "s").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ç/g, "c");
+}
+
+function slug(value) {
+  return normalize(value).replace(/[^a-z0-9]+/g, "-");
+}
+
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}

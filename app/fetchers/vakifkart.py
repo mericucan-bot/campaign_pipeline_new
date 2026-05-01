@@ -1,0 +1,67 @@
+from urllib.parse import urljoin
+
+import requests
+from bs4 import BeautifulSoup
+
+from .generic import HEADERS, clean_text
+
+
+BASE_URL = "https://www.vakifkart.com.tr"
+
+
+def fetch_vakifkart(max_pages=12):
+    items = []
+    seen = set()
+
+    for page in range(1, max_pages + 1):
+        url = f"{BASE_URL}/kampanyalar" if page == 1 else f"{BASE_URL}/kampanyalar/sayfa/{page}"
+        response = requests.get(url, headers=HEADERS, timeout=(10, 75))
+        response.raise_for_status()
+        response.encoding = "utf-8"
+
+        page_items = parse_campaigns(response.text, url)
+        new_count = 0
+        for item in page_items:
+            if item["external_id"] in seen:
+                continue
+            seen.add(item["external_id"])
+            items.append(item)
+            new_count += 1
+
+        if new_count == 0:
+            break
+
+    return items
+
+
+def parse_campaigns(html, page_url):
+    soup = BeautifulSoup(html, "html.parser")
+    cards = soup.select(".mainKampanyalarDesktop.subPage .list a.item")
+    items = []
+
+    for card in cards:
+        href = card.get("href")
+        title_el = card.select_one(".title span") or card.select_one(".title")
+        image_el = card.select_one("img")
+        title = clean_text(title_el.get_text(" ", strip=True) if title_el else card.get_text(" ", strip=True))
+
+        if not href or not title:
+            continue
+
+        detail_url = urljoin(page_url, href)
+        image_url = None
+        if image_el:
+            image_url = image_el.get("src") or image_el.get("data-src")
+
+        items.append(
+            {
+                "bank": "VakifBank",
+                "external_id": detail_url,
+                "title": title,
+                "description": None,
+                "image_url": urljoin(page_url, image_url) if image_url else None,
+                "url": detail_url,
+            }
+        )
+
+    return items
