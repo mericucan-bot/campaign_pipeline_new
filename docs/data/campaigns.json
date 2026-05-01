@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-01T20:07:31Z",
+  "generated_at": "2026-05-01T21:22:31Z",
   "stats": {
     "total": 1108,
     "active": 901,
@@ -21667,7 +21667,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-05-03",
-      "deadline_label": "Son 2 gun",
+      "deadline_label": "Son 1 gun",
       "deadline_urgent": true,
       "highlight": "",
       "bank_label": "Maximum"
@@ -21691,7 +21691,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-05-03",
-      "deadline_label": "Son 2 gun",
+      "deadline_label": "Son 1 gun",
       "deadline_urgent": true,
       "highlight": "",
       "bank_label": "Maximum"
@@ -22267,7 +22267,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-05-08",
-      "deadline_label": "Son 7 gun",
+      "deadline_label": "Son 6 gun",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "Maximum"

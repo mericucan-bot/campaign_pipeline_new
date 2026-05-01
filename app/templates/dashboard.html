@@ -127,6 +127,29 @@
       </div>
     </section>
 
+    <details class="manual-entry">
+      <summary>Manuel favori kampanya ekle</summary>
+      <form action="{{ url_for('manual_campaign') }}" method="post" class="manual-form">
+        <label>
+          <span>Ba&#351;l&#305;k</span>
+          <input name="title" required placeholder="Kart kampanyas&#305; ba&#351;l&#305;&#287;&#305;">
+        </label>
+        <label>
+          <span>A&#231;&#305;klama</span>
+          <input name="description" placeholder="K&#305;sa not, kazan&#305;m veya tarih">
+        </label>
+        <label>
+          <span>Link</span>
+          <input name="url" type="url" placeholder="https://...">
+        </label>
+        <label>
+          <span>G&#246;rsel</span>
+          <input name="image_url" type="url" placeholder="https://...">
+        </label>
+        <button class="apply-button" type="submit">Favoriye Ekle</button>
+      </form>
+    </details>
+
     <section class="campaigns">
       <div class="skeleton-grid" aria-hidden="true">
         {% for _ in range(6) %}
@@ -200,11 +223,23 @@
     </section>
   </main>
 
+  <button class="back-to-top" type="button" aria-label="Sayfa ba&#351;&#305;na d&#246;n">↑</button>
+
   <script>
     const scanForm = document.querySelector(".scan-form");
     if (scanForm) {
       scanForm.addEventListener("submit", () => {
         document.body.classList.add("is-loading");
+      });
+    }
+
+    const backToTop = document.querySelector(".back-to-top");
+    if (backToTop) {
+      window.addEventListener("scroll", () => {
+        backToTop.classList.toggle("visible", window.scrollY > 600);
+      });
+      backToTop.addEventListener("click", () => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
       });
     }
   </script>

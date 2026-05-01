@@ -355,6 +355,79 @@ def toggle_favorite(campaign_id):
         return True
 
 
+def add_manual_campaign(title, description=None, url=None, image_url=None, bank="Manuel Favori"):
+    if USE_SUPABASE:
+        raise RuntimeError("Manual campaign entry is only supported with local SQLite for now.")
+
+    init_local_db()
+    clean_item = {
+        "bank": bank,
+        "external_id": "manual-" + hashlib.sha256(
+            "|".join([title or "", description or "", url or "", image_url or ""]).encode("utf-8")
+        ).hexdigest()[:20],
+        "title": title,
+        "description": description,
+        "image_url": image_url,
+        "url": url,
+    }
+    item_hash = generate_hash(clean_item)
+    timestamp = now_iso()
+
+    with get_connection() as conn:
+        existing = conn.execute(
+            "SELECT id FROM campaigns WHERE bank = ? AND external_id = ?",
+            (clean_item["bank"], clean_item["external_id"]),
+        ).fetchone()
+        if existing:
+            campaign_id = existing["id"]
+            conn.execute(
+                """
+                UPDATE campaigns
+                SET title = ?, description = ?, image_url = ?, url = ?, hash = ?,
+                    last_seen = ?, last_updated = ?, is_active = 1
+                WHERE id = ?
+                """,
+                (
+                    clean_item["title"],
+                    clean_item["description"],
+                    clean_item["image_url"],
+                    clean_item["url"],
+                    item_hash,
+                    timestamp,
+                    timestamp,
+                    campaign_id,
+                ),
+            )
+        else:
+            cursor = conn.execute(
+                """
+                INSERT INTO campaigns (
+                    bank, external_id, title, description, image_url, url, hash,
+                    version, first_seen, last_seen, last_updated, is_active
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, 1)
+                """,
+                (
+                    clean_item["bank"],
+                    clean_item["external_id"],
+                    clean_item["title"],
+                    clean_item["description"],
+                    clean_item["image_url"],
+                    clean_item["url"],
+                    item_hash,
+                    timestamp,
+                    timestamp,
+                    timestamp,
+                ),
+            )
+            campaign_id = cursor.lastrowid
+
+        conn.execute(
+            "INSERT OR IGNORE INTO favorites (campaign_id, created_at) VALUES (?, ?)",
+            (campaign_id, timestamp),
+        )
+        return campaign_id
+
+
 def normalize_search(value):
     value = (value or "").casefold()
     value = value.replace("ı", "i").replace("ğ", "g").replace("ü", "u")

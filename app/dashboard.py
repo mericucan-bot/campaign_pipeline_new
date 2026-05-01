@@ -4,7 +4,7 @@ from datetime import date
 
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 
-from app.core.db import get_favorite_ids, get_stats, list_campaigns, normalize_search, toggle_favorite
+from app.core.db import add_manual_campaign, get_favorite_ids, get_stats, list_campaigns, normalize_search, toggle_favorite
 from app.core.pipeline import run_pipeline
 from app.fetchers.registry import BANK_FETCHERS
 
@@ -59,6 +59,7 @@ BANK_LABELS = {
     "VakifBank": "Vakif",
     "Yapi Kredi World": "YKB",
     "Ziraat Bankkart": "Ziraat",
+    "Manuel Favori": "Manuel",
 }
 
 
@@ -114,6 +115,19 @@ def favorite(campaign_id):
     if request.headers.get("accept") == "application/json":
         return jsonify({"id": campaign_id, "favorite": is_favorite})
     return redirect(request.referrer or url_for("index"))
+
+
+@app.post("/manual")
+def manual_campaign():
+    title = (request.form.get("title") or "").strip()
+    if title:
+        add_manual_campaign(
+            title=title,
+            description=(request.form.get("description") or "").strip() or None,
+            url=(request.form.get("url") or "").strip() or None,
+            image_url=(request.form.get("image_url") or "").strip() or None,
+        )
+    return redirect(url_for("index", favorites="1"))
 
 
 @app.post("/run")

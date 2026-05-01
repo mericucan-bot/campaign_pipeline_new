@@ -3,6 +3,7 @@ const state = {
   filtered: [],
   selectedBank: "",
   favorites: new Set(JSON.parse(localStorage.getItem("campaignFavorites") || "[]")),
+  manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]"),
 };
 
 const labels = {
@@ -20,6 +21,7 @@ const labels = {
   "VakifBank": "Vakif",
   "Yapi Kredi World": "YKB",
   "Ziraat Bankkart": "Ziraat",
+  "Manuel Favori": "Manuel",
 };
 
 const els = {
@@ -37,12 +39,18 @@ const els = {
   bankCount: document.querySelector("#bankCount"),
   favoriteCount: document.querySelector("#favoriteCount"),
   generatedAt: document.querySelector("#generatedAt"),
+  manualForm: document.querySelector("#manualForm"),
+  manualTitle: document.querySelector("#manualTitle"),
+  manualDescription: document.querySelector("#manualDescription"),
+  manualUrl: document.querySelector("#manualUrl"),
+  manualImage: document.querySelector("#manualImage"),
+  backToTop: document.querySelector(".back-to-top"),
 };
 
 fetch("./data/campaigns.json", { cache: "no-store" })
   .then((response) => response.json())
   .then((payload) => {
-    state.campaigns = payload.campaigns || [];
+    state.campaigns = [...(payload.campaigns || []), ...state.manualCampaigns];
     hydrateStats(payload);
     hydrateFilters();
     bindEvents();
@@ -74,6 +82,17 @@ function bindEvents() {
     el.addEventListener("input", applyFilters);
     el.addEventListener("change", applyFilters);
   });
+  if (els.manualForm) {
+    els.manualForm.addEventListener("submit", addManualCampaign);
+  }
+  if (els.backToTop) {
+    window.addEventListener("scroll", () => {
+      els.backToTop.classList.toggle("visible", window.scrollY > 600);
+    });
+    els.backToTop.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
 }
 
 function applyFilters() {
@@ -184,6 +203,48 @@ function card(item) {
       </div>
     </article>
   `;
+}
+
+function addManualCampaign(event) {
+  event.preventDefault();
+  const title = els.manualTitle.value.trim();
+  if (!title) return;
+
+  const now = new Date().toISOString();
+  const id = `manual-${Date.now()}`;
+  const item = {
+    id,
+    bank: "Manuel Favori",
+    bank_label: "Manuel",
+    external_id: id,
+    title,
+    description: els.manualDescription.value.trim(),
+    image_url: els.manualImage.value.trim(),
+    url: els.manualUrl.value.trim(),
+    version: 1,
+    first_seen: now,
+    last_seen: now,
+    last_updated: now,
+    is_active: true,
+    category: "Genel",
+    reward_type: "Firsat",
+    favorite: true,
+    brand_code: "MF",
+    deadline: null,
+    deadline_label: "Manuel",
+    deadline_urgent: false,
+    highlight: "",
+  };
+
+  state.manualCampaigns.unshift(item);
+  state.campaigns.unshift(item);
+  state.favorites.add(String(id));
+  localStorage.setItem("manualCampaigns", JSON.stringify(state.manualCampaigns));
+  localStorage.setItem("campaignFavorites", JSON.stringify([...state.favorites]));
+  els.manualForm.reset();
+  els.favoritesOnly.checked = true;
+  hydrateFilters();
+  applyFilters();
 }
 
 function fillSelect(select, allLabel, values, labeler = (value) => value) {
