@@ -80,6 +80,7 @@ fetch("./data/campaigns.json", { cache: "no-store" })
     hydrateHealth(payload.health || []);
     hydrateFilters();
     hydrateMyCards();
+    initPreferredFlow();
     bindEvents();
     applyFilters();
   })
@@ -134,6 +135,12 @@ function bindEvents() {
     els.settingsDrawer.addEventListener("click", (event) => {
       if (event.target === els.settingsDrawer) els.settingsDrawer.close();
     });
+  }
+}
+
+function initPreferredFlow() {
+  if (els.myCardsOnly && localStorage.getItem("myCards")) {
+    els.myCardsOnly.checked = true;
   }
 }
 
@@ -271,7 +278,7 @@ function card(item) {
             data-date="${escapeAttr(item.deadline_label || "Tarih kaynakta")}"
             data-description="${escapeAttr(item.description || "")}"
             data-url="${escapeAttr(item.url || "")}">Detay</button>
-          ${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noreferrer">Kaynak</a>` : ""}
+          ${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noreferrer">Kaynak <span class="external-icon" aria-hidden="true">↗</span></a>` : ""}
         </div>
       </div>
     </article>
@@ -285,7 +292,7 @@ function hydrateHealth(rows) {
     return;
   }
   els.healthGrid.innerHTML = rows.map((row) => `
-    <div class="health-item">
+    <div class="health-item ${Number(row.inactive || 0) ? "has-issue" : ""}">
       <strong>${escapeHtml(bankLabel(row.bank || ""))}</strong>
       <span>${row.active || 0} aktif · ${row.inactive || 0} pasif</span>
       <small>${String(row.last_seen || "Tarih yok").slice(0, 10)}</small>

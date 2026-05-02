@@ -197,7 +197,7 @@
                 data-url="{{ campaign.url or ''|e }}"
               >Detay</button>
               {% if campaign.url %}
-                <a href="{{ campaign.url }}" target="_blank" rel="noreferrer">Kaynak</a>
+                <a href="{{ campaign.url }}" target="_blank" rel="noreferrer">Kaynak <span class="external-icon" aria-hidden="true">↗</span></a>
               {% endif %}
             </div>
           </div>
@@ -245,7 +245,7 @@
         <summary>Banka tarama sa&#287;l&#305;&#287;&#305;</summary>
         <div class="health-grid">
           {% for row in bank_health %}
-            <div class="health-item">
+            <div class="health-item {% if row.inactive %}has-issue{% endif %}">
               <strong>{{ bank_label(row.bank) }}</strong>
               <span>{{ row.active }} aktif · {{ row.inactive }} pasif</span>
               <small>{{ row.last_seen[:10] or 'Tarih yok' }}</small>
@@ -289,7 +289,7 @@
         <span class="date-badge modal-date"></span>
       </div>
       <p class="modal-description"></p>
-      <a class="modal-link" href="#" target="_blank" rel="noreferrer">Kayna&#287;a Git</a>
+      <a class="modal-link" href="#" target="_blank" rel="noreferrer">Kayna&#287;a Git <span class="external-icon" aria-hidden="true">↗</span></a>
     </div>
   </dialog>
 
@@ -316,6 +316,7 @@
     const defaultMyCards = ["Akbank Axess", "Is Bankasi Maximum", "Paraf", "Paraf Premium", "VakifBank", "Yapi Kredi World"];
     const cardPickInputs = Array.from(document.querySelectorAll("[data-card-pick]"));
     const myCardsOnlyInput = document.querySelector("#myCardsOnly");
+    const urlParams = new URLSearchParams(window.location.search);
 
     function getMyCards() {
       try {
@@ -350,6 +351,9 @@
     }
 
     if (myCardsOnlyInput) {
+      if (!urlParams.has("my_cards") && localStorage.getItem("myCards") && !urlParams.has("favorites")) {
+        myCardsOnlyInput.checked = true;
+      }
       myCardsOnlyInput.addEventListener("change", applyMyCardsFilter);
       applyMyCardsFilter();
     }
