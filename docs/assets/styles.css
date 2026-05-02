@@ -123,7 +123,9 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .calculator-grid { display: grid; gap: 6px; grid-template-columns: repeat(5, minmax(150px, 1fr)); }
 .kr-slider-row { align-items: center; display: flex; gap: 8px; margin: 6px 0; }
 .kr-slider-row label { color: #6b7280; flex: 0 0 70px; font-size: 12px; }
-.kr-slider-row input { flex: 1; height: 32px; padding: 0; }
+.kr-slider-row input[type="range"] { flex: 1; height: 32px; padding: 0; }
+.manual-spend { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: #eef5f7; flex: 0 0 86px; font-size: 12px; font-weight: 700; height: 32px; min-width: 0; padding: 0 8px; }
+.manual-spend:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 0 3px rgba(32,181,159,.12); outline: none; }
 .kr-slider-row span { flex: 0 0 60px; font-size: 12px; font-weight: 500; text-align: right; }
 .calculator-total { color: #dce7eb; font-size: 13px; font-weight: 800; }
 .calculator-results { display: grid; gap: 8px; }

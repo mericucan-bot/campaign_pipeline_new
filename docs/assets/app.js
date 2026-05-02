@@ -614,23 +614,39 @@ function initCalculator() {
   const saved = JSON.parse(localStorage.getItem("kr-harcamalar") || "{}");
   const defaults = { market: 1500, restoran: 800, yakit: 300, online: 1000, diger: 500 };
   Object.entries({ ...defaults, ...saved }).forEach(([key, value]) => {
-    const input = document.getElementById(`s-${key}`);
-    if (input) input.value = value;
+    const slider = document.getElementById(`s-${key}`);
+    const manual = document.getElementById(`m-${key}`);
+    const amount = Math.max(0, Number(value) || 0);
+    if (slider) slider.value = Math.min(amount, Number(slider.max) || 10000);
+    if (manual) manual.value = amount;
   });
   ["market", "restoran", "yakit", "online", "diger"].forEach((key) => {
-    const input = document.getElementById(`s-${key}`);
-    if (input) input.addEventListener("input", hesapla);
+    const slider = document.getElementById(`s-${key}`);
+    const manual = document.getElementById(`m-${key}`);
+    if (slider) {
+      slider.addEventListener("input", () => {
+        if (manual) manual.value = slider.value;
+        hesapla();
+      });
+    }
+    if (manual) {
+      manual.addEventListener("input", () => {
+        const amount = Math.max(0, Number(manual.value) || 0);
+        if (slider) slider.value = Math.min(amount, Number(slider.max) || 10000);
+        hesapla();
+      });
+    }
   });
   hesapla();
 }
 
 function hesapla() {
   const harcamalar = {
-    market: Number(document.getElementById("s-market")?.value || 0),
-    restoran: Number(document.getElementById("s-restoran")?.value || 0),
-    yakit: Number(document.getElementById("s-yakit")?.value || 0),
-    online: Number(document.getElementById("s-online")?.value || 0),
-    diger: Number(document.getElementById("s-diger")?.value || 0),
+    market: calculatorSpend("market"),
+    restoran: calculatorSpend("restoran"),
+    yakit: calculatorSpend("yakit"),
+    online: calculatorSpend("online"),
+    diger: calculatorSpend("diger"),
   };
 
   Object.keys(harcamalar).forEach((key) => {
@@ -667,6 +683,15 @@ function hesapla() {
   }
 
   localStorage.setItem("kr-harcamalar", JSON.stringify(harcamalar));
+}
+
+function calculatorSpend(key) {
+  const manual = document.getElementById(`m-${key}`);
+  const slider = document.getElementById(`s-${key}`);
+  const amount = Math.max(0, Number(manual?.value || slider?.value || 0));
+  if (manual && manual.value !== String(amount)) manual.value = amount;
+  if (slider) slider.value = Math.min(amount, Number(slider.max) || 10000);
+  return amount;
 }
 
 function calculatorCategory(item) {
