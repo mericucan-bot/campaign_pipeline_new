@@ -4,6 +4,7 @@ const state = {
   selectedBank: "",
   favorites: new Set(JSON.parse(localStorage.getItem("campaignFavorites") || "[]")),
   manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]"),
+  monthlySpend: Number(localStorage.getItem("monthlySpend") || 3000),
   myCards: new Set(JSON.parse(localStorage.getItem("myCards") || "null") || [
     "Akbank Axess",
     "Is Bankasi Maximum",
@@ -64,6 +65,8 @@ const els = {
   manualDescription: document.querySelector("#manualDescription"),
   manualUrl: document.querySelector("#manualUrl"),
   manualImage: document.querySelector("#manualImage"),
+  monthlySpend: document.querySelector("#monthlySpend"),
+  monthlySpendValue: document.querySelector("#monthlySpendValue"),
   backToTop: document.querySelector(".back-to-top"),
   modal: document.querySelector(".detail-modal"),
   modalClose: document.querySelector(".modal-close"),
@@ -71,6 +74,8 @@ const els = {
   settingsOpen: document.querySelector("[data-settings-open]"),
   settingsClose: document.querySelector("[data-settings-close]"),
 };
+
+showLoadingState();
 
 fetch("./data/campaigns.json", { cache: "no-store" })
   .then((response) => response.json())
@@ -84,8 +89,8 @@ fetch("./data/campaigns.json", { cache: "no-store" })
     bindEvents();
     applyFilters();
   })
-  .catch(() => {
-    els.campaigns.innerHTML = emptyState("Veri okunamadı", "GitHub Actions henüz kampanya verisini üretmemiş olabilir.");
+  .catch((err) => {
+    showErrorState(err);
   });
 
 function hydrateStats(payload) {
@@ -110,6 +115,16 @@ function bindEvents() {
     el.addEventListener("input", applyFilters);
     el.addEventListener("change", applyFilters);
   });
+  if (els.monthlySpend) {
+    els.monthlySpend.value = state.monthlySpend;
+    updateMonthlySpendLabel();
+    els.monthlySpend.addEventListener("input", () => {
+      state.monthlySpend = Number(els.monthlySpend.value || 3000);
+      localStorage.setItem("monthlySpend", String(state.monthlySpend));
+      updateMonthlySpendLabel();
+      applyFilters();
+    });
+  }
   if (els.manualForm) {
     els.manualForm.addEventListener("submit", addManualCampaign);
   }
@@ -198,7 +213,7 @@ function sortRows(rows, sort) {
     return clone.sort((a, b) => (a.deadline || "9999-12-31").localeCompare(b.deadline || "9999-12-31"));
   }
   if (sort === "gain") {
-    return clone.sort((a, b) => gainScore(b) - gainScore(a));
+    return clone.sort((a, b) => normalizeKazanim(b, state.monthlySpend) - normalizeKazanim(a, state.monthlySpend));
   }
   if (sort === "bank") {
     return clone.sort((a, b) => `${a.bank}${a.title}`.localeCompare(`${b.bank}${b.title}`));
@@ -222,9 +237,7 @@ function renderBankRail() {
 
 function renderCampaigns() {
   if (!state.filtered.length) {
-    els.campaigns.innerHTML = els.favoritesOnly.checked
-      ? emptyState("Henüz favori kampanyan yok", "Beğendiğin kampanyaların yıldızına bas; sonra burada sadece takip ettiklerini gör.")
-      : emptyState("Kayıt yok", "Filtreleri gevşet veya aramanı değiştir.");
+    showEmptyState(els.favoritesOnly.checked ? "favorites" : "filters");
     return;
   }
 
@@ -235,6 +248,8 @@ function renderCampaigns() {
       if (state.favorites.has(id)) state.favorites.delete(id);
       else state.favorites.add(id);
       localStorage.setItem("campaignFavorites", JSON.stringify([...state.favorites]));
+      button.classList.add("is-bumping");
+      setTimeout(() => button.classList.remove("is-bumping"), 260);
       applyFilters();
     });
   });
@@ -245,14 +260,21 @@ function renderCampaigns() {
 
 function card(item) {
   const favorite = state.favorites.has(String(item.id));
+  const gain = normalizeKazanim(item, state.monthlySpend);
+  const rewardKind = rewardKindFor(item);
+  const deadline = deadlineInfo(item);
+  const logoStyle = `--logo-bg:${bankColor(item.bank || item.brand_code || "KR")}`;
+  const logo = item.image_url
+    ? `<img src="${escapeAttr(item.image_url)}" alt="" loading="lazy">`
+    : `<span class="media-monogram" style="${logoStyle}">${escapeHtml(bankCode(item))}</span>`;
   return `
-    <article class="campaign-card">
+    <article class="campaign-card ${deadline.cardClass}" data-id="${escapeAttr(item.id)}">
       <a class="media" href="${escapeAttr(item.url || "#")}" target="_blank" rel="noreferrer">
-        ${item.image_url ? `<img src="${escapeAttr(item.image_url)}" alt="" loading="lazy">` : `<span>${escapeHtml(item.brand_code || "KR")}</span>`}
+        ${logo}
       </a>
       <div class="campaign-body">
         <div class="campaign-topline">
-          <span class="brand-badge">${escapeHtml(item.brand_code || "KR")}</span>
+          <span class="brand-badge" style="${logoStyle}">${escapeHtml(bankCode(item))}</span>
           <div class="campaign-meta">
             <span class="bank-name">${escapeHtml(item.bank || "")}</span>
             <span class="status ${item.is_active ? "active" : "inactive"}">${item.is_active ? "Aktif" : "Pasif"}</span>
@@ -261,15 +283,16 @@ function card(item) {
         </div>
         <div class="badges">
           <span class="category-badge category-${slug(item.category)}">${escapeHtml(item.category || "Genel")}</span>
-          <span class="reward-badge reward-${slug(item.reward_type)}">${escapeHtml(item.reward_type || "Fırsat")}</span>
-          <span class="date-badge">${escapeHtml(item.deadline_label || "Tarih kaynakta")}</span>
+          <span class="reward-badge reward-${rewardKind}">${escapeHtml(rewardLabelFor(item))}</span>
+          <span class="gain-badge">≈ ${formatCurrency(gain)}</span>
+          <span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>
           ${item.deadline_urgent ? `<span class="urgent-badge">Bitiyor</span>` : ""}
         </div>
         <h2>${escapeHtml(item.title || "")}</h2>
         ${item.highlight ? `<strong class="campaign-highlight">${escapeHtml(item.highlight)}</strong>` : ""}
         ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
         <div class="campaign-footer">
-          <span>v${item.version || 1} · ${String(item.last_seen || "").slice(0, 10)}</span>
+          <span>Kaynak: ${escapeHtml(bankLabel(item.bank || ""))} · ${String(item.last_seen || item.first_seen || "").slice(0, 10) || "Tarih yok"}</span>
           <button class="detail-button" type="button"
             data-title="${escapeAttr(item.title || "")}"
             data-bank="${escapeAttr(item.bank || "")}"
@@ -364,8 +387,15 @@ function chip(value, label, selected) {
   return `<button type="button" class="bank-chip ${selected ? "selected" : ""}" data-bank="${escapeAttr(value)}" title="${escapeAttr(value || "Tümü")}">${escapeHtml(label)}</button>`;
 }
 
-function emptyState(title, text) {
-  return `<div class="empty"><div class="empty-icon" aria-hidden="true">&#9733;</div><h2>${title}</h2><p>${text}</p></div>`;
+function emptyState(title, text, clearable = false) {
+  return `
+    <div class="empty">
+      <div class="empty-icon" aria-hidden="true">&#8981;</div>
+      <h2>${title}</h2>
+      <p>${text}</p>
+      ${clearable ? `<button type="button" class="apply-button" data-clear-filters>Filtreleri temizle</button>` : ""}
+    </div>
+  `;
 }
 
 function unique(values) {
@@ -380,6 +410,128 @@ function gainScore(item) {
   const text = `${item.title || ""} ${item.description || ""}`;
   const numbers = [...text.matchAll(/\b\d{2,5}\b/g)].map((match) => Number(match[0]));
   return Math.max(0, ...numbers);
+}
+
+function normalizeKazanim(kampanya, aylikHarcama) {
+  const text = `${kampanya.highlight || ""} ${kampanya.title || ""} ${kampanya.description || ""}`;
+  const normalized = normalize(text);
+  const tl = [...text.matchAll(/(\d{2,6}(?:[.,]\d{1,2})?)\s*(?:tl|₺)/gi)].map((match) => parseMoney(match[1]));
+  if (tl.length) return Math.max(...tl);
+
+  const percent = [...text.matchAll(/%[\s]*(\d{1,2}(?:[.,]\d{1,2})?)/g)].map((match) => parseMoney(match[1]));
+  if (percent.length) return Math.round(aylikHarcama * (Math.max(...percent) / 100));
+
+  const points = [...text.matchAll(/(\d{2,6})\s*(?:puan|chip|bonus|para|worldpuan|bankkart lira)/gi)].map((match) => Number(match[1]));
+  if (points.length || normalized.includes("puan")) return Math.round(Math.max(0, ...points) * 0.01);
+
+  const miles = [...text.matchAll(/(\d{2,6})\s*(?:mil|mile)/gi)].map((match) => Number(match[1]));
+  if (miles.length || normalized.includes("mil")) return Math.round(Math.max(0, ...miles) * 0.03);
+
+  return gainScore(kampanya);
+}
+
+function rewardKindFor(item) {
+  const text = `${item.highlight || ""} ${item.title || ""} ${item.description || ""} ${item.reward_type || ""}`;
+  const normalized = normalize(text);
+  if (/%\s*\d+/.test(text)) return "percent";
+  if (/(tl|₺)/i.test(text)) return "tl";
+  if (normalized.includes("puan") || normalized.includes("chip") || normalized.includes("bonus")) return "puan";
+  if (normalized.includes("mil")) return "mil";
+  return slug(item.reward_type || "firsat");
+}
+
+function rewardLabelFor(item) {
+  const kind = rewardKindFor(item);
+  if (kind === "tl") return "TL";
+  if (kind === "percent") return "%";
+  if (kind === "puan") return "Puan";
+  if (kind === "mil") return "Mil";
+  return item.reward_type || "Fırsat";
+}
+
+function deadlineInfo(item) {
+  if (!item.is_active) return { label: "Doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
+  if (!item.deadline) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const end = new Date(`${item.deadline}T00:00:00`);
+  if (Number.isNaN(end.getTime())) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
+  const days = Math.ceil((end - today) / 86400000);
+  if (days < 0) return { label: "Doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
+  if (days === 0) return { label: "Bugün bitiyor", badgeClass: "deadline-danger pulse", cardClass: "deadline-danger-card" };
+  if (days <= 3) return { label: `${days} gün kaldı`, badgeClass: "deadline-danger pulse", cardClass: "deadline-danger-card" };
+  if (days <= 14) return { label: `${days} gün kaldı`, badgeClass: "deadline-warning", cardClass: "deadline-warning-card" };
+  return { label: `${days} gün kaldı`, badgeClass: "deadline-neutral", cardClass: "" };
+}
+
+function parseMoney(value) {
+  return Number(String(value || "0").replace(/\./g, "").replace(",", ".")) || 0;
+}
+
+function formatCurrency(value) {
+  return `${Math.round(value || 0).toLocaleString("tr-TR")}₺`;
+}
+
+function bankCode(item) {
+  return String(item.brand_code || bankLabel(item.bank || "KR").replace(/[^A-Za-zÇĞİÖŞÜçğıöşü0-9 ]/g, "").split(/\s+/).map((part) => part[0]).join("").slice(0, 2) || "KR").toUpperCase();
+}
+
+function bankColor(seed) {
+  const palette = ["#1a56db", "#10b981", "#7c3aed", "#f59e0b", "#0891b2", "#dc2626", "#4338ca", "#0f766e"];
+  let hash = 0;
+  for (const char of String(seed || "KR")) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return palette[hash % palette.length];
+}
+
+function updateMonthlySpendLabel() {
+  if (els.monthlySpendValue) els.monthlySpendValue.textContent = formatCurrency(state.monthlySpend);
+}
+
+function showLoadingState() {
+  if (!els.campaigns) return;
+  els.campaigns.innerHTML = `
+    <div class="skeleton-grid" aria-hidden="true">
+      ${Array.from({ length: 6 }).map(() => `<div class="skeleton-card"><span></span><b></b><i></i><i></i></div>`).join("")}
+    </div>
+  `;
+}
+
+function showEmptyState(ctx) {
+  const title = ctx === "favorites" ? "Henüz favori kampanyan yok" : "Kayıt yok";
+  const text = ctx === "favorites"
+    ? "Beğendiğin kampanyaların yıldızına bas; sonra burada sadece takip ettiklerini gör."
+    : "Filtreleri gevşet veya aramanı değiştir.";
+  els.campaigns.innerHTML = emptyState(title, text, true);
+  const clearButton = els.campaigns.querySelector("[data-clear-filters]");
+  if (clearButton) clearButton.addEventListener("click", clearFilters);
+}
+
+function showErrorState(err) {
+  console.error(err);
+  els.campaigns.innerHTML = `
+    <div class="empty error-state">
+      <div class="empty-icon" aria-hidden="true">!</div>
+      <h2>Veri okunamadı</h2>
+      <p>Veri hazırlanırken sorun oluştu. Biraz sonra tekrar deneyebilirsin.</p>
+      <div class="empty-actions">
+        <button type="button" class="apply-button" onclick="location.reload()">Tekrar dene</button>
+        <a href="https://github.com/mericucan-bot/campaign_pipeline_new/issues" target="_blank" rel="noreferrer">GitHub issue aç</a>
+      </div>
+    </div>
+  `;
+}
+
+function clearFilters() {
+  els.bankFilter.value = "";
+  els.categoryFilter.value = "";
+  els.rewardFilter.value = "";
+  els.sortFilter.value = "updated";
+  els.searchInput.value = "";
+  els.activeOnly.checked = true;
+  els.favoritesOnly.checked = false;
+  els.myCardsOnly.checked = false;
+  applyFilters();
 }
 
 function normalize(value) {
