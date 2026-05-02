@@ -75,6 +75,17 @@ const els = {
   settingsClose: document.querySelector("[data-settings-close]"),
 };
 
+function closeBanner() {
+  const banner = document.getElementById("info-banner");
+  if (banner) banner.style.display = "none";
+  localStorage.setItem("kr-banner-closed", "1");
+}
+
+if (localStorage.getItem("kr-banner-closed") === "1") {
+  const banner = document.getElementById("info-banner");
+  if (banner) banner.style.display = "none";
+}
+
 showLoadingState();
 
 fetch("./data/campaigns.json", { cache: "no-store" })
@@ -298,8 +309,8 @@ function card(item) {
       </div>
 
       <div class="card-source">
-        <span>Kaynak: ${escapeHtml(data.banka)} · ${escapeHtml(data.sourceDate)}</span>
         <button class="source-button" type="button" data-url="${escapeAttr(data.kaynak_url)}">Kaynağa git <span aria-hidden="true">↗</span></button>
+        <span class="source-disclaimer">Kaynak: ${escapeHtml(data.banka)} resmi sitesi • ${escapeHtml(data.sourceDate)}</span>
       </div>
     </article>
   `;
