@@ -73,6 +73,9 @@ const els = {
   settingsDrawer: document.querySelector(".settings-drawer"),
   settingsOpen: document.querySelector("[data-settings-open]"),
   settingsClose: document.querySelector("[data-settings-close]"),
+  calculatorToggle: document.querySelector("#calculatorToggle"),
+  calculatorPanel: document.querySelector("#calculatorPanel"),
+  calculatorResult: document.querySelector("#kalk-sonuc"),
 };
 
 function closeBanner() {
@@ -101,6 +104,7 @@ fetch("./data/campaigns.json", { cache: "no-store" })
     requestNotificationPermission();
     checkNotifs();
     syncFavoriteNotifications();
+    initCalculator();
     if (!state.campaigns.length) {
       showEmptyState("Tüm kaynaklar");
       return;
@@ -164,6 +168,15 @@ function bindEvents() {
     els.settingsClose.addEventListener("click", () => els.settingsDrawer.close());
     els.settingsDrawer.addEventListener("click", (event) => {
       if (event.target === els.settingsDrawer) els.settingsDrawer.close();
+    });
+  }
+  if (els.calculatorToggle && els.calculatorPanel) {
+    els.calculatorToggle.addEventListener("click", () => {
+      const willOpen = els.calculatorPanel.hidden;
+      els.calculatorPanel.hidden = !willOpen;
+      els.calculatorToggle.setAttribute("aria-expanded", String(willOpen));
+      els.calculatorToggle.textContent = `🧮 Kazanım Hesaplayıcısı ${willOpen ? "▲" : "▼"}`;
+      if (willOpen) hesapla();
     });
   }
 }
@@ -300,7 +313,7 @@ function card(item) {
     ? `<img src="${escapeAttr(data.gorsel_url)}" alt="" loading="lazy">`
     : `<span style="${logoStyle}">${escapeHtml(bankInitials(data.banka))}</span>`;
   return `
-    <article class="campaign-card radar-card ${deadline.cardClass} ${urgent.cardClass}" data-id="${escapeAttr(data.id)}">
+    <article id="card-${escapeAttr(data.id)}" class="campaign-card radar-card ${deadline.cardClass} ${urgent.cardClass}" data-id="${escapeAttr(data.id)}">
       <div class="card-header">
         <div class="bank-logo" style="${logoStyle}">${logo}</div>
         <div class="card-bank-meta">
@@ -469,6 +482,97 @@ function syncFavoriteNotifications() {
   state.campaigns.forEach((item) => {
     if (state.favorites.has(String(item.id))) scheduleNotif(adaptCampaign(item));
   });
+}
+
+function initCalculator() {
+  const saved = JSON.parse(localStorage.getItem("kr-harcamalar") || "{}");
+  const defaults = { market: 1500, restoran: 800, yakit: 300, online: 1000, diger: 500 };
+  Object.entries({ ...defaults, ...saved }).forEach(([key, value]) => {
+    const input = document.getElementById(`s-${key}`);
+    if (input) input.value = value;
+  });
+  ["market", "restoran", "yakit", "online", "diger"].forEach((key) => {
+    const input = document.getElementById(`s-${key}`);
+    if (input) input.addEventListener("input", hesapla);
+  });
+  hesapla();
+}
+
+function hesapla() {
+  const harcamalar = {
+    market: Number(document.getElementById("s-market")?.value || 0),
+    restoran: Number(document.getElementById("s-restoran")?.value || 0),
+    yakit: Number(document.getElementById("s-yakit")?.value || 0),
+    online: Number(document.getElementById("s-online")?.value || 0),
+    diger: Number(document.getElementById("s-diger")?.value || 0),
+  };
+
+  Object.keys(harcamalar).forEach((key) => {
+    const valueEl = document.getElementById(`v-${key}`);
+    if (valueEl) valueEl.textContent = `${harcamalar[key].toLocaleString("tr-TR")}₺`;
+  });
+
+  const toplam = Object.values(harcamalar).reduce((total, value) => total + value, 0);
+  const totalEl = document.getElementById("toplam-val");
+  if (totalEl) totalEl.textContent = `${toplam.toLocaleString("tr-TR")}₺`;
+
+  const sonuclar = state.campaigns
+    .filter((item) => item.aktif ?? item.is_active)
+    .map((item) => {
+      const data = adaptCampaign(item);
+      const ilgiliHarcama = harcamalar[calculatorCategory(data)] || 0;
+      return { ...data, tahminiKazanim: normalizeKazanim(data, ilgiliHarcama) };
+    })
+    .filter((item) => item.tahminiKazanim > 0)
+    .sort((a, b) => b.tahminiKazanim - a.tahminiKazanim)
+    .slice(0, 5);
+
+  const resultEl = document.getElementById("kalk-sonuc");
+  const rozetler = ["🥇", "🥈", "🥉", "4.", "5."];
+  if (resultEl) {
+    resultEl.innerHTML = sonuclar.length === 0
+      ? `<p>Eşleşen kampanya bulunamadı.</p>`
+      : sonuclar.map((item, index) => `
+        <button class="calculator-result" type="button" onclick="highlightCard('${escapeAttr(item.id)}')">
+          <span>${rozetler[index]} ${escapeHtml(item.banka)} — ${escapeHtml(item.baslik)}</span>
+          <strong>+${Math.round(item.tahminiKazanim).toLocaleString("tr-TR")}₺</strong>
+        </button>
+      `).join("");
+  }
+
+  localStorage.setItem("kr-harcamalar", JSON.stringify(harcamalar));
+}
+
+function calculatorCategory(item) {
+  const text = normalize(`${item.kategori || ""} ${item.baslik || ""} ${item.aciklama || ""}`);
+  if (text.includes("market") || text.includes("supermarket") || text.includes("gida")) return "market";
+  if (text.includes("restoran") || text.includes("yemek") || text.includes("cafe") || text.includes("kafe")) return "restoran";
+  if (text.includes("yakit") || text.includes("akaryakit") || text.includes("benzin") || text.includes("petrol")) return "yakit";
+  if (text.includes("online") || text.includes("internet") || text.includes("e-ticaret") || text.includes("eticaret")) return "online";
+  return "diger";
+}
+
+function highlightCard(id) {
+  document.querySelectorAll(".campaign-card").forEach((cardEl) => cardEl.classList.remove("calculator-highlight"));
+  let el = document.getElementById(`card-${id}`);
+  if (!el) {
+    const campaign = state.campaigns.find((item) => String(item.id) === String(id));
+    if (campaign) {
+      els.bankFilter.value = campaign.bank || "";
+      els.categoryFilter.value = "";
+      els.rewardFilter.value = "";
+      els.searchInput.value = "";
+      els.activeOnly.checked = false;
+      els.favoritesOnly.checked = false;
+      els.myCardsOnly.checked = false;
+      applyFilters();
+      el = document.getElementById(`card-${id}`);
+    }
+  }
+  if (el) {
+    el.classList.add("calculator-highlight");
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 }
 
 function hydrateHealth(rows) {

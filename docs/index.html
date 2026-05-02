@@ -83,6 +83,39 @@
         <button class="settings-open" type="button" data-settings-open>Ayarlar</button>
       </form>
       <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
+      <button class="calculator-toggle" type="button" id="calculatorToggle" aria-expanded="false" aria-controls="calculatorPanel">🧮 Kazanım Hesaplayıcısı ▼</button>
+      <section class="calculator-panel" id="calculatorPanel" hidden>
+        <p>Bu ay ne kadar harcayacağını gir, sana en karlı kampanyaları sıralayayım:</p>
+        <div class="calculator-grid">
+          <div class="kr-slider-row">
+            <label for="s-market">Market</label>
+            <input id="s-market" type="range" min="0" max="5000" step="100" value="1500">
+            <span id="v-market">1.500₺</span>
+          </div>
+          <div class="kr-slider-row">
+            <label for="s-restoran">Restoran</label>
+            <input id="s-restoran" type="range" min="0" max="5000" step="100" value="800">
+            <span id="v-restoran">800₺</span>
+          </div>
+          <div class="kr-slider-row">
+            <label for="s-yakit">Yakıt</label>
+            <input id="s-yakit" type="range" min="0" max="5000" step="100" value="300">
+            <span id="v-yakit">300₺</span>
+          </div>
+          <div class="kr-slider-row">
+            <label for="s-online">Online</label>
+            <input id="s-online" type="range" min="0" max="5000" step="100" value="1000">
+            <span id="v-online">1.000₺</span>
+          </div>
+          <div class="kr-slider-row">
+            <label for="s-diger">Diğer</label>
+            <input id="s-diger" type="range" min="0" max="5000" step="100" value="500">
+            <span id="v-diger">500₺</span>
+          </div>
+        </div>
+        <div class="calculator-total">Toplam: <strong id="toplam-val">4.100₺</strong></div>
+        <div class="calculator-results" id="kalk-sonuc"></div>
+      </section>
     </section>
 
     <section class="campaigns" id="campaigns">

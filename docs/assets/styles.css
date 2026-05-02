@@ -107,6 +107,31 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .bank-chip:hover { background: var(--panel-2); border-color: rgba(32,181,159,.42); color: #e7f5f2; transform: translateY(-1px); }
 .bank-chip.selected { background: rgba(32,181,159,.12); border-color: rgba(32,181,159,.48); color: #f4f7f8; }
 .bank-chip.selected::after { background: var(--primary); border-radius: 999px; bottom: -1px; content: ""; height: 2px; left: 12px; position: absolute; right: 12px; }
+.calculator-toggle {
+  align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: #e8f4f1;
+  cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 900; justify-self: start; min-height: 38px; padding: 0 13px;
+}
+.calculator-toggle:hover { background: var(--panel-2); border-color: rgba(32,181,159,.42); }
+.calculator-panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 14px 32px rgba(0,0,0,.22);
+  display: grid; gap: 12px; padding: 14px;
+}
+.calculator-panel[hidden] { display: none; }
+.calculator-panel p { color: var(--muted); font-size: 13px; }
+.calculator-grid { display: grid; gap: 6px; grid-template-columns: repeat(5, minmax(150px, 1fr)); }
+.kr-slider-row { align-items: center; display: flex; gap: 8px; margin: 6px 0; }
+.kr-slider-row label { color: #6b7280; flex: 0 0 70px; font-size: 12px; }
+.kr-slider-row input { flex: 1; height: 32px; padding: 0; }
+.kr-slider-row span { flex: 0 0 60px; font-size: 12px; font-weight: 500; text-align: right; }
+.calculator-total { color: #dce7eb; font-size: 13px; font-weight: 800; }
+.calculator-results { display: grid; gap: 8px; }
+.calculator-result {
+  align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: #dce7eb;
+  cursor: pointer; display: flex; gap: 10px; justify-content: space-between; min-height: 42px; padding: 9px 11px; text-align: left;
+}
+.calculator-result:hover { border-color: rgba(26,86,219,.58); box-shadow: 0 0 0 3px rgba(26,86,219,.14); }
+.calculator-result span { color: #dce7eb; font-size: 13px; font-weight: 800; margin: 0; }
+.calculator-result strong { color: #86e7d7; font-size: 14px; white-space: nowrap; }
 .settings-open { align-self: end; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: #dce7eb; cursor: pointer; font-size: 14px; font-weight: 900; height: 40px; min-height: 40px; padding: 0 14px; white-space: nowrap; }
 .settings-open:hover { background: rgba(32,181,159,.13); border-color: rgba(32,181,159,.45); color: #f4f7f8; }
 .settings-drawer { background: transparent; border: 0; color: var(--ink); height: 100vh; inset: 0 0 0 auto; margin: 0 0 0 auto; max-height: 100vh; max-width: min(500px, calc(100vw - 20px)); padding: 0; position: fixed; width: min(500px, calc(100vw - 20px)); }
@@ -192,6 +217,7 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .campaign-card.deadline-danger-card { border-color: rgba(239,68,68,.5); }
 .campaign-card.urgent-hours-card { border-left: 4px solid #ef4444; }
 .campaign-card.urgent-days-card { border-left: 4px solid #f59e0b; }
+.campaign-card.calculator-highlight { outline: 2px solid #1a56db; outline-offset: 3px; }
 .radar-card { gap: 12px; padding: 14px; }
 .radar-card.is-expired { filter: grayscale(1); opacity: .5; }
 .card-header { align-items: center; display: grid; gap: 10px; grid-template-columns: 32px minmax(0, 1fr) 34px; }
@@ -284,6 +310,7 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
 .back-to-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
 @media (max-width: 1180px) {
   .hero-grid, .filters { grid-template-columns: 1fr; }
+  .calculator-grid { grid-template-columns: 1fr; }
   .snapshot { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stats-panel { max-width: none; }
   .filter-switches { height: auto; }
