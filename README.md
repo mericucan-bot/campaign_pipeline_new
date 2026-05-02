@@ -41,6 +41,8 @@ Workflow su islemleri yapar:
 - 6 saatte bir otomatik calisir
 - `python -m app.main` ile kampanyalari ceker
 - `python -m app.static_export` ile `docs/data/campaigns.json` uretir
+- Onceki `docs/data/campaigns.json` dosyasini okuyup artik yeni taramada gorunmeyen kampanyalari pasif isaretler
+- Guncel `docs/data/campaigns.json` dosyasini repo'ya geri commit eder
 - `docs/` klasorunu GitHub Pages'e deploy eder
 
 GitHub'da gerekli ayar:

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-01T21:22:31Z",
+  "generated_at": "2026-05-02T05:50:19Z",
   "stats": {
     "total": 1108,
     "active": 901,
@@ -21,7 +21,7 @@
       "Ziraat Bankkart"
     ],
     "bank_count": 14,
-    "storage": "Local SQLite"
+    "storage": "GitHub Pages JSON"
   },
   "campaigns": [
     {
@@ -6355,7 +6355,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-05-15",
-      "deadline_label": "15.05.2026",
+      "deadline_label": "Son katilim 15.05.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "YKB"
@@ -6403,7 +6403,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-06-01",
-      "deadline_label": "01.06.2026",
+      "deadline_label": "Son katilim 01.06.2026",
       "deadline_urgent": false,
       "highlight": "200 TL Worldpuan",
       "bank_label": "YKB"
@@ -6475,7 +6475,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-05-19",
-      "deadline_label": "19.05.2026",
+      "deadline_label": "Son katilim 19.05.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "YKB"
@@ -6499,7 +6499,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-05-19",
-      "deadline_label": "19.05.2026",
+      "deadline_label": "Son katilim 19.05.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "YKB"
@@ -6523,7 +6523,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-05-19",
-      "deadline_label": "19.05.2026",
+      "deadline_label": "Son katilim 19.05.2026",
       "deadline_urgent": false,
       "highlight": "500 TL puan",
       "bank_label": "YKB"
@@ -6547,7 +6547,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-05-19",
-      "deadline_label": "19.05.2026",
+      "deadline_label": "Son katilim 19.05.2026",
       "deadline_urgent": false,
       "highlight": "500 TL puan",
       "bank_label": "YKB"
@@ -6907,7 +6907,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-05-31",
-      "deadline_label": "31.05.2026",
+      "deadline_label": "Son katilim 31.05.2026",
       "deadline_urgent": false,
       "highlight": "150 TL indirim",
       "bank_label": "YKB"
@@ -7723,7 +7723,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-12-31",
-      "deadline_label": "31.12.2026",
+      "deadline_label": "Son katilim 31.12.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "YKB"
@@ -7747,7 +7747,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-12-31",
-      "deadline_label": "31.12.2026",
+      "deadline_label": "Son katilim 31.12.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "YKB"
@@ -7795,7 +7795,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2027-01-03",
-      "deadline_label": "03.01.2027",
+      "deadline_label": "Son katilim 03.01.2027",
       "deadline_urgent": false,
       "highlight": "6 taksit",
       "bank_label": "YKB"
@@ -8011,7 +8011,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-05-19",
-      "deadline_label": "19.05.2026",
+      "deadline_label": "Son katilim 19.05.2026",
       "deadline_urgent": false,
       "highlight": "250 TL puan",
       "bank_label": "YKB"
@@ -8035,7 +8035,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-05-19",
-      "deadline_label": "19.05.2026",
+      "deadline_label": "Son katilim 19.05.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "YKB"
@@ -8083,7 +8083,7 @@
       "favorite": false,
       "brand_code": "YK",
       "deadline": "2026-05-19",
-      "deadline_label": "19.05.2026",
+      "deadline_label": "Son katilim 19.05.2026",
       "deadline_urgent": false,
       "highlight": "250 TL indirim",
       "bank_label": "YKB"
@@ -21739,7 +21739,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-06-30",
-      "deadline_label": "30.06.2026",
+      "deadline_label": "Son katilim 30.06.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "Maximum"
@@ -22099,7 +22099,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-05-31",
-      "deadline_label": "31.05.2026",
+      "deadline_label": "Son katilim 31.05.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "Maximum"
@@ -22123,7 +22123,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-05-31",
-      "deadline_label": "31.05.2026",
+      "deadline_label": "Son katilim 31.05.2026",
       "deadline_urgent": false,
       "highlight": "6 taksit",
       "bank_label": "Maximum"
@@ -22147,7 +22147,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-06-30",
-      "deadline_label": "30.06.2026",
+      "deadline_label": "Son katilim 30.06.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "Maximum"
@@ -22195,7 +22195,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-06-30",
-      "deadline_label": "30.06.2026",
+      "deadline_label": "Son katilim 30.06.2026",
       "deadline_urgent": false,
       "highlight": "%5 indirim",
       "bank_label": "Maximum"
@@ -22339,7 +22339,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-12-31",
-      "deadline_label": "31.12.2026",
+      "deadline_label": "Son katilim 31.12.2026",
       "deadline_urgent": false,
       "highlight": "26 Taksit",
       "bank_label": "Maximum"
@@ -22387,7 +22387,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-06-30",
-      "deadline_label": "30.06.2026",
+      "deadline_label": "Son katilim 30.06.2026",
       "deadline_urgent": false,
       "highlight": "",
       "bank_label": "Maximum"
@@ -22531,7 +22531,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-05-15",
-      "deadline_label": "15.05.2026",
+      "deadline_label": "Son katilim 15.05.2026",
       "deadline_urgent": false,
       "highlight": "350 TL MaxiPuan",
       "bank_label": "Maximum"
@@ -22675,7 +22675,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-12-31",
-      "deadline_label": "31.12.2026",
+      "deadline_label": "Son katilim 31.12.2026",
       "deadline_urgent": false,
       "highlight": "6 taksit",
       "bank_label": "Maximum"
@@ -22699,7 +22699,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-12-31",
-      "deadline_label": "31.12.2026",
+      "deadline_label": "Son katilim 31.12.2026",
       "deadline_urgent": false,
       "highlight": "6 taksit",
       "bank_label": "Maximum"
@@ -22723,7 +22723,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-05-31",
-      "deadline_label": "31.05.2026",
+      "deadline_label": "Son katilim 31.05.2026",
       "deadline_urgent": false,
       "highlight": "%20 İndirim",
       "bank_label": "Maximum"
@@ -22771,7 +22771,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-06-30",
-      "deadline_label": "30.06.2026",
+      "deadline_label": "Son katilim 30.06.2026",
       "deadline_urgent": false,
       "highlight": "%10 indirim",
       "bank_label": "Maximum"
@@ -22795,7 +22795,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-06-30",
-      "deadline_label": "30.06.2026",
+      "deadline_label": "Son katilim 30.06.2026",
       "deadline_urgent": false,
       "highlight": "%40 indirim",
       "bank_label": "Maximum"
@@ -22819,7 +22819,7 @@
       "favorite": false,
       "brand_code": "IB",
       "deadline": "2026-12-31",
-      "deadline_label": "31.12.2026",
+      "deadline_label": "Son katilim 31.12.2026",
       "deadline_urgent": false,
       "highlight": "%10 İndirim",
       "bank_label": "Maximum"

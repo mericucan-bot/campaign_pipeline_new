@@ -245,7 +245,7 @@ def deadline_label(deadline):
         return "Bugun bitiyor"
     if days <= 7:
         return f"Son {days} gun"
-    return deadline.strftime("%d.%m.%Y")
+    return "Son katilim " + deadline.strftime("%d.%m.%Y")
 
 
 def is_deadline_urgent(deadline):
