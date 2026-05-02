@@ -169,8 +169,10 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .health-panel summary::after { color: var(--primary); content: "+"; float: right; font-size: 18px; line-height: 1; }
 .health-panel[open] summary::after { content: "-"; }
 .health-grid { border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; padding: 14px; }
-.health-item { align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; display: grid; gap: 6px 10px; grid-template-columns: minmax(88px, 1fr) auto auto; padding: 12px; }
-.health-item.has-issue { background: rgba(227,109,90,.08); border-color: rgba(227,109,90,.34); }
+.health-item { align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-left: 4px solid rgba(156,163,175,.7); border-radius: 8px; display: grid; gap: 6px 10px; grid-template-columns: minmax(88px, 1fr) auto auto; padding: 12px; }
+.health-item.health-fresh { border-left-color: #10b981; }
+.health-item.health-warn { border-left-color: #f59e0b; }
+.health-item.health-stale { background: rgba(227,109,90,.08); border-color: rgba(227,109,90,.34); border-left-color: #ef4444; }
 .health-item strong, .health-item span, .health-item small { display: block; }
 .health-item strong { font-size: 13px; }
 .health-item span { color: var(--muted); font-size: 12px; font-weight: 850; }

@@ -365,9 +365,9 @@ function card(item) {
       </div>
 
       <div class="card-footer">
-        <span class="reward-badge ${reward.className}">${escapeHtml(reward.label)}</span>
-        <span class="gain-badge">≈ ${normalized.toLocaleString("tr-TR")}₺ değerinde</span>
-        <span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>
+        ${reward ? `<span class="reward-badge ${reward.className}">${escapeHtml(reward.label)}</span>` : ""}
+        ${normalized > 0 && isSpendRewardCampaign(data) ? `<span class="gain-badge">≈ ${normalized.toLocaleString("tr-TR")}₺ değerinde</span>` : ""}
+        ${deadline.hidden ? "" : `<span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>`}
         ${urgent.badge ? `<span class="urgent-badge ${urgent.badgeClass}">${escapeHtml(urgent.badge)}</span>` : ""}
       </div>
 
@@ -430,13 +430,16 @@ function isDeadlineOnlyText(text) {
 }
 
 function rewardBadge(data) {
+  if (!isSpendRewardCampaign(data)) return null;
   const type = String(data.kazanim_turu || "").toLowerCase();
   const value = rewardValueText(data.kazanim);
+  const amount = parseMoney(value);
+  if (!value || !amount) return null;
   if (type === "tl") return { className: "reward-card-tl", label: `+${value}₺ cashback` };
   if (type === "%") return { className: "reward-card-percent", label: `+${value}% indirim` };
   if (type === "puan") return { className: "reward-card-puan", label: `+${value} puan` };
   if (type === "mil") return { className: "reward-card-mil", label: `+${value} mil` };
-  return { className: "reward-card-default", label: value ? `+${value}` : "Fırsat" };
+  return null;
 }
 
 function rewardValueText(value) {
@@ -709,6 +712,7 @@ function hesapla() {
     .filter((item) => item.aktif ?? item.is_active)
     .map((item) => {
       const data = adaptCampaign(item);
+      if (!isCalculatorEligible(data)) return { ...data, tahminiKazanim: 0 };
       const ilgiliHarcama = harcamalar[calculatorCategory(data)] || 0;
       return { ...data, tahminiKazanim: normalizeKazanim(data, ilgiliHarcama) };
     })
@@ -792,12 +796,34 @@ function hydrateHealth(rows) {
     return;
   }
   els.healthGrid.innerHTML = rows.map((row) => `
-    <div class="health-item ${Number(row.inactive || 0) ? "has-issue" : ""}">
+    <div class="health-item ${healthClass(row)}">
       <strong>${escapeHtml(bankLabel(row.bank || ""))}</strong>
       <span>${row.active || 0} aktif · ${row.inactive || 0} pasif</span>
-      <small>${String(row.last_seen || "Tarih yok").slice(0, 10)}</small>
+      <small>${escapeHtml(formatHealthTime(row.last_seen))}</small>
     </div>
   `).join("");
+}
+
+function healthClass(row) {
+  const age = hoursSince(row.last_seen);
+  if (age === null) return "health-stale";
+  if (age <= 12 && !Number(row.inactive || 0)) return "health-fresh";
+  if (age <= 36) return "health-warn";
+  return "health-stale";
+}
+
+function hoursSince(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return (Date.now() - date.getTime()) / 3600000;
+}
+
+function formatHealthTime(value) {
+  if (!value) return "Tarih yok";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+  return date.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
 function showDetail(data) {
@@ -872,13 +898,8 @@ function bankLabel(bank) {
   return labels[bank] || bank;
 }
 
-function gainScore(item) {
-  const text = `${item.title || ""} ${item.description || ""}`;
-  const numbers = [...text.matchAll(/\b\d{2,5}\b/g)].map((match) => Number(match[0]));
-  return Math.max(0, ...numbers);
-}
-
 function normalizeKazanim(kampanya, aylikHarcama = 2000) {
+  if (!isSpendRewardCampaign(kampanya)) return 0;
   const structured = normalizeStructuredKazanim(kampanya, aylikHarcama);
   if (structured > 0) return structured;
 
@@ -896,7 +917,17 @@ function normalizeKazanim(kampanya, aylikHarcama = 2000) {
   const miles = [...text.matchAll(/(\d{2,6})\s*(?:mil|mile)/gi)].map((match) => Number(match[1]));
   if (miles.length || normalized.includes("mil")) return Math.round(Math.max(0, ...miles) * 0.03);
 
-  return gainScore(kampanya);
+  return 0;
+}
+
+function isCalculatorEligible(item) {
+  return isSpendRewardCampaign(item) && normalizeKazanim(item, 2000) > 0;
+}
+
+function isSpendRewardCampaign(item) {
+  const text = normalize(`${item.kazanim || ""} ${item.highlight || ""} ${item.title || ""} ${item.baslik || ""} ${item.description || ""} ${item.aciklama || ""} ${item.reward_type || ""}`);
+  if (/(faiz|mevduat|nakit avans|fatura ode|hesap ac|vadeli|vade|fon|yatirim|sigorta)/.test(text)) return false;
+  return /(tl|₺|indirim|iade|cashback|puan|bonus|chip|worldpuan|bankkart lira|mil|oran|%)/.test(text);
 }
 
 function normalizeStructuredKazanim(kampanya, aylikHarcama = 2000) {
@@ -937,10 +968,10 @@ function deadlineInfo(item) {
   if (!item.aktif && item.aktif !== undefined) return { label: "Süresi doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
   if (item.is_active === false) return { label: "Süresi doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
   const deadlineValue = item.bitis_tarihi || item.deadline;
-  if (!deadlineValue) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
+  if (!deadlineValue) return { label: "", badgeClass: "deadline-neutral", cardClass: "", hidden: true };
 
   const end = parseDeadline(deadlineValue);
-  if (!end) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
+  if (!end) return { label: "", badgeClass: "deadline-neutral", cardClass: "", hidden: true };
   const days = Math.ceil((end - new Date()) / 86400000);
   if (days <= 0) return { label: "Süresi doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
   if (days <= 3) return { label: `🔴 ${days} gün`, badgeClass: "deadline-danger pulse", cardClass: "deadline-danger-card" };
