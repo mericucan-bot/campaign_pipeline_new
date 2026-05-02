@@ -117,7 +117,7 @@
           </label>
 
           <label class="toggle {% if my_cards_only %}field-active{% endif %}" title="Benim kartlarimdaki kampanyalar">
-            <input type="checkbox" name="my_cards" value="1" {% if my_cards_only %}checked{% endif %}>
+            <input id="myCardsOnly" type="checkbox" value="1" {% if my_cards_only %}checked{% endif %}>
             <span>Benim Kartlar&#305;m</span>
           </label>
         </div>
@@ -131,6 +131,18 @@
         {% endfor %}
       </div>
     </section>
+
+    <details class="my-cards-panel">
+      <summary>Kartlar&#305;m&#305; Se&#231;</summary>
+      <div class="my-cards-grid">
+        {% for bank in stats.banks %}
+          <label class="card-pick">
+            <input type="checkbox" value="{{ bank }}" data-card-pick>
+            <span>{{ bank_label(bank) }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </details>
 
     <details class="health-panel">
       <summary>Banka tarama sa&#287;l&#305;&#287;&#305;</summary>
@@ -176,7 +188,7 @@
       </div>
 
       {% for campaign in campaigns %}
-        <article class="campaign-card">
+        <article class="campaign-card" data-bank="{{ campaign.bank }}">
           <a class="media" href="{{ campaign.url or '#' }}" target="_blank" rel="noreferrer">
             {% if campaign.image_url %}
               <img src="{{ campaign.image_url }}" alt="" loading="lazy">
@@ -285,6 +297,47 @@
       backToTop.addEventListener("click", () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
+    }
+
+    const defaultMyCards = ["Akbank Axess", "Is Bankasi Maximum", "Paraf", "Paraf Premium", "VakifBank", "Yapi Kredi World"];
+    const cardPickInputs = Array.from(document.querySelectorAll("[data-card-pick]"));
+    const myCardsOnlyInput = document.querySelector("#myCardsOnly");
+
+    function getMyCards() {
+      try {
+        return JSON.parse(localStorage.getItem("myCards") || "null") || defaultMyCards;
+      } catch {
+        return defaultMyCards;
+      }
+    }
+
+    function saveMyCards(values) {
+      localStorage.setItem("myCards", JSON.stringify(values));
+    }
+
+    function applyMyCardsFilter() {
+      const selected = new Set(getMyCards());
+      const enabled = Boolean(myCardsOnlyInput && myCardsOnlyInput.checked);
+      document.querySelectorAll(".campaign-card[data-bank]").forEach((card) => {
+        card.hidden = enabled && !selected.has(card.dataset.bank);
+      });
+    }
+
+    if (cardPickInputs.length) {
+      const selected = new Set(getMyCards());
+      cardPickInputs.forEach((input) => {
+        input.checked = selected.has(input.value);
+        input.addEventListener("change", () => {
+          const values = cardPickInputs.filter((item) => item.checked).map((item) => item.value);
+          saveMyCards(values);
+          applyMyCardsFilter();
+        });
+      });
+    }
+
+    if (myCardsOnlyInput) {
+      myCardsOnlyInput.addEventListener("change", applyMyCardsFilter);
+      applyMyCardsFilter();
     }
 
     const modal = document.querySelector(".detail-modal");

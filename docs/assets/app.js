@@ -4,6 +4,14 @@ const state = {
   selectedBank: "",
   favorites: new Set(JSON.parse(localStorage.getItem("campaignFavorites") || "[]")),
   manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]"),
+  myCards: new Set(JSON.parse(localStorage.getItem("myCards") || "null") || [
+    "Akbank Axess",
+    "Is Bankasi Maximum",
+    "Paraf",
+    "Paraf Premium",
+    "VakifBank",
+    "Yapi Kredi World",
+  ]),
 };
 
 const labels = {
@@ -44,6 +52,7 @@ const els = {
   favoritesOnly: document.querySelector("#favoritesOnly"),
   myCardsOnly: document.querySelector("#myCardsOnly"),
   bankRail: document.querySelector("#bankRail"),
+  myCardsGrid: document.querySelector("#myCardsGrid"),
   healthGrid: document.querySelector("#healthGrid"),
   statSubline: document.querySelector("#statSubline"),
   activeCount: document.querySelector("#activeCount"),
@@ -67,6 +76,7 @@ fetch("./data/campaigns.json", { cache: "no-store" })
     hydrateStats(payload);
     hydrateHealth(payload.health || []);
     hydrateFilters();
+    hydrateMyCards();
     bindEvents();
     applyFilters();
   })
@@ -131,7 +141,7 @@ function applyFilters() {
       && (!reward || item.reward_type === reward)
       && (!activeOnly || item.is_active)
       && (!favoritesOnly || state.favorites.has(String(item.id)))
-      && (!myCardsOnly || myCards.has(item.bank))
+      && (!myCardsOnly || state.myCards.has(item.bank))
       && (!query || haystack.includes(query));
   });
 
@@ -143,6 +153,24 @@ function applyFilters() {
   const inactive = state.campaigns.filter((item) => !item.is_active).length;
   els.statSubline.textContent = `${rows.length} sonuc · ${total} kayit · ${inactive} pasif`;
   els.favoriteCount.textContent = state.favorites.size;
+}
+
+function hydrateMyCards() {
+  if (!els.myCardsGrid) return;
+  const banks = unique(state.campaigns.map((item) => item.bank));
+  els.myCardsGrid.innerHTML = banks.map((bank) => `
+    <label class="card-pick">
+      <input type="checkbox" value="${escapeAttr(bank)}" ${state.myCards.has(bank) ? "checked" : ""}>
+      <span>${escapeHtml(bankLabel(bank))}</span>
+    </label>
+  `).join("");
+  els.myCardsGrid.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("change", () => {
+      state.myCards = new Set([...els.myCardsGrid.querySelectorAll("input:checked")].map((item) => item.value));
+      localStorage.setItem("myCards", JSON.stringify([...state.myCards]));
+      applyFilters();
+    });
+  });
 }
 
 function sortRows(rows, sort) {

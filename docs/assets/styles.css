@@ -81,11 +81,15 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .bank-chip:hover { background: var(--panel-2); border-color: rgba(32,181,159,.42); color: #e7f5f2; transform: translateY(-1px); }
 .bank-chip.selected { background: rgba(32,181,159,.12); border-color: rgba(32,181,159,.48); color: #f4f7f8; }
 .bank-chip.selected::after { background: var(--primary); border-radius: 999px; bottom: -1px; content: ""; height: 2px; left: 12px; position: absolute; right: 12px; }
-.manual-entry { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 16px; padding: 0; }
-.manual-entry summary { color: #dce7eb; cursor: pointer; font-size: 13px; font-weight: 950; list-style: none; padding: 14px 16px; }
-.manual-entry summary::-webkit-details-marker { display: none; }
-.manual-entry summary::after { color: var(--primary); content: "+"; float: right; font-size: 18px; line-height: 1; }
-.manual-entry[open] summary::after { content: "-"; }
+.manual-entry, .my-cards-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 16px; padding: 0; }
+.manual-entry summary, .my-cards-panel summary { color: #dce7eb; cursor: pointer; font-size: 13px; font-weight: 950; list-style: none; padding: 14px 16px; }
+.manual-entry summary::-webkit-details-marker, .my-cards-panel summary::-webkit-details-marker { display: none; }
+.manual-entry summary::after, .my-cards-panel summary::after { color: var(--primary); content: "+"; float: right; font-size: 18px; line-height: 1; }
+.manual-entry[open] summary::after, .my-cards-panel[open] summary::after { content: "-"; }
+.my-cards-grid { border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; padding: 14px; }
+.card-pick { align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; display: inline-flex; gap: 8px; min-height: 38px; padding: 0 11px; }
+.card-pick input { accent-color: var(--primary); height: 16px; width: 16px; }
+.card-pick span { color: #dce7eb; font-size: 13px; font-weight: 900; margin: 0; }
 .health-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 16px; }
 .health-panel summary { color: #dce7eb; cursor: pointer; font-size: 13px; font-weight: 950; list-style: none; padding: 14px 16px; }
 .health-panel summary::-webkit-details-marker { display: none; }

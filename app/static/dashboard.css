@@ -370,7 +370,8 @@ input:focus {
   right: 12px;
 }
 
-.manual-entry {
+.manual-entry,
+.my-cards-panel {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -378,7 +379,8 @@ input:focus {
   padding: 0;
 }
 
-.manual-entry summary {
+.manual-entry summary,
+.my-cards-panel summary {
   color: #dce7eb;
   cursor: pointer;
   font-size: 13px;
@@ -387,11 +389,13 @@ input:focus {
   padding: 14px 16px;
 }
 
-.manual-entry summary::-webkit-details-marker {
+.manual-entry summary::-webkit-details-marker,
+.my-cards-panel summary::-webkit-details-marker {
   display: none;
 }
 
-.manual-entry summary::after {
+.manual-entry summary::after,
+.my-cards-panel summary::after {
   color: var(--primary);
   content: "+";
   float: right;
@@ -399,8 +403,41 @@ input:focus {
   line-height: 1;
 }
 
-.manual-entry[open] summary::after {
+.manual-entry[open] summary::after,
+.my-cards-panel[open] summary::after {
   content: "-";
+}
+
+.my-cards-grid {
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px;
+}
+
+.card-pick {
+  align-items: center;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: inline-flex;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 11px;
+}
+
+.card-pick input {
+  accent-color: var(--primary);
+  height: 16px;
+  width: 16px;
+}
+
+.card-pick span {
+  color: #dce7eb;
+  font-size: 13px;
+  font-weight: 900;
+  margin: 0;
 }
 
 .health-panel {
@@ -971,6 +1008,7 @@ p {
   .stats-panel {
     max-width: none;
   }
+}
 
 @media (max-width: 640px) {
   .hero {
