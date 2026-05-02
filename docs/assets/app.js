@@ -4,7 +4,7 @@ const state = {
   selectedBank: "",
   favorites: loadFavoriteSet(),
   manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]"),
-  monthlySpend: Number(localStorage.getItem("monthlySpend") || 3000),
+  monthlySpend: Number(localStorage.getItem("kr-aylik-harcama") || localStorage.getItem("monthlySpend") || 2000),
   myCards: new Set(JSON.parse(localStorage.getItem("myCards") || "null") || [
     "Akbank Axess",
     "Is Bankasi Maximum",
@@ -66,7 +66,7 @@ const els = {
   manualUrl: document.querySelector("#manualUrl"),
   manualImage: document.querySelector("#manualImage"),
   monthlySpend: document.querySelector("#monthlySpend"),
-  monthlySpendValue: document.querySelector("#monthlySpendValue"),
+  monthlySpendValue: document.querySelector("#harcama-val") || document.querySelector("#monthlySpendValue"),
   backToTop: document.querySelector(".back-to-top"),
   modal: document.querySelector(".detail-modal"),
   modalClose: document.querySelector(".modal-close"),
@@ -134,10 +134,7 @@ function bindEvents() {
     els.monthlySpend.value = state.monthlySpend;
     updateMonthlySpendLabel();
     els.monthlySpend.addEventListener("input", () => {
-      state.monthlySpend = Number(els.monthlySpend.value || 3000);
-      localStorage.setItem("monthlySpend", String(state.monthlySpend));
-      updateMonthlySpendLabel();
-      applyFilters();
+      updateHarcama(els.monthlySpend.value);
     });
   }
   if (els.manualForm) {
@@ -228,7 +225,9 @@ function sortRows(rows, sort) {
     return clone.sort((a, b) => (a.deadline || "9999-12-31").localeCompare(b.deadline || "9999-12-31"));
   }
   if (sort === "gain") {
-    return clone.sort((a, b) => normalizeKazanim(b, state.monthlySpend) - normalizeKazanim(a, state.monthlySpend));
+    return clone
+      .map((item) => ({ ...item, normalized: normalizeKazanim(item, state.monthlySpend) }))
+      .sort((a, b) => b.normalized - a.normalized);
   }
   if (sort === "bank") {
     return clone.sort((a, b) => `${a.bank}${a.title}`.localeCompare(`${b.bank}${b.title}`));
@@ -283,6 +282,7 @@ function card(item) {
   const favorite = state.favorites.has(String(data.id));
   const reward = rewardBadge(data);
   const deadline = deadlineInfo(data);
+  const normalized = Math.round(normalizeKazanim(data, state.monthlySpend));
   const logoStyle = `--logo-bg:${bankColor(data.banka)}`;
   const logo = data.gorsel_url
     ? `<img src="${escapeAttr(data.gorsel_url)}" alt="" loading="lazy">`
@@ -305,6 +305,7 @@ function card(item) {
 
       <div class="card-footer">
         <span class="reward-badge ${reward.className}">${escapeHtml(reward.label)}</span>
+        <span class="gain-badge">≈ ${normalized.toLocaleString("tr-TR")}₺ değerinde</span>
         <span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>
       </div>
 
@@ -325,6 +326,8 @@ function adaptCampaign(item) {
     kategori: item.kategori || item.category || "Genel",
     kazanim: item.kazanim || item.highlight || normalizeKazanim(item, state.monthlySpend),
     kazanim_turu: item.kazanim_turu || rewardLabelFor(item),
+    min_harcama: parseMoney(item.min_harcama || item.min_spend || 0),
+    max_kazanim: parseMoney(item.max_kazanim || item.max_reward || 0),
     bitis_tarihi: item.bitis_tarihi || item.deadline || null,
     kaynak_url: item.kaynak_url || item.url || "",
     gorsel_url: item.gorsel_url || item.image_url || "",
@@ -465,8 +468,11 @@ function gainScore(item) {
   return Math.max(0, ...numbers);
 }
 
-function normalizeKazanim(kampanya, aylikHarcama) {
-  const text = `${kampanya.highlight || ""} ${kampanya.title || ""} ${kampanya.description || ""}`;
+function normalizeKazanim(kampanya, aylikHarcama = 2000) {
+  const structured = normalizeStructuredKazanim(kampanya, aylikHarcama);
+  if (structured > 0) return structured;
+
+  const text = `${kampanya.kazanim || ""} ${kampanya.highlight || ""} ${kampanya.title || ""} ${kampanya.baslik || ""} ${kampanya.description || ""} ${kampanya.aciklama || ""}`;
   const normalized = normalize(text);
   const tl = [...text.matchAll(/(\d{2,6}(?:[.,]\d{1,2})?)\s*(?:tl|₺)/gi)].map((match) => parseMoney(match[1]));
   if (tl.length) return Math.max(...tl);
@@ -481,6 +487,21 @@ function normalizeKazanim(kampanya, aylikHarcama) {
   if (miles.length || normalized.includes("mil")) return Math.round(Math.max(0, ...miles) * 0.03);
 
   return gainScore(kampanya);
+}
+
+function normalizeStructuredKazanim(kampanya, aylikHarcama = 2000) {
+  const kazanim = parseMoney(kampanya.kazanim);
+  const kazanimTuru = String(kampanya.kazanim_turu || "").trim().toLocaleLowerCase("tr-TR");
+  const minHarcama = parseMoney(kampanya.min_harcama || 0);
+  const maxKazanim = parseMoney(kampanya.max_kazanim || 0) || Infinity;
+  const harcama = Math.max(Number(aylikHarcama) || 2000, minHarcama || 0);
+
+  if (!kazanim || !kazanimTuru) return 0;
+  if (kazanimTuru === "tl") return Math.min(kazanim, maxKazanim);
+  if (kazanimTuru === "%") return Math.min((harcama * kazanim) / 100, maxKazanim);
+  if (kazanimTuru === "puan") return kazanim * 0.01;
+  if (kazanimTuru === "mil") return kazanim * 0.03;
+  return 0;
 }
 
 function rewardKindFor(item) {
@@ -520,7 +541,8 @@ function deadlineInfo(item) {
 }
 
 function parseMoney(value) {
-  return Number(String(value || "0").replace(/\./g, "").replace(",", ".")) || 0;
+  const match = String(value || "0").match(/\d+(?:[.,]\d+)?/);
+  return Number(String(match ? match[0] : "0").replace(/\./g, "").replace(",", ".")) || 0;
 }
 
 function formatCurrency(value) {
@@ -540,6 +562,18 @@ function bankColor(seed) {
 
 function updateMonthlySpendLabel() {
   if (els.monthlySpendValue) els.monthlySpendValue.textContent = formatCurrency(state.monthlySpend);
+}
+
+function updateHarcama(val) {
+  state.monthlySpend = Number(val || 2000);
+  updateMonthlySpendLabel();
+  localStorage.setItem("kr-aylik-harcama", String(state.monthlySpend));
+  localStorage.setItem("monthlySpend", String(state.monthlySpend));
+  rerenderCards();
+}
+
+function rerenderCards() {
+  applyFilters();
 }
 
 function showLoadingState() {

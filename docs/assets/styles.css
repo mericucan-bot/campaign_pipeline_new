@@ -133,6 +133,7 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .spend-control label span { margin: 0; }
 .spend-control strong { color: var(--primary); font-size: 18px; }
 .spend-control input { accent-color: var(--primary); padding: 0; }
+.conversion-note { border-left: 3px solid #e5e7eb; color: var(--muted); font-size: 11px; line-height: 1.45; padding-left: 8px; }
 .health-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 16px; }
 .health-panel summary { color: #dce7eb; cursor: pointer; font-size: 13px; font-weight: 950; list-style: none; padding: 14px 16px; }
 .health-panel summary::-webkit-details-marker { display: none; }
@@ -194,7 +195,7 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .card-body { display: grid; gap: 4px; }
 .card-title { font-size: 14px; font-weight: 600; line-height: 1.35; margin: 0 0 4px; }
 .card-description { color: var(--muted); display: -webkit-box; font-size: 12px; line-height: 1.45; margin: 0; overflow: hidden; text-overflow: ellipsis; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.card-footer { align-items: center; display: flex; gap: 8px; justify-content: space-between; }
+.card-footer { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
 .card-source { display: grid; gap: 10px; padding-top: 2px; }
 .card-source span { color: var(--faint); font-size: 10px; font-weight: 500; }
 .source-disclaimer { border-top: 1px solid #f3f4f6; color: #9ca3af; display: block; font-size: 10px; margin-top: 6px; padding-top: 6px; }
