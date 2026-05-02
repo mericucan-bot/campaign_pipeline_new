@@ -2,7 +2,7 @@ const state = {
   campaigns: [],
   filtered: [],
   selectedBank: "",
-  favorites: new Set(JSON.parse(localStorage.getItem("campaignFavorites") || "[]")),
+  favorites: loadFavoriteSet(),
   manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]"),
   monthlySpend: Number(localStorage.getItem("monthlySpend") || 3000),
   myCards: new Set(JSON.parse(localStorage.getItem("myCards") || "null") || [
@@ -247,10 +247,15 @@ function renderCampaigns() {
       const id = button.dataset.id;
       if (state.favorites.has(id)) state.favorites.delete(id);
       else state.favorites.add(id);
-      localStorage.setItem("campaignFavorites", JSON.stringify([...state.favorites]));
+      persistFavorites();
       button.classList.add("is-bumping");
       setTimeout(() => button.classList.remove("is-bumping"), 260);
       applyFilters();
+    });
+  });
+  els.campaigns.querySelectorAll(".source-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (button.dataset.url) window.open(button.dataset.url, "_blank", "noopener");
     });
   });
   els.campaigns.querySelectorAll(".detail-button").forEach((button) => {
@@ -259,53 +264,97 @@ function renderCampaigns() {
 }
 
 function card(item) {
-  const favorite = state.favorites.has(String(item.id));
-  const gain = normalizeKazanim(item, state.monthlySpend);
-  const rewardKind = rewardKindFor(item);
-  const deadline = deadlineInfo(item);
-  const logoStyle = `--logo-bg:${bankColor(item.bank || item.brand_code || "KR")}`;
-  const logo = item.image_url
-    ? `<img src="${escapeAttr(item.image_url)}" alt="" loading="lazy">`
-    : `<span class="media-monogram" style="${logoStyle}">${escapeHtml(bankCode(item))}</span>`;
+  const data = adaptCampaign(item);
+  const favorite = state.favorites.has(String(data.id));
+  const reward = rewardBadge(data);
+  const deadline = deadlineInfo(data);
+  const logoStyle = `--logo-bg:${bankColor(data.banka)}`;
+  const logo = data.gorsel_url
+    ? `<img src="${escapeAttr(data.gorsel_url)}" alt="" loading="lazy">`
+    : `<span style="${logoStyle}">${escapeHtml(bankInitials(data.banka))}</span>`;
   return `
-    <article class="campaign-card ${deadline.cardClass}" data-id="${escapeAttr(item.id)}">
-      <a class="media" href="${escapeAttr(item.url || "#")}" target="_blank" rel="noreferrer">
-        ${logo}
-      </a>
-      <div class="campaign-body">
-        <div class="campaign-topline">
-          <span class="brand-badge" style="${logoStyle}">${escapeHtml(bankCode(item))}</span>
-          <div class="campaign-meta">
-            <span class="bank-name">${escapeHtml(item.bank || "")}</span>
-            <span class="status ${item.is_active ? "active" : "inactive"}">${item.is_active ? "Aktif" : "Pasif"}</span>
-          </div>
-          <button class="favorite-button ${favorite ? "selected" : ""}" data-id="${item.id}" title="Favorilere ekle">&#9733;</button>
+    <article class="campaign-card radar-card ${deadline.cardClass}" data-id="${escapeAttr(data.id)}">
+      <div class="card-header">
+        <div class="bank-logo" style="${logoStyle}">${logo}</div>
+        <div class="card-bank-meta">
+          <strong>${escapeHtml(data.banka)}</strong>
+          <span class="category-badge">${escapeHtml(data.kategori)}</span>
         </div>
-        <div class="badges">
-          <span class="category-badge category-${slug(item.category)}">${escapeHtml(item.category || "Genel")}</span>
-          <span class="reward-badge reward-${rewardKind}">${escapeHtml(rewardLabelFor(item))}</span>
-          <span class="gain-badge">≈ ${formatCurrency(gain)}</span>
-          <span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>
-          ${item.deadline_urgent ? `<span class="urgent-badge">Bitiyor</span>` : ""}
-        </div>
-        <h2>${escapeHtml(item.title || "")}</h2>
-        ${item.highlight ? `<strong class="campaign-highlight">${escapeHtml(item.highlight)}</strong>` : ""}
-        ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
-        <div class="campaign-footer">
-          <span>Kaynak: ${escapeHtml(bankLabel(item.bank || ""))} · ${String(item.last_seen || item.first_seen || "").slice(0, 10) || "Tarih yok"}</span>
-          <button class="detail-button" type="button"
-            data-title="${escapeAttr(item.title || "")}"
-            data-bank="${escapeAttr(item.bank || "")}"
-            data-category="${escapeAttr(item.category || "Genel")}"
-            data-reward="${escapeAttr(item.reward_type || "Fırsat")}"
-            data-date="${escapeAttr(item.deadline_label || "Tarih kaynakta")}"
-            data-description="${escapeAttr(item.description || "")}"
-            data-url="${escapeAttr(item.url || "")}">Detay</button>
-          ${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noreferrer">Kaynak <span class="external-icon" aria-hidden="true">↗</span></a>` : ""}
-        </div>
+        <button class="favorite-button ${favorite ? "selected" : ""}" data-id="${escapeAttr(data.id)}" title="Favorilere ekle" aria-label="Favorilere ekle">${favorite ? "★" : "☆"}</button>
+      </div>
+
+      <div class="card-body">
+        <h2 class="card-title">${escapeHtml(data.baslik)}</h2>
+        ${data.aciklama ? `<p class="card-description">${escapeHtml(data.aciklama)}</p>` : ""}
+      </div>
+
+      <div class="card-footer">
+        <span class="reward-badge ${reward.className}">${escapeHtml(reward.label)}</span>
+        <span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>
+      </div>
+
+      <div class="card-source">
+        <span>Kaynak: ${escapeHtml(data.banka)} · ${escapeHtml(data.sourceDate)}</span>
+        <button class="source-button" type="button" data-url="${escapeAttr(data.kaynak_url)}">Kaynağa git <span aria-hidden="true">↗</span></button>
       </div>
     </article>
   `;
+}
+
+function adaptCampaign(item) {
+  return {
+    id: item.id,
+    baslik: item.baslik || item.title || "",
+    aciklama: item.aciklama || item.description || "",
+    banka: item.banka || item.bank || "Kampanya",
+    kategori: item.kategori || item.category || "Genel",
+    kazanim: item.kazanim || item.highlight || normalizeKazanim(item, state.monthlySpend),
+    kazanim_turu: item.kazanim_turu || rewardLabelFor(item),
+    bitis_tarihi: item.bitis_tarihi || item.deadline || null,
+    kaynak_url: item.kaynak_url || item.url || "",
+    gorsel_url: item.gorsel_url || item.image_url || "",
+    aktif: item.aktif ?? item.is_active ?? true,
+    sourceDate: String(item.last_seen || item.first_seen || "").slice(0, 10) || "Tarih yok",
+  };
+}
+
+function rewardBadge(data) {
+  const type = String(data.kazanim_turu || "").toLowerCase();
+  const value = rewardValueText(data.kazanim);
+  if (type === "tl") return { className: "reward-card-tl", label: `+${value}₺ cashback` };
+  if (type === "%") return { className: "reward-card-percent", label: `+${value}% indirim` };
+  if (type === "puan") return { className: "reward-card-puan", label: `+${value} puan` };
+  if (type === "mil") return { className: "reward-card-mil", label: `+${value} mil` };
+  return { className: "reward-card-default", label: value ? `+${value}` : "Fırsat" };
+}
+
+function rewardValueText(value) {
+  const match = String(value || "").match(/\d+(?:[.,]\d+)?/);
+  return match ? match[0] : String(value || "").trim();
+}
+
+function bankInitials(name) {
+  return String(name || "KR").trim().slice(0, 2).toLocaleUpperCase("tr-TR");
+}
+
+function loadFavoriteSet() {
+  try {
+    const objectFavorites = JSON.parse(localStorage.getItem("favorites") || "{}");
+    const ids = Object.entries(objectFavorites).filter(([, enabled]) => enabled).map(([id]) => id);
+    if (ids.length) return new Set(ids);
+  } catch (err) {
+    console.error(err);
+  }
+  return new Set(JSON.parse(localStorage.getItem("campaignFavorites") || "[]"));
+}
+
+function persistFavorites() {
+  const objectFavorites = {};
+  state.favorites.forEach((id) => {
+    objectFavorites[id] = true;
+  });
+  localStorage.setItem("favorites", JSON.stringify(objectFavorites));
+  localStorage.setItem("campaignFavorites", JSON.stringify([...state.favorites]));
 }
 
 function hydrateHealth(rows) {
@@ -372,7 +421,7 @@ function addManualCampaign(event) {
   state.campaigns.unshift(item);
   state.favorites.add(String(id));
   localStorage.setItem("manualCampaigns", JSON.stringify(state.manualCampaigns));
-  localStorage.setItem("campaignFavorites", JSON.stringify([...state.favorites]));
+  persistFavorites();
   els.manualForm.reset();
   els.favoritesOnly.checked = true;
   hydrateFilters();
@@ -450,19 +499,20 @@ function rewardLabelFor(item) {
 }
 
 function deadlineInfo(item) {
-  if (!item.is_active) return { label: "Doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
-  if (!item.deadline) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
+  if (!item.aktif && item.aktif !== undefined) return { label: "Süresi doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
+  if (item.is_active === false) return { label: "Süresi doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
+  const deadlineValue = item.bitis_tarihi || item.deadline;
+  if (!deadlineValue) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const end = new Date(`${item.deadline}T00:00:00`);
+  const end = new Date(`${deadlineValue}T00:00:00`);
   if (Number.isNaN(end.getTime())) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
   const days = Math.ceil((end - today) / 86400000);
-  if (days < 0) return { label: "Doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
-  if (days === 0) return { label: "Bugün bitiyor", badgeClass: "deadline-danger pulse", cardClass: "deadline-danger-card" };
-  if (days <= 3) return { label: `${days} gün kaldı`, badgeClass: "deadline-danger pulse", cardClass: "deadline-danger-card" };
-  if (days <= 14) return { label: `${days} gün kaldı`, badgeClass: "deadline-warning", cardClass: "deadline-warning-card" };
-  return { label: `${days} gün kaldı`, badgeClass: "deadline-neutral", cardClass: "" };
+  if (days <= 0) return { label: "Süresi doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
+  if (days <= 3) return { label: `🔴 ${days} gün`, badgeClass: "deadline-danger pulse", cardClass: "deadline-danger-card" };
+  if (days <= 14) return { label: `⚠ ${days} gün`, badgeClass: "deadline-warning", cardClass: "deadline-warning-card" };
+  return { label: `${days} gün`, badgeClass: "deadline-neutral", cardClass: "" };
 }
 
 function parseMoney(value) {
@@ -478,7 +528,7 @@ function bankCode(item) {
 }
 
 function bankColor(seed) {
-  const palette = ["#1a56db", "#10b981", "#7c3aed", "#f59e0b", "#0891b2", "#dc2626", "#4338ca", "#0f766e"];
+  const palette = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
   let hash = 0;
   for (const char of String(seed || "KR")) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   return palette[hash % palette.length];
