@@ -3,6 +3,7 @@ const state = {
   filtered: [],
   selectedBank: "",
   favorites: loadFavoriteSet(),
+  used: loadUsed(),
   manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]"),
   monthlySpend: Number(localStorage.getItem("kr-aylik-harcama") || localStorage.getItem("monthlySpend") || 2000),
   myCards: new Set(JSON.parse(localStorage.getItem("myCards") || "null") || [
@@ -52,6 +53,7 @@ const els = {
   activeOnly: document.querySelector("#activeOnly"),
   favoritesOnly: document.querySelector("#favoritesOnly"),
   myCardsOnly: document.querySelector("#myCardsOnly"),
+  usedOnly: document.querySelector("#usedOnly"),
   bankRail: document.querySelector("#bankRail"),
   myCardsGrid: document.querySelector("#myCardsGrid"),
   healthGrid: document.querySelector("#healthGrid"),
@@ -76,6 +78,10 @@ const els = {
   calculatorToggle: document.querySelector("#calculatorToggle"),
   calculatorPanel: document.querySelector("#calculatorPanel"),
   calculatorResult: document.querySelector("#kalk-sonuc"),
+  usedHistory: document.querySelector("#usedHistory"),
+  usedSummary: document.querySelector("#usedSummary"),
+  exportUsed: document.querySelector("#exportUsed"),
+  clearUsed: document.querySelector("#clearUsed"),
 };
 
 function closeBanner() {
@@ -99,6 +105,7 @@ fetch("./data/campaigns.json", { cache: "no-store" })
     hydrateHealth(payload.health || []);
     hydrateFilters();
     hydrateMyCards();
+    renderUsedHistory();
     initPreferredFlow();
     bindEvents();
     requestNotificationPermission();
@@ -133,7 +140,7 @@ function hydrateFilters() {
 }
 
 function bindEvents() {
-  [els.bankFilter, els.categoryFilter, els.rewardFilter, els.sortFilter, els.searchInput, els.activeOnly, els.favoritesOnly, els.myCardsOnly].forEach((el) => {
+  [els.bankFilter, els.categoryFilter, els.rewardFilter, els.sortFilter, els.searchInput, els.activeOnly, els.favoritesOnly, els.myCardsOnly, els.usedOnly].forEach((el) => {
     el.addEventListener("input", applyFilters);
     el.addEventListener("change", applyFilters);
   });
@@ -179,6 +186,8 @@ function bindEvents() {
       if (willOpen) hesapla();
     });
   }
+  if (els.exportUsed) els.exportUsed.addEventListener("click", exportData);
+  if (els.clearUsed) els.clearUsed.addEventListener("click", clearUsedHistory);
 }
 
 function initPreferredFlow() {
@@ -195,6 +204,7 @@ function applyFilters() {
   const activeOnly = els.activeOnly.checked;
   const favoritesOnly = els.favoritesOnly.checked;
   const myCardsOnly = els.myCardsOnly.checked;
+  const usedOnly = els.usedOnly.checked;
 
   let rows = state.campaigns.filter((item) => {
     const haystack = normalize(`${item.title || ""} ${item.description || ""} ${item.bank || ""}`);
@@ -204,6 +214,7 @@ function applyFilters() {
       && (!activeOnly || item.is_active)
       && (!favoritesOnly || state.favorites.has(String(item.id)))
       && (!myCardsOnly || state.myCards.has(item.bank))
+      && (!usedOnly || Boolean(state.used[String(item.id)]))
       && (!query || haystack.includes(query));
   });
 
@@ -296,6 +307,9 @@ function renderCampaigns() {
       if (button.dataset.url) window.open(button.dataset.url, "_blank", "noopener");
     });
   });
+  els.campaigns.querySelectorAll(".used-button").forEach((button) => {
+    button.addEventListener("click", () => markUsed(button.dataset.id));
+  });
   els.campaigns.querySelectorAll(".detail-button").forEach((button) => {
     button.addEventListener("click", () => showDetail(button.dataset));
   });
@@ -304,6 +318,7 @@ function renderCampaigns() {
 function card(item) {
   const data = adaptCampaign(item);
   const favorite = state.favorites.has(String(data.id));
+  const usedData = state.used[String(data.id)];
   const reward = rewardBadge(data);
   const deadline = deadlineInfo(data);
   const urgent = urgencyInfo(data);
@@ -313,7 +328,7 @@ function card(item) {
     ? `<img src="${escapeAttr(data.gorsel_url)}" alt="" loading="lazy">`
     : `<span style="${logoStyle}">${escapeHtml(bankInitials(data.banka))}</span>`;
   return `
-    <article id="card-${escapeAttr(data.id)}" class="campaign-card radar-card ${deadline.cardClass} ${urgent.cardClass}" data-id="${escapeAttr(data.id)}">
+    <article id="card-${escapeAttr(data.id)}" class="campaign-card radar-card ${deadline.cardClass} ${urgent.cardClass} ${usedData ? "used-card" : ""}" data-id="${escapeAttr(data.id)}">
       <div class="card-header">
         <div class="bank-logo" style="${logoStyle}">${logo}</div>
         <div class="card-bank-meta">
@@ -340,6 +355,7 @@ function card(item) {
 
       <div class="card-source">
         <button class="source-button" type="button" data-url="${escapeAttr(data.kaynak_url)}">Kaynağa git <span aria-hidden="true">↗</span></button>
+        <button id="used-${escapeAttr(data.id)}" class="used-button ${usedData ? "is-used" : ""}" type="button" data-id="${escapeAttr(data.id)}" ${usedData ? "disabled" : ""}>${usedData ? `✓ Kullanıldı (${escapeHtml(usedData.tarih)})` : "✓ Kullandım"}</button>
         <span class="source-disclaimer">Kaynak: ${escapeHtml(data.banka)} resmi sitesi • ${escapeHtml(data.sourceDate)}</span>
       </div>
     </article>
@@ -395,13 +411,93 @@ function loadFavoriteSet() {
   return new Set(JSON.parse(localStorage.getItem("campaignFavorites") || "[]"));
 }
 
+function loadUsed() {
+  try {
+    return JSON.parse(localStorage.getItem("kr-used") || "{}") || {};
+  } catch (err) {
+    console.error(err);
+    return {};
+  }
+}
+
 function persistFavorites() {
   const objectFavorites = {};
   state.favorites.forEach((id) => {
     objectFavorites[id] = true;
   });
   localStorage.setItem("favorites", JSON.stringify(objectFavorites));
+  localStorage.setItem("kr-favorites", JSON.stringify(objectFavorites));
   localStorage.setItem("campaignFavorites", JSON.stringify([...state.favorites]));
+}
+
+function persistUsed() {
+  localStorage.setItem("kr-used", JSON.stringify(state.used));
+}
+
+function markUsed(id) {
+  if (state.used[id]) return;
+  const kazanilan = prompt("Ne kadar kazandın? (₺ olarak, boş bırakabilirsin)");
+  const note = prompt("Kısa not (boş bırakabilirsin):");
+  state.used[id] = {
+    tarih: new Date().toLocaleDateString("tr-TR"),
+    kazanilan: kazanilan ? parseMoney(kazanilan) : null,
+    not: note || "",
+  };
+  persistUsed();
+  updateUsedButton(id, state.used[id]);
+  renderUsedHistory();
+}
+
+function updateUsedButton(id, data) {
+  const btn = document.getElementById(`used-${id}`);
+  if (!btn) return;
+  btn.textContent = `✓ Kullanıldı (${data.tarih})`;
+  btn.classList.add("is-used");
+  btn.disabled = true;
+  const card = document.getElementById(`card-${id}`);
+  if (card) card.classList.add("used-card");
+}
+
+function renderUsedHistory() {
+  if (!els.usedHistory || !els.usedSummary) return;
+  const usedList = Object.entries(state.used);
+  const toplamKazanilan = usedList.reduce((sum, [, data]) => sum + (Number(data.kazanilan) || 0), 0);
+  els.usedSummary.textContent = `${usedList.length} kampanya kullanıldı • Toplam ≈ ${Math.round(toplamKazanilan).toLocaleString("tr-TR")}₺ kazanıldı`;
+  if (!usedList.length) {
+    els.usedHistory.innerHTML = `<p class="history-empty">Henüz kullanılan kampanya yok.</p>`;
+    return;
+  }
+  els.usedHistory.innerHTML = usedList.map(([id, data]) => {
+    const campaign = state.campaigns.find((item) => String(item.id) === String(id));
+    const adapted = campaign ? adaptCampaign(campaign) : null;
+    return `
+      <div class="history-item">
+        <span>${escapeHtml(data.tarih)} — ${escapeHtml(adapted?.banka || "?")} ${escapeHtml(adapted?.baslik || id)}</span>
+        ${data.kazanilan ? `<strong>+${Number(data.kazanilan).toLocaleString("tr-TR")}₺</strong>` : ""}
+        ${data.not ? `<small>${escapeHtml(data.not)}</small>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function exportData() {
+  const favorites = JSON.parse(localStorage.getItem("kr-favorites") || localStorage.getItem("favorites") || "{}");
+  const used = JSON.parse(localStorage.getItem("kr-used") || "{}");
+  const data = { favorites, used };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "kampanya-radar-yedek.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function clearUsedHistory() {
+  if (!confirm("Geçmişi temizlemek istediğine emin misin?")) return;
+  state.used = {};
+  persistUsed();
+  renderUsedHistory();
+  applyFilters();
 }
 
 function urgentFavorites() {
@@ -565,6 +661,7 @@ function highlightCard(id) {
       els.activeOnly.checked = false;
       els.favoritesOnly.checked = false;
       els.myCardsOnly.checked = false;
+      els.usedOnly.checked = false;
       applyFilters();
       el = document.getElementById(`card-${id}`);
     }
@@ -762,7 +859,13 @@ function parseDeadline(value) {
 
 function parseMoney(value) {
   const match = String(value || "0").match(/\d+(?:[.,]\d+)?/);
-  return Number(String(match ? match[0] : "0").replace(/\./g, "").replace(",", ".")) || 0;
+  const raw = String(match ? match[0] : "0");
+  if (raw.includes(",")) return Number(raw.replace(/\./g, "").replace(",", ".")) || 0;
+  if (raw.includes(".")) {
+    const cents = raw.split(".").at(-1);
+    return Number(cents.length <= 2 ? raw : raw.replace(/\./g, "")) || 0;
+  }
+  return Number(raw) || 0;
 }
 
 function formatCurrency(value) {
@@ -880,6 +983,7 @@ function resetFilters(activeOnly) {
   els.activeOnly.checked = activeOnly;
   els.favoritesOnly.checked = false;
   els.myCardsOnly.checked = false;
+  els.usedOnly.checked = false;
   applyFilters();
 }
 
@@ -892,6 +996,7 @@ function activeFilterContext() {
   if (els.activeOnly.checked) parts.push("Aktif kampanyalar");
   if (els.favoritesOnly.checked) parts.push("Favoriler");
   if (els.myCardsOnly.checked) parts.push("Benim kartlarım");
+  if (els.usedOnly.checked) parts.push("Kullandıklarım");
   return parts.join(", ") || "Tüm kampanyalar";
 }
 

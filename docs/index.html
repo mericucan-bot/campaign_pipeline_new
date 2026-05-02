@@ -79,6 +79,7 @@
           <label class="toggle"><input id="activeOnly" type="checkbox" checked><span>Aktif</span></label>
           <label class="toggle"><input id="favoritesOnly" type="checkbox"><span>Favoriler</span></label>
           <label class="toggle"><input id="myCardsOnly" type="checkbox"><span>Benim kartlarım</span></label>
+          <label class="toggle"><input id="usedOnly" type="checkbox"><span>Kullandıklarım</span></label>
         </div>
         <button class="settings-open" type="button" data-settings-open>Ayarlar</button>
       </form>
@@ -165,6 +166,18 @@
       <details class="health-panel">
         <summary>Banka tarama sağlığı</summary>
         <div class="health-grid" id="healthGrid"></div>
+      </details>
+
+      <details class="history-panel">
+        <summary>Geçmişim</summary>
+        <div class="history-shell">
+          <p class="history-summary" id="usedSummary">0 kampanya kullanıldı • Toplam ≈ 0₺ kazanıldı</p>
+          <div class="history-list" id="usedHistory"></div>
+          <div class="history-actions">
+            <button class="secondary-button" type="button" id="exportUsed">Dışa aktar (JSON)</button>
+            <button class="danger-button" type="button" id="clearUsed">Geçmişi temizle</button>
+          </div>
+        </div>
       </details>
 
       <details class="manual-entry">

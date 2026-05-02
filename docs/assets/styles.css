@@ -142,13 +142,13 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .settings-head h2 { font-size: 24px; }
 .settings-close { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); cursor: pointer; height: 36px; min-height: 36px; padding: 0; width: 36px; }
 .settings-copy { border-bottom: 1px solid var(--line); padding-bottom: 14px; }
-.settings-drawer .manual-entry, .settings-drawer .my-cards-panel, .settings-drawer .value-panel, .settings-drawer .health-panel { margin: 0; }
+.settings-drawer .manual-entry, .settings-drawer .my-cards-panel, .settings-drawer .value-panel, .settings-drawer .health-panel, .settings-drawer .history-panel { margin: 0; }
 .settings-drawer .manual-form { grid-template-columns: 1fr; }
-.manual-entry, .my-cards-panel, .value-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 16px; padding: 0; }
-.manual-entry summary, .my-cards-panel summary, .value-panel summary { color: #dce7eb; cursor: pointer; font-size: 13px; font-weight: 950; list-style: none; padding: 14px 16px; }
-.manual-entry summary::-webkit-details-marker, .my-cards-panel summary::-webkit-details-marker, .value-panel summary::-webkit-details-marker { display: none; }
-.manual-entry summary::after, .my-cards-panel summary::after, .value-panel summary::after { color: var(--primary); content: "+"; float: right; font-size: 18px; line-height: 1; }
-.manual-entry[open] summary::after, .my-cards-panel[open] summary::after, .value-panel[open] summary::after { content: "-"; }
+.manual-entry, .my-cards-panel, .value-panel, .history-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 16px; padding: 0; }
+.manual-entry summary, .my-cards-panel summary, .value-panel summary, .history-panel summary { color: #dce7eb; cursor: pointer; font-size: 13px; font-weight: 950; list-style: none; padding: 14px 16px; }
+.manual-entry summary::-webkit-details-marker, .my-cards-panel summary::-webkit-details-marker, .value-panel summary::-webkit-details-marker, .history-panel summary::-webkit-details-marker { display: none; }
+.manual-entry summary::after, .my-cards-panel summary::after, .value-panel summary::after, .history-panel summary::after { color: var(--primary); content: "+"; float: right; font-size: 18px; line-height: 1; }
+.manual-entry[open] summary::after, .my-cards-panel[open] summary::after, .value-panel[open] summary::after, .history-panel[open] summary::after { content: "-"; }
 .my-cards-grid { border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; padding: 14px; }
 .card-pick { align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; display: inline-flex; gap: 8px; min-height: 38px; padding: 0 11px; }
 .card-pick input { accent-color: var(--primary); height: 16px; width: 16px; }
@@ -171,6 +171,16 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .health-item strong { font-size: 13px; }
 .health-item span { color: var(--muted); font-size: 12px; font-weight: 850; }
 .health-item small { color: var(--faint); font-size: 11px; font-weight: 850; text-align: right; }
+.history-shell { border-top: 1px solid var(--line); display: grid; gap: 12px; padding: 14px; }
+.history-summary { color: #dce7eb; font-size: 13px; font-weight: 850; }
+.history-list { display: grid; gap: 8px; }
+.history-item { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; display: grid; gap: 4px; padding: 10px; }
+.history-item span { color: #dce7eb; font-size: 12px; font-weight: 800; }
+.history-item strong { color: var(--primary); font-size: 12px; }
+.history-item small, .history-empty { color: var(--muted); font-size: 12px; }
+.history-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.danger-button { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.34); border-radius: 8px; color: #fca5a5; cursor: pointer; font-size: 13px; font-weight: 800; min-height: 40px; padding: 0 14px; }
+.danger-button:hover { background: rgba(239,68,68,.18); }
 .manual-form { border-top: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: minmax(180px,1.1fr) minmax(180px,1.3fr) minmax(180px,1fr) minmax(180px,1fr) auto; padding: 14px; }
 .campaigns { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -218,6 +228,7 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .campaign-card.urgent-hours-card { border-left: 4px solid #ef4444; }
 .campaign-card.urgent-days-card { border-left: 4px solid #f59e0b; }
 .campaign-card.calculator-highlight { outline: 2px solid #1a56db; outline-offset: 3px; }
+.campaign-card.used-card { border-left: 4px solid #10b981; }
 .radar-card { gap: 12px; padding: 14px; }
 .radar-card.is-expired { filter: grayscale(1); opacity: .5; }
 .card-header { align-items: center; display: grid; gap: 10px; grid-template-columns: 32px minmax(0, 1fr) 34px; }
@@ -236,6 +247,9 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .source-disclaimer { border-top: 1px solid #f3f4f6; color: #9ca3af; display: block; font-size: 10px; margin-top: 6px; padding-top: 6px; }
 .source-button { align-items: center; background: var(--kr-primary); border: 0; border-radius: 8px; color: #fff; cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 600; gap: 6px; justify-content: center; min-height: 36px; padding: 0 12px; }
 .source-button:hover { background: #174bbf; }
+.used-button { align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: #dce7eb; cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 800; justify-content: center; min-height: 34px; padding: 0 12px; }
+.used-button:hover { border-color: rgba(16,185,129,.46); color: #86efac; }
+.used-button.is-used { border-color: #10b981; color: #10b981; cursor: default; }
 .media { align-items: center; aspect-ratio: 16/9; background: linear-gradient(135deg, rgba(32,181,159,.16), rgba(214,169,74,.1)), var(--panel-3); display: flex; justify-content: center; overflow: hidden; text-decoration: none; }
 .media img { display: block; height: 100%; object-fit: cover; transition: transform 220ms ease; width: 100%; }
 .campaign-card:hover .media img { transform: scale(1.035); }
