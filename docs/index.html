@@ -4,13 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kampanya Radar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%231a56db"/%3E%3Ctext x="16" y="20.5" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="white"%3EKR%3C/text%3E%3C/svg%3E'>
   <link rel="stylesheet" href="./assets/styles.css">
 </head>
 <body>
   <header class="hero">
     <nav class="nav">
       <a class="brand" href="./" aria-label="Kampanya Radar">
-        <span class="brand-mark">KR</span>
+        <svg class="brand-logo" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+          <circle cx="16" cy="16" r="16" fill="#1a56db"></circle>
+          <text x="16" y="20.5" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff" font-family="Inter, system-ui, sans-serif">KR</text>
+        </svg>
         <span>Kampanya Radar</span>
       </a>
       <span class="sync" id="generatedAt">Veri hazırlanıyor</span>
