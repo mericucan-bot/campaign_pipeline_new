@@ -98,6 +98,9 @@ fetch("./data/campaigns.json", { cache: "no-store" })
     hydrateMyCards();
     initPreferredFlow();
     bindEvents();
+    requestNotificationPermission();
+    checkNotifs();
+    syncFavoriteNotifications();
     if (!state.campaigns.length) {
       showEmptyState("Tüm kaynaklar");
       return;
@@ -255,12 +258,20 @@ function renderCampaigns() {
     return;
   }
 
-  els.campaigns.innerHTML = state.filtered.map((item) => card(item)).join("");
+  els.campaigns.innerHTML = `${urgentFavoritesBanner()}${state.filtered.map((item) => card(item)).join("")}`;
+  const urgentButton = els.campaigns.querySelector("[data-filter-urgent]");
+  if (urgentButton) urgentButton.addEventListener("click", filterUrgent);
   els.campaigns.querySelectorAll(".favorite-button").forEach((button) => {
     button.addEventListener("click", () => {
       const id = button.dataset.id;
-      if (state.favorites.has(id)) state.favorites.delete(id);
-      else state.favorites.add(id);
+      if (state.favorites.has(id)) {
+        state.favorites.delete(id);
+        unscheduleNotif(id);
+      } else {
+        state.favorites.add(id);
+        const campaign = state.campaigns.find((item) => String(item.id) === id);
+        if (campaign) scheduleNotif(adaptCampaign(campaign));
+      }
       persistFavorites();
       button.classList.add("is-bumping");
       setTimeout(() => button.classList.remove("is-bumping"), 260);
@@ -282,20 +293,24 @@ function card(item) {
   const favorite = state.favorites.has(String(data.id));
   const reward = rewardBadge(data);
   const deadline = deadlineInfo(data);
+  const urgent = urgencyInfo(data);
   const normalized = Math.round(normalizeKazanim(data, state.monthlySpend));
   const logoStyle = `--logo-bg:${bankColor(data.banka)}`;
   const logo = data.gorsel_url
     ? `<img src="${escapeAttr(data.gorsel_url)}" alt="" loading="lazy">`
     : `<span style="${logoStyle}">${escapeHtml(bankInitials(data.banka))}</span>`;
   return `
-    <article class="campaign-card radar-card ${deadline.cardClass}" data-id="${escapeAttr(data.id)}">
+    <article class="campaign-card radar-card ${deadline.cardClass} ${urgent.cardClass}" data-id="${escapeAttr(data.id)}">
       <div class="card-header">
         <div class="bank-logo" style="${logoStyle}">${logo}</div>
         <div class="card-bank-meta">
           <strong>${escapeHtml(data.banka)}</strong>
           <span class="category-badge">${escapeHtml(data.kategori)}</span>
         </div>
-        <button class="favorite-button ${favorite ? "selected" : ""}" data-id="${escapeAttr(data.id)}" title="Favorilere ekle" aria-label="Favorilere ekle">${favorite ? "★" : "☆"}</button>
+        <div class="favorite-wrap">
+          <button class="favorite-button ${favorite ? "selected" : ""}" data-id="${escapeAttr(data.id)}" title="Favorilere ekle" aria-label="Favorilere ekle">${favorite ? "★" : "☆"}</button>
+          ${favorite && urgent.isUrgent ? `<span class="favorite-urgent-dot" aria-label="Acil favori"></span>` : ""}
+        </div>
       </div>
 
       <div class="card-body">
@@ -307,6 +322,7 @@ function card(item) {
         <span class="reward-badge ${reward.className}">${escapeHtml(reward.label)}</span>
         <span class="gain-badge">≈ ${normalized.toLocaleString("tr-TR")}₺ değerinde</span>
         <span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>
+        ${urgent.badge ? `<span class="urgent-badge ${urgent.badgeClass}">${escapeHtml(urgent.badge)}</span>` : ""}
       </div>
 
       <div class="card-source">
@@ -373,6 +389,86 @@ function persistFavorites() {
   });
   localStorage.setItem("favorites", JSON.stringify(objectFavorites));
   localStorage.setItem("campaignFavorites", JSON.stringify([...state.favorites]));
+}
+
+function urgentFavorites() {
+  return state.campaigns
+    .map((item) => adaptCampaign(item))
+    .filter((item) => state.favorites.has(String(item.id)))
+    .map((item) => ({ ...item, urgency: urgencyInfo(item) }))
+    .filter((item) => item.urgency.hours > 0 && item.urgency.hours <= 48)
+    .sort((a, b) => a.urgency.hours - b.urgency.hours);
+}
+
+function urgentFavoritesBanner() {
+  const rows = urgentFavorites();
+  if (!rows.length) return "";
+  return `
+    <section class="urgent-banner">
+      <div class="urgent-banner-head">
+        <strong>⚡ ${rows.length} favori kampanyan 48 saat içinde bitiyor!</strong>
+        <button type="button" class="secondary-button" data-filter-urgent>Acil kampanyaları göster</button>
+      </div>
+      <ul>
+        ${rows.map((item) => `<li>• ${escapeHtml(item.banka)} — ${escapeHtml(item.baslik)} — ${item.urgency.hours} saat kaldı</li>`).join("")}
+      </ul>
+    </section>
+  `;
+}
+
+function filterUrgent() {
+  const rows = urgentFavorites().map((item) => state.campaigns.find((campaign) => String(campaign.id) === String(item.id))).filter(Boolean);
+  state.filtered = rows;
+  renderCampaigns();
+  els.statSubline.textContent = `${rows.length} acil favori · ${state.campaigns.length} kayıt`;
+}
+
+function requestNotificationPermission() {
+  if ("Notification" in window && Notification.permission === "default") {
+    setTimeout(() => Notification.requestPermission(), 3000);
+  }
+}
+
+function scheduleNotif(kampanya) {
+  const bitisTarihi = parseDeadline(kampanya.bitis_tarihi);
+  if (!bitisTarihi) return;
+  const uyarilar = [
+    { zaman: new Date(bitisTarihi - 24 * 3600 * 1000), mesaj: "24 saat kaldı" },
+    { zaman: new Date(bitisTarihi - 2 * 3600 * 1000), mesaj: "2 saat kaldı" },
+  ].filter((uyari) => uyari.zaman > new Date());
+  if (!uyarilar.length) return;
+  const kayitli = JSON.parse(localStorage.getItem("kr-notifs") || "{}");
+  kayitli[kampanya.id] = uyarilar.map((uyari) => ({ zaman: uyari.zaman.toISOString(), mesaj: uyari.mesaj, gosterildi: false }));
+  localStorage.setItem("kr-notifs", JSON.stringify(kayitli));
+}
+
+function unscheduleNotif(id) {
+  const kayitli = JSON.parse(localStorage.getItem("kr-notifs") || "{}");
+  delete kayitli[id];
+  localStorage.setItem("kr-notifs", JSON.stringify(kayitli));
+}
+
+function checkNotifs() {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const kayitli = JSON.parse(localStorage.getItem("kr-notifs") || "{}");
+  const simdi = new Date();
+  Object.entries(kayitli).forEach(([id, uyarilar]) => {
+    uyarilar.forEach((uyari) => {
+      if (!uyari.gosterildi && new Date(uyari.zaman) <= simdi) {
+        const kampanya = state.campaigns.find((item) => String(item.id) === String(id));
+        const data = kampanya ? adaptCampaign(kampanya) : null;
+        if (data) new Notification("Kampanya Radar ⏰", { body: `${data.baslik} — ${uyari.mesaj}`, icon: "/favicon.ico" });
+        uyari.gosterildi = true;
+      }
+    });
+  });
+  localStorage.setItem("kr-notifs", JSON.stringify(kayitli));
+}
+
+function syncFavoriteNotifications() {
+  state.campaigns.forEach((item) => {
+    if (state.favorites.has(String(item.id))) scheduleNotif(adaptCampaign(item));
+  });
 }
 
 function hydrateHealth(rows) {
@@ -529,15 +625,35 @@ function deadlineInfo(item) {
   const deadlineValue = item.bitis_tarihi || item.deadline;
   if (!deadlineValue) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const end = new Date(`${deadlineValue}T00:00:00`);
-  if (Number.isNaN(end.getTime())) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
-  const days = Math.ceil((end - today) / 86400000);
+  const end = parseDeadline(deadlineValue);
+  if (!end) return { label: item.deadline_label || "Tarih kaynakta", badgeClass: "deadline-neutral", cardClass: "" };
+  const days = Math.ceil((end - new Date()) / 86400000);
   if (days <= 0) return { label: "Süresi doldu", badgeClass: "deadline-expired", cardClass: "is-expired" };
   if (days <= 3) return { label: `🔴 ${days} gün`, badgeClass: "deadline-danger pulse", cardClass: "deadline-danger-card" };
   if (days <= 14) return { label: `⚠ ${days} gün`, badgeClass: "deadline-warning", cardClass: "deadline-warning-card" };
   return { label: `${days} gün`, badgeClass: "deadline-neutral", cardClass: "" };
+}
+
+function urgencyInfo(item) {
+  const end = parseDeadline(item.bitis_tarihi || item.deadline);
+  if (!end) return { hours: Infinity, isUrgent: false, badge: "", badgeClass: "", cardClass: "" };
+  const hours = Math.ceil((end - new Date()) / 3600000);
+  if (hours <= 0) return { hours, isUrgent: false, badge: "", badgeClass: "", cardClass: "" };
+  if (hours <= 24) {
+    return { hours, isUrgent: true, badge: `SON ${hours} SAAT`, badgeClass: "urgent-hours", cardClass: "urgent-hours-card" };
+  }
+  if (hours <= 72) {
+    const days = Math.ceil(hours / 24);
+    return { hours, isUrgent: true, badge: `⚠ ${days} gün`, badgeClass: "urgent-days", cardClass: "urgent-days-card" };
+  }
+  return { hours, isUrgent: false, badge: "", badgeClass: "", cardClass: "" };
+}
+
+function parseDeadline(value) {
+  if (!value) return null;
+  const raw = String(value).trim();
+  const date = raw.includes("T") ? new Date(raw) : new Date(`${raw}T23:59:59`);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function parseMoney(value) {

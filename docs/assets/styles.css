@@ -178,11 +178,20 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
   cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 800; justify-content: center; min-height: 40px; padding: 0 14px; text-decoration: none;
 }
 .secondary-button:hover, .secondary-link:hover { background: rgba(255,255,255,.08); border-color: rgba(32,181,159,.38); color: #f4f7f8; }
+.urgent-banner {
+  background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.36); border-radius: 8px; color: #fde68a;
+  display: grid; gap: 10px; grid-column: 1/-1; padding: 14px;
+}
+.urgent-banner-head { align-items: center; display: flex; gap: 12px; justify-content: space-between; }
+.urgent-banner strong { color: #fff7d6; font-size: 14px; }
+.urgent-banner ul { color: #f8d783; display: grid; font-size: 12px; gap: 5px; list-style: none; margin: 0; padding: 0; }
 .campaign-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.3), 0 16px 38px rgba(0,0,0,.18); display: flex; flex-direction: column; min-height: 100%; overflow: hidden; transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease, opacity 200ms ease; }
 .campaign-card:hover { border-color: rgba(32,181,159,.42); box-shadow: var(--shadow); transform: translateY(-2px); }
 .campaign-card.is-expired { opacity: .5; }
 .campaign-card.deadline-warning-card { border-color: rgba(245,158,11,.38); }
 .campaign-card.deadline-danger-card { border-color: rgba(239,68,68,.5); }
+.campaign-card.urgent-hours-card { border-left: 4px solid #ef4444; }
+.campaign-card.urgent-days-card { border-left: 4px solid #f59e0b; }
 .radar-card { gap: 12px; padding: 14px; }
 .radar-card.is-expired { filter: grayscale(1); opacity: .5; }
 .card-header { align-items: center; display: grid; gap: 10px; grid-template-columns: 32px minmax(0, 1fr) 34px; }
@@ -216,6 +225,8 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .favorite-button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: #9ca3af; cursor: pointer; font-size: 19px; height: 34px; line-height: 1; transition: transform 150ms ease, background 150ms ease, color 150ms ease; width: 34px; }
 .favorite-button:hover, .favorite-button.selected { background: rgba(245,158,11,.16); border-color: rgba(245,158,11,.42); color: #f59e0b; }
 .favorite-button.is-bumping { animation: favorite-pop 150ms ease; }
+.favorite-wrap { display: inline-grid; position: relative; }
+.favorite-urgent-dot { background: #f59e0b; border: 2px solid var(--panel); border-radius: 999px; height: 10px; position: absolute; right: -2px; top: -2px; width: 10px; }
 @keyframes favorite-pop { 50% { transform: scale(1.4); } }
 .badges { flex-wrap: wrap; margin-bottom: 2px; }
 .category-badge { background: rgba(32,181,159,.13); color: #6eead8; }
@@ -241,6 +252,8 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .pulse { animation: pulse-danger 1.1s ease-in-out infinite; }
 @keyframes pulse-danger { 50% { box-shadow: 0 0 0 4px rgba(239,68,68,.16); } }
 .urgent-badge { background: rgba(227,109,90,.18); color: #ff9a8c; }
+.urgent-hours { background: rgba(239,68,68,.22); color: #fecaca; }
+.urgent-days { background: rgba(245,158,11,.2); color: #fde68a; }
 h2 { font-size: 18px; letter-spacing: 0; line-height: 1.34; margin: 0; }
 .campaign-highlight { align-self: flex-start; background: rgba(32,181,159,.12); border: 1px solid rgba(32,181,159,.34); border-radius: 8px; color: #73f0dd; font-size: 18px; font-weight: 950; line-height: 1.15; padding: 9px 11px; }
 p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
