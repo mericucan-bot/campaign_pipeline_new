@@ -4,6 +4,7 @@ const state = {
   selectedBank: "",
   favorites: loadFavoriteSet(),
   used: loadUsed(),
+  pendingUsedId: null,
   manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]"),
   monthlySpend: Number(localStorage.getItem("kr-aylik-harcama") || localStorage.getItem("monthlySpend") || 2000),
   myCards: new Set(JSON.parse(localStorage.getItem("myCards") || "null") || [
@@ -82,6 +83,14 @@ const els = {
   usedSummary: document.querySelector("#usedSummary"),
   exportUsed: document.querySelector("#exportUsed"),
   clearUsed: document.querySelector("#clearUsed"),
+  usedModal: document.querySelector("#usedModal"),
+  usedForm: document.querySelector("#usedForm"),
+  usedCancel: document.querySelector("#usedCancel"),
+  usedModalClose: document.querySelector(".used-modal-close"),
+  usedBank: document.querySelector("#usedBank"),
+  usedTitle: document.querySelector("#usedTitle"),
+  usedGain: document.querySelector("#usedGain"),
+  usedNote: document.querySelector("#usedNote"),
 };
 
 function closeBanner() {
@@ -166,6 +175,15 @@ function bindEvents() {
     els.modalClose.addEventListener("click", () => els.modal.close());
     els.modal.addEventListener("click", (event) => {
       if (event.target === els.modal) els.modal.close();
+    });
+  }
+  if (els.usedForm && els.usedModal) {
+    els.usedForm.addEventListener("submit", saveUsedFromModal);
+    [els.usedCancel, els.usedModalClose].forEach((button) => {
+      if (button) button.addEventListener("click", closeUsedModal);
+    });
+    els.usedModal.addEventListener("click", (event) => {
+      if (event.target === els.usedModal) closeUsedModal();
     });
   }
   if (els.settingsOpen && els.settingsDrawer) {
@@ -333,7 +351,7 @@ function card(item) {
         <div class="bank-logo" style="${logoStyle}">${logo}</div>
         <div class="card-bank-meta">
           <strong>${escapeHtml(data.banka)}</strong>
-          <span class="category-badge">${escapeHtml(data.kategori)}</span>
+          <span class="category-badge ${categoryClass(data.kategori)}">${escapeHtml(data.kategori)}</span>
         </div>
         <div class="favorite-wrap">
           <button class="favorite-button ${favorite ? "selected" : ""}" data-id="${escapeAttr(data.id)}" title="Favorilere ekle" aria-label="Favorilere ekle">${favorite ? "★" : "☆"}</button>
@@ -466,16 +484,40 @@ function persistUsed() {
 
 function markUsed(id) {
   if (state.used[id]) return;
-  const kazanilan = prompt("Ne kadar kazandın? (₺ olarak, boş bırakabilirsin)");
-  const note = prompt("Kısa not (boş bırakabilirsin):");
+  openUsedModal(id);
+}
+
+function openUsedModal(id) {
+  if (!els.usedModal) return;
+  const campaign = state.campaigns.find((item) => String(item.id) === String(id));
+  const adapted = campaign ? adaptCampaign(campaign) : null;
+  state.pendingUsedId = String(id);
+  if (els.usedBank) els.usedBank.textContent = adapted?.banka || "Kampanya";
+  if (els.usedTitle) els.usedTitle.textContent = adapted?.baslik || "Kampanyayı kullandım";
+  if (els.usedGain) els.usedGain.value = "";
+  if (els.usedNote) els.usedNote.value = "";
+  els.usedModal.showModal();
+}
+
+function closeUsedModal() {
+  state.pendingUsedId = null;
+  if (els.usedModal?.open) els.usedModal.close();
+}
+
+function saveUsedFromModal(event) {
+  event.preventDefault();
+  const id = state.pendingUsedId;
+  if (!id || state.used[id]) return closeUsedModal();
+  const gainValue = Number(els.usedGain?.value || 0);
   state.used[id] = {
     tarih: new Date().toLocaleDateString("tr-TR"),
-    kazanilan: kazanilan ? parseMoney(kazanilan) : null,
-    not: note || "",
+    kazanilan: gainValue > 0 ? gainValue : null,
+    not: els.usedNote?.value.trim() || "",
   };
   persistUsed();
   updateUsedButton(id, state.used[id]);
   renderUsedHistory();
+  closeUsedModal();
 }
 
 function updateUsedButton(id, data) {
@@ -492,7 +534,12 @@ function renderUsedHistory() {
   if (!els.usedHistory || !els.usedSummary) return;
   const usedList = Object.entries(state.used);
   const toplamKazanilan = usedList.reduce((sum, [, data]) => sum + (Number(data.kazanilan) || 0), 0);
-  els.usedSummary.textContent = `${usedList.length} kampanya kullanıldı • Toplam ≈ ${Math.round(toplamKazanilan).toLocaleString("tr-TR")}₺ kazanıldı`;
+  const hasGain = usedList.some(([, data]) => Number(data.kazanilan) > 0);
+  els.usedSummary.textContent = !usedList.length
+    ? "0 kampanya kullanıldı"
+    : hasGain
+    ? `${usedList.length} kampanya kullanıldı • Toplam ≈ ${Math.round(toplamKazanilan).toLocaleString("tr-TR")}₺ kazanıldı`
+    : `${usedList.length} kampanya kullanıldı • Kazanım tutarı girilmedi`;
   if (!usedList.length) {
     els.usedHistory.innerHTML = `<p class="history-empty">Henüz kullanılan kampanya yok.</p>`;
     return;
@@ -676,7 +723,7 @@ function hesapla() {
       ? `<p>Eşleşen kampanya bulunamadı.</p>`
       : sonuclar.map((item, index) => `
         <button class="calculator-result" type="button" onclick="highlightCard('${escapeAttr(item.id)}')">
-          <span>${rozetler[index]} ${escapeHtml(item.banka)} — ${escapeHtml(item.baslik)}</span>
+          <span title="${escapeAttr(item.baslik)}">${rozetler[index]} ${escapeHtml(item.banka)} — ${escapeHtml(shortenText(item.baslik, 44))}</span>
           <strong>+${Math.round(item.tahminiKazanim).toLocaleString("tr-TR")}₺</strong>
         </button>
       `).join("");
@@ -701,6 +748,17 @@ function calculatorCategory(item) {
   if (text.includes("yakit") || text.includes("akaryakit") || text.includes("benzin") || text.includes("petrol")) return "yakit";
   if (text.includes("online") || text.includes("internet") || text.includes("e-ticaret") || text.includes("eticaret")) return "online";
   return "diger";
+}
+
+function categoryClass(category) {
+  const text = normalize(category);
+  if (text.includes("seyahat") || text.includes("tatil") || text.includes("otel") || text.includes("yurt disi")) return "category-travel";
+  if (text.includes("restoran") || text.includes("yemek") || text.includes("cafe") || text.includes("kafe")) return "category-food";
+  if (text.includes("market") || text.includes("supermarket") || text.includes("gida")) return "category-market";
+  if (text.includes("yakit") || text.includes("akaryakit") || text.includes("benzin")) return "category-fuel";
+  if (text.includes("online") || text.includes("internet") || text.includes("alisveris")) return "category-online";
+  if (text.includes("firsat")) return "category-opportunity";
+  return "category-general";
 }
 
 function highlightCard(id) {

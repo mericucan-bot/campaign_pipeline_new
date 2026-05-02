@@ -30,7 +30,7 @@
 
     <div class="hero-grid">
       <section class="intro">
-        <p class="eyebrow">Campaign intelligence <span>Created by MeRiC</span></p>
+        <p class="eyebrow">Kampanya zekası <span>MeRiC tarafından</span></p>
         <h1>T&#252;m Kampanyalar Tek Ekranda</h1>
         <p class="lead">GitHub Actions taraf&#305;ndan otomatik g&#252;ncellenen statik kampanya paneli.</p>
       </section>
@@ -223,6 +223,26 @@
       <p class="modal-description"></p>
       <a class="modal-link" href="#" target="_blank" rel="noreferrer">Kaynağa git <span class="external-icon" aria-hidden="true">↗</span></a>
     </div>
+  </dialog>
+
+  <dialog class="used-modal" id="usedModal">
+    <form class="modal-card used-modal-card" method="dialog" id="usedForm">
+      <button class="modal-close used-modal-close" type="button" aria-label="Kapat">×</button>
+      <span class="modal-bank" id="usedBank"></span>
+      <h2 class="modal-title" id="usedTitle">Kampanyayı kullandım</h2>
+      <label>
+        Kazanılan tutar
+        <input id="usedGain" type="number" min="0" step="1" placeholder="Örn. 85">
+      </label>
+      <label>
+        Kısa not
+        <textarea id="usedNote" rows="3" placeholder="Örn. Migros'ta kullandım"></textarea>
+      </label>
+      <div class="used-modal-actions">
+        <button class="secondary-button" type="button" id="usedCancel">İptal</button>
+        <button class="apply-button" type="submit">Kaydet</button>
+      </div>
+    </form>
   </dialog>
 
   <button class="back-to-top" type="button" aria-label="Sayfa basina don">↑</button>
