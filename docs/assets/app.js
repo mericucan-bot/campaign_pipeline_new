@@ -87,6 +87,10 @@ fetch("./data/campaigns.json", { cache: "no-store" })
     hydrateMyCards();
     initPreferredFlow();
     bindEvents();
+    if (!state.campaigns.length) {
+      showEmptyState("Tüm kaynaklar");
+      return;
+    }
     applyFilters();
   })
   .catch((err) => {
@@ -237,7 +241,7 @@ function renderBankRail() {
 
 function renderCampaigns() {
   if (!state.filtered.length) {
-    showEmptyState(els.favoritesOnly.checked ? "favorites" : "filters");
+    showEmptyState(activeFilterContext());
     return;
   }
 
@@ -436,17 +440,6 @@ function chip(value, label, selected) {
   return `<button type="button" class="bank-chip ${selected ? "selected" : ""}" data-bank="${escapeAttr(value)}" title="${escapeAttr(value || "Tümü")}">${escapeHtml(label)}</button>`;
 }
 
-function emptyState(title, text, clearable = false) {
-  return `
-    <div class="empty">
-      <div class="empty-icon" aria-hidden="true">&#8981;</div>
-      <h2>${title}</h2>
-      <p>${text}</p>
-      ${clearable ? `<button type="button" class="apply-button" data-clear-filters>Filtreleri temizle</button>` : ""}
-    </div>
-  `;
-}
-
 function unique(values) {
   return [...new Set(values.filter(Boolean))].sort((a, b) => bankLabel(a).localeCompare(bankLabel(b), "tr"));
 }
@@ -541,47 +534,100 @@ function updateMonthlySpendLabel() {
 function showLoadingState() {
   if (!els.campaigns) return;
   els.campaigns.innerHTML = `
-    <div class="skeleton-grid" aria-hidden="true">
-      ${Array.from({ length: 6 }).map(() => `<div class="skeleton-card"><span></span><b></b><i></i><i></i></div>`).join("")}
-    </div>
-  `;
-}
-
-function showEmptyState(ctx) {
-  const title = ctx === "favorites" ? "Henüz favori kampanyan yok" : "Kayıt yok";
-  const text = ctx === "favorites"
-    ? "Beğendiğin kampanyaların yıldızına bas; sonra burada sadece takip ettiklerini gör."
-    : "Filtreleri gevşet veya aramanı değiştir.";
-  els.campaigns.innerHTML = emptyState(title, text, true);
-  const clearButton = els.campaigns.querySelector("[data-clear-filters]");
-  if (clearButton) clearButton.addEventListener("click", clearFilters);
-}
-
-function showErrorState(err) {
-  console.error(err);
-  els.campaigns.innerHTML = `
-    <div class="empty error-state">
-      <div class="empty-icon" aria-hidden="true">!</div>
-      <h2>Veri okunamadı</h2>
-      <p>Veri hazırlanırken sorun oluştu. Biraz sonra tekrar deneyebilirsin.</p>
-      <div class="empty-actions">
-        <button type="button" class="apply-button" onclick="location.reload()">Tekrar dene</button>
-        <a href="https://github.com/mericucan-bot/campaign_pipeline_new/issues" target="_blank" rel="noreferrer">GitHub issue aç</a>
+    <div class="state-panel loading-state" aria-live="polite">
+      <svg class="loading-spinner" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="3" opacity=".18"></circle>
+        <path d="M21 12a9 9 0 0 0-9-9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="3"></path>
+      </svg>
+      <h2>Kampanyalar yükleniyor...</h2>
+      <div class="skeleton-state-grid" aria-hidden="true">
+        ${Array.from({ length: 3 }).map(() => `
+          <div class="skeleton-state-card">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-line"></div>
+            <div class="skeleton skeleton-line short"></div>
+            <div class="skeleton skeleton-footer"></div>
+          </div>
+        `).join("")}
       </div>
     </div>
   `;
 }
 
+function showEmptyState(filterContext) {
+  const context = filterContext || "Seçili filtreler";
+  els.campaigns.innerHTML = `
+    <div class="state-panel empty-state" aria-live="polite">
+      <svg class="state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="m20 20-3.5-3.5"></path>
+      </svg>
+      <h2>Sonuç bulunamadı</h2>
+      <p><strong>${escapeHtml(context)}</strong> için kampanya yok. Filtreleri değiştirmeyi deneyin.</p>
+      <div class="state-actions">
+        <button type="button" class="apply-button" data-clear-filters>Filtreleri Temizle</button>
+        <button type="button" class="secondary-button" data-show-all>Tüm Kampanyaları Gör</button>
+      </div>
+    </div>
+  `;
+  const clearButton = els.campaigns.querySelector("[data-clear-filters]");
+  const showAllButton = els.campaigns.querySelector("[data-show-all]");
+  if (clearButton) clearButton.addEventListener("click", clearFilters);
+  if (showAllButton) showAllButton.addEventListener("click", showAllCampaigns);
+}
+
+function showErrorState(errorMsg) {
+  console.error(errorMsg);
+  const detail = errorMsg && errorMsg.message ? errorMsg.message : String(errorMsg || "Bilinmeyen hata");
+  els.campaigns.innerHTML = `
+    <div class="state-panel error-state" aria-live="assertive">
+      <svg class="state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.3 4.1 2.7 18a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 4.1a2 2 0 0 0-3.4 0Z"></path>
+        <path d="M12 9v4"></path>
+        <path d="M12 17h.01"></path>
+      </svg>
+      <h2>Veriler yüklenemedi</h2>
+      <p>Teknik detay: ${escapeHtml(detail)}</p>
+      <div class="state-actions">
+        <button type="button" class="apply-button" data-retry-load>Tekrar Dene</button>
+        <a class="secondary-link" href="https://github.com/mericucan-bot/campaign_pipeline_new/issues" target="_blank" rel="noreferrer">GitHub'da bildir</a>
+      </div>
+    </div>
+  `;
+  const retryButton = els.campaigns.querySelector("[data-retry-load]");
+  if (retryButton) retryButton.addEventListener("click", () => location.reload());
+}
+
 function clearFilters() {
+  resetFilters(true);
+}
+
+function showAllCampaigns() {
+  resetFilters(false);
+}
+
+function resetFilters(activeOnly) {
   els.bankFilter.value = "";
   els.categoryFilter.value = "";
   els.rewardFilter.value = "";
   els.sortFilter.value = "updated";
   els.searchInput.value = "";
-  els.activeOnly.checked = true;
+  els.activeOnly.checked = activeOnly;
   els.favoritesOnly.checked = false;
   els.myCardsOnly.checked = false;
   applyFilters();
+}
+
+function activeFilterContext() {
+  const parts = [];
+  if (els.bankFilter.value) parts.push(bankLabel(els.bankFilter.value));
+  if (els.categoryFilter.value) parts.push(els.categoryFilter.value);
+  if (els.rewardFilter.value) parts.push(els.rewardFilter.value);
+  if (els.searchInput.value.trim()) parts.push(`Arama: ${els.searchInput.value.trim()}`);
+  if (els.activeOnly.checked) parts.push("Aktif kampanyalar");
+  if (els.favoritesOnly.checked) parts.push("Favoriler");
+  if (els.myCardsOnly.checked) parts.push("Benim kartlarım");
+  return parts.join(", ") || "Tüm kampanyalar";
 }
 
 function normalize(value) {

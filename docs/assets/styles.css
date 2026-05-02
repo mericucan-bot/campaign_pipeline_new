@@ -137,14 +137,37 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .health-item span { color: var(--muted); font-size: 12px; font-weight: 850; }
 .health-item small { color: var(--faint); font-size: 11px; font-weight: 850; text-align: right; }
 .manual-form { border-top: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: minmax(180px,1.1fr) minmax(180px,1.3fr) minmax(180px,1fr) minmax(180px,1fr) auto; padding: 14px; }
-.campaigns, .skeleton-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); }
-.skeleton-grid { grid-column: 1/-1; }
-.skeleton-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; min-height: 360px; overflow: hidden; padding: 16px; }
-.skeleton-card span, .skeleton-card b, .skeleton-card i { animation: pulse 1.15s ease-in-out infinite; background: linear-gradient(90deg, #1d242a, #303941, #1d242a); background-size: 220% 100%; border-radius: 8px; display: block; }
-.skeleton-card span { height: 168px; margin: -16px -16px 18px; }
-.skeleton-card b { height: 22px; margin-bottom: 14px; width: 70%; }
-.skeleton-card i { height: 14px; margin-bottom: 10px; width: 90%; }
-@keyframes pulse { 0% { background-position: 0 0; } 100% { background-position: -220% 0; } }
+.campaigns { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.state-panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; grid-column: 1/-1;
+  padding: 42px clamp(18px, 4vw, 46px); text-align: center;
+}
+.state-panel h2 { color: var(--ink); font-size: 20px; font-weight: 700; margin: 0 0 8px; }
+.state-panel p { color: var(--muted); margin: 0 auto; max-width: 560px; }
+.state-panel p strong { color: #dce7eb; font-weight: 700; }
+.state-icon { display: block; margin: 0 auto 14px; }
+.loading-spinner { animation: spin 1s linear infinite; color: #1a56db; display: block; margin: 0 auto 12px; }
+.skeleton-state-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 20px; }
+.skeleton-state-card { background: #fff; border: 1px solid var(--kr-border); border-radius: 10px; padding: 14px; text-align: left; }
+.skeleton {
+  animation: shimmer 1.4s infinite; background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);
+  background-size: 400px 100%; border-radius: 8px; height: 16px;
+}
+.skeleton-title { margin-bottom: 12px; width: 100%; }
+.skeleton-line { margin-bottom: 8px; width: 86%; }
+.skeleton-line.short { width: 64%; }
+.skeleton-footer { margin-top: 16px; width: 42%; }
+.state-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }
+.secondary-button, .secondary-link {
+  align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: #dce7eb;
+  cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 800; justify-content: center; min-height: 40px; padding: 0 14px; text-decoration: none;
+}
+.secondary-button:hover, .secondary-link:hover { background: rgba(255,255,255,.08); border-color: rgba(32,181,159,.38); color: #f4f7f8; }
 .campaign-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.3), 0 16px 38px rgba(0,0,0,.18); display: flex; flex-direction: column; min-height: 100%; overflow: hidden; transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease, opacity 200ms ease; }
 .campaign-card:hover { border-color: rgba(32,181,159,.42); box-shadow: var(--shadow); transform: translateY(-2px); }
 .campaign-card.is-expired { opacity: .5; }
@@ -247,7 +270,8 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
   .health-item { align-items: start; grid-template-columns: 1fr; }
   .health-item small { text-align: left; }
   .snapshot { grid-template-columns: 1fr; }
-  .campaigns, .skeleton-grid { gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .campaigns { gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .skeleton-state-grid { grid-template-columns: 1fr; }
   .campaign-card { border-radius: 7px; }
   .media { aspect-ratio: 4/3; }
   .campaign-body { gap: 9px; padding: 11px; }
