@@ -86,6 +86,17 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .manual-entry summary::-webkit-details-marker { display: none; }
 .manual-entry summary::after { color: var(--primary); content: "+"; float: right; font-size: 18px; line-height: 1; }
 .manual-entry[open] summary::after { content: "-"; }
+.health-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; margin: 0 0 16px; }
+.health-panel summary { color: #dce7eb; cursor: pointer; font-size: 13px; font-weight: 950; list-style: none; padding: 14px 16px; }
+.health-panel summary::-webkit-details-marker { display: none; }
+.health-panel summary::after { color: var(--primary); content: "+"; float: right; font-size: 18px; line-height: 1; }
+.health-panel[open] summary::after { content: "-"; }
+.health-grid { border-top: 1px solid var(--line); display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); padding: 14px; }
+.health-item { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.health-item strong, .health-item span, .health-item small { display: block; }
+.health-item strong { font-size: 13px; margin-bottom: 7px; }
+.health-item span { color: var(--muted); font-size: 12px; font-weight: 850; }
+.health-item small { color: var(--faint); font-size: 11px; font-weight: 850; margin-top: 6px; }
 .manual-form { border-top: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: minmax(180px,1.1fr) minmax(180px,1.3fr) minmax(180px,1fr) minmax(180px,1fr) auto; padding: 14px; }
 .campaigns { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); }
 .campaign-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 16px 38px rgba(0,0,0,.28); display: flex; flex-direction: column; min-height: 100%; overflow: hidden; transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease; }
@@ -120,6 +131,15 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
 .campaign-footer { border-top: 1px solid var(--line); justify-content: space-between; margin-top: auto; padding-top: 15px; }
 .campaign-footer span { color: var(--faint); font-size: 12px; font-weight: 850; }
 .campaign-footer a { background: #f4f7f8; border-radius: 8px; color: #101820; font-size: 13px; font-weight: 950; padding: 9px 12px; text-decoration: none; }
+.detail-button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: #dce7eb; cursor: pointer; font-size: 13px; font-weight: 950; min-height: 36px; padding: 0 12px; }
+.detail-modal { background: transparent; border: 0; color: var(--ink); max-width: min(560px, calc(100vw - 28px)); padding: 0; }
+.detail-modal::backdrop { background: rgba(0,0,0,.62); backdrop-filter: blur(6px); }
+.modal-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); padding: 22px; position: relative; }
+.modal-close { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); cursor: pointer; height: 34px; min-height: 34px; padding: 0; position: absolute; right: 14px; top: 14px; width: 34px; }
+.modal-bank { color: var(--primary); display: block; font-size: 12px; font-weight: 950; margin: 0 42px 10px 0; }
+.modal-title { margin: 0 42px 14px 0; }
+.modal-description { margin: 14px 0 18px; }
+.modal-link { background: var(--primary); border-radius: 8px; color: #04110f; display: inline-flex; font-size: 13px; font-weight: 950; padding: 10px 13px; text-decoration: none; }
 .empty { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; grid-column: 1/-1; padding: 44px 34px; text-align: center; }
 .empty-icon { align-items: center; background: rgba(214,169,74,.14); border: 1px solid rgba(214,169,74,.28); border-radius: 8px; color: var(--amber); display: inline-flex; font-size: 28px; height: 56px; justify-content: center; margin-bottom: 16px; width: 56px; }
 .back-to-top { align-items: center; background: var(--primary); border: 0; border-radius: 8px; bottom: 22px; box-shadow: 0 16px 34px rgba(0,0,0,.32); color: #04110f; cursor: pointer; display: inline-flex; font-size: 22px; font-weight: 950; height: 44px; justify-content: center; opacity: 0; pointer-events: none; position: fixed; right: 22px; transform: translateY(10px); transition: opacity 160ms ease, transform 160ms ease; width: 44px; z-index: 50; }

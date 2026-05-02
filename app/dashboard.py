@@ -16,10 +16,12 @@ CATEGORIES = {
     "Akaryakit": ["akaryakit", "yakit", "benzin", "petrol", "shell", "opet", "bp", "aytemiz", "total"],
     "Restoran": ["restoran", "yemek", "cafe", "kahve", "burger", "pizza", "getir", "yemeksepeti"],
     "Giyim": ["giyim", "moda", "ayakkabi", "tekstil", "lc waikiki", "boyner", "defacto"],
-    "Seyahat": ["tatil", "otel", "ucak", "seyahat", "havalimani", "lounge", "yurt disi", "harc", "transfer"],
+    "Seyahat": ["tatil", "otel", "ucak", "seyahat", "havalimani", "lounge", "yurt disi", "yurtdisi", "harc", "transfer", "yurt disi cikis"],
     "Online": ["online", "e-ticaret", "eticaret", "internet", "amazon", "trendyol", "hepsiburada", "n11"],
     "Elektronik": ["elektronik", "teknoloji", "telefon", "bilgisayar", "beyaz esya"],
     "Saglik": ["saglik", "eczane", "hastane", "medikal"],
+    "Aidat/Harç": ["aidat", "harc", "yurt disi cikis harci", "vergi", "mtv"],
+    "Premium": ["premium", "lounge", "otopark", "prime", "ayricalik"],
 }
 
 REWARD_TYPES = {
@@ -62,6 +64,15 @@ BANK_LABELS = {
     "Manuel Favori": "Manuel",
 }
 
+MY_CARD_BANKS = {
+    "Akbank Axess",
+    "Is Bankasi Maximum",
+    "Paraf",
+    "Paraf Premium",
+    "VakifBank",
+    "Yapi Kredi World",
+}
+
 
 @app.get("/")
 def index():
@@ -72,11 +83,14 @@ def index():
     selected_reward = request.args.get("reward") or ""
     selected_sort = request.args.get("sort") or "updated"
     favorites_only = request.args.get("favorites") == "1"
+    my_cards_only = request.args.get("my_cards") == "1"
 
     campaigns = list_campaigns(bank=bank, search=search, active_only=active_only)
     favorite_ids = get_favorite_ids()
     campaigns = enrich_campaigns(campaigns, favorite_ids)
-    campaigns = apply_dashboard_filters(campaigns, selected_category, selected_reward, favorites_only)
+    campaigns = dedupe_campaigns(campaigns)
+    bank_health = build_bank_health(campaigns)
+    campaigns = apply_dashboard_filters(campaigns, selected_category, selected_reward, favorites_only, my_cards_only)
     campaigns = sort_campaigns(campaigns, selected_sort)
     stats = get_stats()
     stats["favorites"] = len(favorite_ids)
@@ -91,9 +105,11 @@ def index():
         selected_reward=selected_reward,
         selected_sort=selected_sort,
         favorites_only=favorites_only,
+        my_cards_only=my_cards_only,
         categories=sorted(CATEGORIES.keys()),
         reward_types=sorted(REWARD_TYPES.keys()),
         bank_label=bank_label,
+        bank_health=bank_health,
     )
 
 
@@ -106,6 +122,7 @@ def api_campaigns():
     )
     favorite_ids = get_favorite_ids()
     campaigns = enrich_campaigns(campaigns, favorite_ids)
+    campaigns = dedupe_campaigns(campaigns)
     return jsonify(campaigns)
 
 
@@ -166,7 +183,40 @@ def bank_label(bank):
     return BANK_LABELS.get(bank, bank)
 
 
-def apply_dashboard_filters(campaigns, category, reward, favorites_only):
+def dedupe_campaigns(campaigns):
+    seen = set()
+    rows = []
+    for item in campaigns:
+        key = (
+            normalize_search(item.get("bank") or ""),
+            item.get("url") or item.get("external_id") or normalize_search(item.get("title") or ""),
+        )
+        title_key = (normalize_search(item.get("bank") or ""), normalize_search(item.get("title") or ""))
+        if key in seen or title_key in seen:
+            continue
+        seen.add(key)
+        seen.add(title_key)
+        rows.append(item)
+    return rows
+
+
+def build_bank_health(campaigns):
+    health = {}
+    for item in campaigns:
+        bank = item.get("bank") or "Bilinmeyen"
+        row = health.setdefault(bank, {"bank": bank, "active": 0, "inactive": 0, "total": 0, "last_seen": ""})
+        row["total"] += 1
+        if item.get("is_active"):
+            row["active"] += 1
+        else:
+            row["inactive"] += 1
+        last_seen = item.get("last_seen") or ""
+        if last_seen > row["last_seen"]:
+            row["last_seen"] = last_seen
+    return sorted(health.values(), key=lambda row: row["bank"])
+
+
+def apply_dashboard_filters(campaigns, category, reward, favorites_only, my_cards_only=False):
     rows = campaigns
     if category:
         rows = [item for item in rows if item.get("category") == category]
@@ -174,6 +224,8 @@ def apply_dashboard_filters(campaigns, category, reward, favorites_only):
         rows = [item for item in rows if item.get("reward_type") == reward]
     if favorites_only:
         rows = [item for item in rows if item.get("favorite")]
+    if my_cards_only:
+        rows = [item for item in rows if item.get("bank") in MY_CARD_BANKS]
     return rows
 
 
@@ -221,6 +273,14 @@ def extract_deadline(item):
         month = MONTHS.get(month_name)
         if month:
             candidates.append(safe_date(int(year), month, int(day)))
+
+    for day, month_name, year in re.findall(r"\b\d{1,2}\s*[-–]\s*(\d{1,2})\s+([a-z]+)\s+(20\d{2})\b", normalized):
+        month = MONTHS.get(month_name)
+        if month:
+            candidates.append(safe_date(int(year), month, int(day)))
+
+    for days in re.findall(r"\bson\s+(\d{1,3})\s+gun\b", normalized):
+        candidates.append(today + date.resolution * int(days))
 
     future = [item for item in candidates if item and item >= today]
     if future:

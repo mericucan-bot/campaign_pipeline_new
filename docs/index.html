@@ -66,10 +66,16 @@
         <div class="filter-switches">
           <label class="toggle"><input id="activeOnly" type="checkbox" checked><span>Aktif</span></label>
           <label class="toggle"><input id="favoritesOnly" type="checkbox"><span>Favoriler</span></label>
+          <label class="toggle"><input id="myCardsOnly" type="checkbox"><span>Benim Kartlarim</span></label>
         </div>
       </form>
       <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
     </section>
+
+    <details class="health-panel">
+      <summary>Banka tarama sagligi</summary>
+      <div class="health-grid" id="healthGrid"></div>
+    </details>
 
     <details class="manual-entry">
       <summary>Manuel favori kampanya ekle</summary>
@@ -98,6 +104,21 @@
       <div class="empty"><div class="empty-icon" aria-hidden="true">&#9678;</div><h2>Yukleniyor</h2><p>Kampanya verisi okunuyor.</p></div>
     </section>
   </main>
+
+  <dialog class="detail-modal">
+    <div class="modal-card">
+      <button class="modal-close" type="button" aria-label="Kapat">×</button>
+      <span class="modal-bank"></span>
+      <h2 class="modal-title"></h2>
+      <div class="badges">
+        <span class="category-badge modal-category"></span>
+        <span class="reward-badge modal-reward"></span>
+        <span class="date-badge modal-date"></span>
+      </div>
+      <p class="modal-description"></p>
+      <a class="modal-link" href="#" target="_blank" rel="noreferrer">Kaynaga Git</a>
+    </div>
+  </dialog>
 
   <button class="back-to-top" type="button" aria-label="Sayfa basina don">↑</button>
   <script src="./assets/app.js"></script>

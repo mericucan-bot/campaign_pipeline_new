@@ -58,6 +58,16 @@ Sonrasinda GitHub size su formda bir internet adresi verir:
 
 Not: GitHub Pages statik calisir. Bu nedenle internetteki versiyonda `Simdi Tara` butonu yoktur; veriler GitHub Actions calistikca guncellenir. Favoriler tarayici hafizasinda saklanir.
 
+## Dashboard ozellikleri
+
+- Benim Kartlarim filtresi: Axess, Maximum, Paraf, Paraf Premium, Vakif ve YKB kampanyalarini one cikarir.
+- Banka tarama sagligi: banka bazli aktif/pasif sayisini ve son gorulme tarihini gosterir.
+- Detay penceresi: kart icindeki bilgiyi dashboard'dan ayrilmadan okumayi saglar.
+- Manuel favori kampanya: elle eklenen kampanyalari direkt favorilere alir.
+- Sayfa basina don: uzun listelerde hizli yukari cikis saglar.
+- Tekillestirme: ayni banka icinde ayni URL veya ayni basliga sahip tekrar eden kampanyalari gizler.
+- Tarih etiketi: yakalanabilen tarihleri `Son katilim`, `Son X gun`, `Bugun bitiyor` formatinda gosterir.
+
 ### Telegram hata bildirimi
 
 Workflow hata verirse Telegram mesaji gonderebilir. Basarili calismalarda mesaj atmaz.

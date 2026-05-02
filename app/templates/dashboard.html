@@ -115,17 +115,35 @@
             <input type="checkbox" name="favorites" value="1" {% if favorites_only %}checked{% endif %}>
             <span>Favoriler</span>
           </label>
+
+          <label class="toggle {% if my_cards_only %}field-active{% endif %}" title="Benim kartlarimdaki kampanyalar">
+            <input type="checkbox" name="my_cards" value="1" {% if my_cards_only %}checked{% endif %}>
+            <span>Benim Kartlar&#305;m</span>
+          </label>
         </div>
 
         <button class="apply-button" type="submit">Uygula</button>
       </form>
       <div class="bank-rail" aria-label="Bankalar">
-        <a href="{{ url_for('index', q=search, active='1' if active_only else '0', category=selected_category, reward=selected_reward, sort=selected_sort, favorites='1' if favorites_only else None) }}" class="bank-chip {% if not selected_bank %}selected{% endif %}">T&#252;m&#252;</a>
+        <a href="{{ url_for('index', q=search, active='1' if active_only else '0', category=selected_category, reward=selected_reward, sort=selected_sort, favorites='1' if favorites_only else None, my_cards='1' if my_cards_only else None) }}" class="bank-chip {% if not selected_bank %}selected{% endif %}">T&#252;m&#252;</a>
         {% for bank in stats.banks %}
-          <a href="{{ url_for('index', bank=bank, q=search, active='1' if active_only else '0', category=selected_category, reward=selected_reward, sort=selected_sort, favorites='1' if favorites_only else None) }}" class="bank-chip {% if bank == selected_bank %}selected{% endif %}" title="{{ bank }}">{{ bank_label(bank) }}</a>
+          <a href="{{ url_for('index', bank=bank, q=search, active='1' if active_only else '0', category=selected_category, reward=selected_reward, sort=selected_sort, favorites='1' if favorites_only else None, my_cards='1' if my_cards_only else None) }}" class="bank-chip {% if bank == selected_bank %}selected{% endif %}" title="{{ bank }}">{{ bank_label(bank) }}</a>
         {% endfor %}
       </div>
     </section>
+
+    <details class="health-panel">
+      <summary>Banka tarama sa&#287;l&#305;&#287;&#305;</summary>
+      <div class="health-grid">
+        {% for row in bank_health %}
+          <div class="health-item">
+            <strong>{{ bank_label(row.bank) }}</strong>
+            <span>{{ row.active }} aktif · {{ row.inactive }} pasif</span>
+            <small>{{ row.last_seen[:10] or 'Tarih yok' }}</small>
+          </div>
+        {% endfor %}
+      </div>
+    </details>
 
     <details class="manual-entry">
       <summary>Manuel favori kampanya ekle</summary>
@@ -202,8 +220,19 @@
 
             <div class="campaign-footer">
               <span>v{{ campaign.version }} · {{ campaign.last_seen[:10] }}</span>
+              <button
+                class="detail-button"
+                type="button"
+                data-title="{{ campaign.title|e }}"
+                data-bank="{{ campaign.bank|e }}"
+                data-category="{{ campaign.category|e }}"
+                data-reward="{{ campaign.reward_type|e }}"
+                data-date="{{ campaign.deadline_label|e }}"
+                data-description="{{ campaign.description or ''|e }}"
+                data-url="{{ campaign.url or ''|e }}"
+              >Detay</button>
               {% if campaign.url %}
-                <a href="{{ campaign.url }}" target="_blank" rel="noreferrer">Detay</a>
+                <a href="{{ campaign.url }}" target="_blank" rel="noreferrer">Kaynak</a>
               {% endif %}
             </div>
           </div>
@@ -223,6 +252,21 @@
     </section>
   </main>
 
+  <dialog class="detail-modal">
+    <div class="modal-card">
+      <button class="modal-close" type="button" aria-label="Kapat">×</button>
+      <span class="modal-bank"></span>
+      <h2 class="modal-title"></h2>
+      <div class="badges">
+        <span class="category-badge modal-category"></span>
+        <span class="reward-badge modal-reward"></span>
+        <span class="date-badge modal-date"></span>
+      </div>
+      <p class="modal-description"></p>
+      <a class="modal-link" href="#" target="_blank" rel="noreferrer">Kayna&#287;a Git</a>
+    </div>
+  </dialog>
+
   <button class="back-to-top" type="button" aria-label="Sayfa ba&#351;&#305;na d&#246;n">↑</button>
 
   <script>
@@ -240,6 +284,29 @@
       });
       backToTop.addEventListener("click", () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    const modal = document.querySelector(".detail-modal");
+    const closeModal = document.querySelector(".modal-close");
+    document.querySelectorAll(".detail-button").forEach((button) => {
+      button.addEventListener("click", () => {
+        modal.querySelector(".modal-bank").textContent = button.dataset.bank;
+        modal.querySelector(".modal-title").textContent = button.dataset.title;
+        modal.querySelector(".modal-category").textContent = button.dataset.category;
+        modal.querySelector(".modal-reward").textContent = button.dataset.reward;
+        modal.querySelector(".modal-date").textContent = button.dataset.date;
+        modal.querySelector(".modal-description").textContent = button.dataset.description || "Aciklama kaynak sayfada.";
+        const link = modal.querySelector(".modal-link");
+        link.href = button.dataset.url || "#";
+        link.hidden = !button.dataset.url;
+        modal.showModal();
+      });
+    });
+    if (closeModal) {
+      closeModal.addEventListener("click", () => modal.close());
+      modal.addEventListener("click", (event) => {
+        if (event.target === modal) modal.close();
       });
     }
   </script>

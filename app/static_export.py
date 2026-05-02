@@ -3,7 +3,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from app.core.db import list_campaigns
-from app.dashboard import enrich_campaigns, bank_label
+from app.dashboard import build_bank_health, dedupe_campaigns, enrich_campaigns, bank_label
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -76,11 +76,15 @@ def main():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     output_path = DATA_DIR / "campaigns.json"
     previous_campaigns = load_previous_campaigns(output_path)
-    current_campaigns = [serialize_campaign(item) for item in enrich_campaigns(list_campaigns(active_only=False), set())]
+    current_campaigns = [
+        serialize_campaign(item)
+        for item in dedupe_campaigns(enrich_campaigns(list_campaigns(active_only=False), set()))
+    ]
     campaigns = merge_with_previous(current_campaigns, previous_campaigns)
     payload = {
         "generated_at": datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "stats": build_stats(campaigns),
+        "health": build_bank_health(campaigns),
         "campaigns": campaigns,
     }
     output_path.write_text(

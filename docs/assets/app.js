@@ -24,6 +24,15 @@ const labels = {
   "Manuel Favori": "Manuel",
 };
 
+const myCards = new Set([
+  "Akbank Axess",
+  "Is Bankasi Maximum",
+  "Paraf",
+  "Paraf Premium",
+  "VakifBank",
+  "Yapi Kredi World",
+]);
+
 const els = {
   campaigns: document.querySelector("#campaigns"),
   bankFilter: document.querySelector("#bankFilter"),
@@ -33,7 +42,9 @@ const els = {
   searchInput: document.querySelector("#searchInput"),
   activeOnly: document.querySelector("#activeOnly"),
   favoritesOnly: document.querySelector("#favoritesOnly"),
+  myCardsOnly: document.querySelector("#myCardsOnly"),
   bankRail: document.querySelector("#bankRail"),
+  healthGrid: document.querySelector("#healthGrid"),
   statSubline: document.querySelector("#statSubline"),
   activeCount: document.querySelector("#activeCount"),
   bankCount: document.querySelector("#bankCount"),
@@ -45,6 +56,8 @@ const els = {
   manualUrl: document.querySelector("#manualUrl"),
   manualImage: document.querySelector("#manualImage"),
   backToTop: document.querySelector(".back-to-top"),
+  modal: document.querySelector(".detail-modal"),
+  modalClose: document.querySelector(".modal-close"),
 };
 
 fetch("./data/campaigns.json", { cache: "no-store" })
@@ -52,6 +65,7 @@ fetch("./data/campaigns.json", { cache: "no-store" })
   .then((payload) => {
     state.campaigns = [...(payload.campaigns || []), ...state.manualCampaigns];
     hydrateStats(payload);
+    hydrateHealth(payload.health || []);
     hydrateFilters();
     bindEvents();
     applyFilters();
@@ -78,7 +92,7 @@ function hydrateFilters() {
 }
 
 function bindEvents() {
-  [els.bankFilter, els.categoryFilter, els.rewardFilter, els.sortFilter, els.searchInput, els.activeOnly, els.favoritesOnly].forEach((el) => {
+  [els.bankFilter, els.categoryFilter, els.rewardFilter, els.sortFilter, els.searchInput, els.activeOnly, els.favoritesOnly, els.myCardsOnly].forEach((el) => {
     el.addEventListener("input", applyFilters);
     el.addEventListener("change", applyFilters);
   });
@@ -93,6 +107,12 @@ function bindEvents() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
+  if (els.modalClose && els.modal) {
+    els.modalClose.addEventListener("click", () => els.modal.close());
+    els.modal.addEventListener("click", (event) => {
+      if (event.target === els.modal) els.modal.close();
+    });
+  }
 }
 
 function applyFilters() {
@@ -102,6 +122,7 @@ function applyFilters() {
   const reward = els.rewardFilter.value;
   const activeOnly = els.activeOnly.checked;
   const favoritesOnly = els.favoritesOnly.checked;
+  const myCardsOnly = els.myCardsOnly.checked;
 
   let rows = state.campaigns.filter((item) => {
     const haystack = normalize(`${item.title || ""} ${item.description || ""} ${item.bank || ""}`);
@@ -110,6 +131,7 @@ function applyFilters() {
       && (!reward || item.reward_type === reward)
       && (!activeOnly || item.is_active)
       && (!favoritesOnly || state.favorites.has(String(item.id)))
+      && (!myCardsOnly || myCards.has(item.bank))
       && (!query || haystack.includes(query));
   });
 
@@ -169,6 +191,9 @@ function renderCampaigns() {
       applyFilters();
     });
   });
+  els.campaigns.querySelectorAll(".detail-button").forEach((button) => {
+    button.addEventListener("click", () => showDetail(button.dataset));
+  });
 }
 
 function card(item) {
@@ -198,11 +223,48 @@ function card(item) {
         ${item.description ? `<p>${escapeHtml(item.description)}</p>` : ""}
         <div class="campaign-footer">
           <span>v${item.version || 1} · ${String(item.last_seen || "").slice(0, 10)}</span>
-          ${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noreferrer">Detay</a>` : ""}
+          <button class="detail-button" type="button"
+            data-title="${escapeAttr(item.title || "")}"
+            data-bank="${escapeAttr(item.bank || "")}"
+            data-category="${escapeAttr(item.category || "Genel")}"
+            data-reward="${escapeAttr(item.reward_type || "Firsat")}"
+            data-date="${escapeAttr(item.deadline_label || "Tarih kaynakta")}"
+            data-description="${escapeAttr(item.description || "")}"
+            data-url="${escapeAttr(item.url || "")}">Detay</button>
+          ${item.url ? `<a href="${escapeAttr(item.url)}" target="_blank" rel="noreferrer">Kaynak</a>` : ""}
         </div>
       </div>
     </article>
   `;
+}
+
+function hydrateHealth(rows) {
+  if (!els.healthGrid) return;
+  if (!rows.length) {
+    els.healthGrid.innerHTML = `<div class="health-item"><strong>Veri yok</strong><span>Bir sonraki taramada olusur</span><small>-</small></div>`;
+    return;
+  }
+  els.healthGrid.innerHTML = rows.map((row) => `
+    <div class="health-item">
+      <strong>${escapeHtml(bankLabel(row.bank || ""))}</strong>
+      <span>${row.active || 0} aktif · ${row.inactive || 0} pasif</span>
+      <small>${String(row.last_seen || "Tarih yok").slice(0, 10)}</small>
+    </div>
+  `).join("");
+}
+
+function showDetail(data) {
+  if (!els.modal) return;
+  els.modal.querySelector(".modal-bank").textContent = data.bank || "";
+  els.modal.querySelector(".modal-title").textContent = data.title || "";
+  els.modal.querySelector(".modal-category").textContent = data.category || "";
+  els.modal.querySelector(".modal-reward").textContent = data.reward || "";
+  els.modal.querySelector(".modal-date").textContent = data.date || "";
+  els.modal.querySelector(".modal-description").textContent = data.description || "Aciklama kaynak sayfada.";
+  const link = els.modal.querySelector(".modal-link");
+  link.href = data.url || "#";
+  link.hidden = !data.url;
+  els.modal.showModal();
 }
 
 function addManualCampaign(event) {
@@ -274,6 +336,7 @@ function gainScore(item) {
 }
 
 function normalize(value) {
+  value = String(value || "").replaceAll("yurtdışı", "yurt dışı").replaceAll("yurtdisi", "yurt disi");
   return String(value || "").toLocaleLowerCase("tr-TR").replaceAll("ı", "i").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ğ/g, "g").replace(/ş/g, "s").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ç/g, "c");
 }
 
