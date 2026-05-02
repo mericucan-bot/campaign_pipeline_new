@@ -182,7 +182,7 @@ function bindEvents() {
       const willOpen = els.calculatorPanel.hidden;
       els.calculatorPanel.hidden = !willOpen;
       els.calculatorToggle.setAttribute("aria-expanded", String(willOpen));
-      els.calculatorToggle.textContent = `🧮 Kazanım Hesaplayıcısı ${willOpen ? "▲" : "▼"}`;
+      els.calculatorToggle.textContent = `Kazanım Hesaplayıcısı ${willOpen ? "▲" : "▼"}`;
       if (willOpen) hesapla();
     });
   }
