@@ -241,7 +241,7 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .card-bank-meta strong { color: #eef5f7; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-bank-meta .category-badge { align-self: start; font-size: 10px; padding: 5px 7px; }
 .card-body { display: grid; gap: 4px; }
-.card-title { font-size: 14px; font-weight: 600; line-height: 1.35; margin: 0 0 4px; }
+.card-title { display: -webkit-box; font-size: 14px; font-weight: 600; line-height: 1.35; margin: 0 0 4px; overflow: hidden; text-overflow: ellipsis; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .card-description { color: var(--muted); display: -webkit-box; font-size: 12px; line-height: 1.45; margin: 0; overflow: hidden; text-overflow: ellipsis; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .card-footer { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
 .card-source { display: grid; gap: 10px; padding-top: 2px; }
@@ -355,6 +355,7 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
   .card-footer { align-items: flex-start; flex-direction: column; }
   .status, .category-badge, .reward-badge, .date-badge, .urgent-badge { font-size: 10px; padding: 6px 7px; }
   .campaign-card h2 { font-size: 13px; line-height: 1.25; }
+  .card-title { -webkit-line-clamp: 2; }
   .campaign-highlight { font-size: 13px; padding: 7px 8px; }
   .campaign-footer { gap: 7px; padding-top: 10px; }
   .campaign-footer a, .detail-button { flex: 1 1 0; font-size: 11px; justify-content: center; min-height: 32px; padding: 0 7px; }

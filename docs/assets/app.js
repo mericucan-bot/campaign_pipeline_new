@@ -342,7 +342,7 @@ function card(item) {
       </div>
 
       <div class="card-body">
-        <h2 class="card-title">${escapeHtml(data.baslik)}</h2>
+        <h2 class="card-title" title="${escapeAttr(data.fullTitle || data.baslik)}">${escapeHtml(data.baslik)}</h2>
         ${data.aciklama ? `<p class="card-description">${escapeHtml(data.aciklama)}</p>` : ""}
       </div>
 
@@ -363,10 +363,14 @@ function card(item) {
 }
 
 function adaptCampaign(item) {
+  const rawTitle = item.baslik || item.title || "";
+  const rawDescription = item.aciklama || item.description || "";
+  const text = compactCampaignText(rawTitle, rawDescription);
   return {
     id: item.id,
-    baslik: item.baslik || item.title || "",
-    aciklama: item.aciklama || item.description || "",
+    baslik: text.baslik,
+    aciklama: text.aciklama,
+    fullTitle: String(rawTitle || "").replace(/\s+/g, " ").trim(),
     banka: item.banka || item.bank || "Kampanya",
     kategori: item.kategori || item.category || "Genel",
     kazanim: item.kazanim || item.highlight || normalizeKazanim(item, state.monthlySpend),
@@ -379,6 +383,32 @@ function adaptCampaign(item) {
     aktif: item.aktif ?? item.is_active ?? true,
     sourceDate: String(item.last_seen || item.first_seen || "").slice(0, 10) || "Tarih yok",
   };
+}
+
+function compactCampaignText(title, description) {
+  const cleanTitle = String(title || "").replace(/\s+/g, " ").trim();
+  const cleanDescription = String(description || "").replace(/\s+/g, " ").trim();
+  if (cleanTitle.length <= 120) {
+    return { baslik: cleanTitle, aciklama: cleanDescription };
+  }
+
+  return {
+    baslik: shortenText(cleanTitle, 96),
+    aciklama: cleanDescription && !isDeadlineOnlyText(cleanDescription) ? cleanDescription : cleanTitle,
+  };
+}
+
+function shortenText(text, maxLength) {
+  const value = String(text || "").trim();
+  if (value.length <= maxLength) return value;
+  const cut = value.slice(0, maxLength);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${cut.slice(0, lastSpace > 60 ? lastSpace : maxLength).trim()}...`;
+}
+
+function isDeadlineOnlyText(text) {
+  const value = normalize(text);
+  return /^(?:\d+\s+gun\s+kaldi|bu kampanya bitmistir|tarih kaynakta|suresi gecmis)$/.test(value);
 }
 
 function rewardBadge(data) {
