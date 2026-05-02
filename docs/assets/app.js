@@ -216,7 +216,7 @@ function initPreferredFlow() {
 
 function applyFilters() {
   state.selectedBank = els.bankFilter.value;
-  const query = normalize(els.searchInput.value);
+  const query = normalizeSearch(els.searchInput.value);
   const category = els.categoryFilter.value;
   const reward = els.rewardFilter.value;
   const activeOnly = els.activeOnly.checked;
@@ -225,7 +225,7 @@ function applyFilters() {
   const usedOnly = els.usedOnly.checked;
 
   let rows = state.campaigns.filter((item) => {
-    const haystack = normalize(`${item.title || ""} ${item.description || ""} ${item.bank || ""}`);
+    const haystack = normalizeSearch(`${item.title || ""} ${item.description || ""} ${item.bank || ""} ${item.highlight || ""} ${item.category || ""}`);
     return (!state.selectedBank || item.bank === state.selectedBank)
       && (!category || item.category === category)
       && (!reward || item.reward_type === reward)
@@ -728,7 +728,7 @@ function hesapla() {
       : sonuclar.map((item, index) => `
         <button class="calculator-result" type="button" onclick="highlightCard('${escapeAttr(item.id)}')">
           <span title="${escapeAttr(item.baslik)}">${rozetler[index]} ${escapeHtml(item.banka)} — ${escapeHtml(shortenText(item.baslik, 44))}</span>
-          <strong>+${Math.round(item.tahminiKazanim).toLocaleString("tr-TR")}₺</strong>
+          <strong>≈ +${Math.round(item.tahminiKazanim).toLocaleString("tr-TR")}₺</strong>
         </button>
       `).join("");
   }
@@ -1068,14 +1068,15 @@ function showLoadingState() {
 
 function showEmptyState(filterContext) {
   const context = filterContext || "Seçili filtreler";
+  const emptyFavorites = els.favoritesOnly?.checked && state.favorites.size === 0;
   els.campaigns.innerHTML = `
     <div class="state-panel empty-state" aria-live="polite">
       <svg class="state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="11" cy="11" r="7"></circle>
         <path d="m20 20-3.5-3.5"></path>
       </svg>
-      <h2>Sonuç bulunamadı</h2>
-      <p><strong>${escapeHtml(context)}</strong> için kampanya yok. Filtreleri değiştirmeyi deneyin.</p>
+      <h2>${emptyFavorites ? "Henüz favori kampanyan yok" : "Sonuç bulunamadı"}</h2>
+      <p>${emptyFavorites ? "Kartlardaki yıldızlara basarak ilgilendiğin kampanyaları burada toplayabilirsin." : `<strong>${escapeHtml(context)}</strong> için kampanya yok. Filtreleri değiştirmeyi deneyin.`}</p>
       <div class="state-actions">
         <button type="button" class="apply-button" data-clear-filters>Filtreleri Temizle</button>
         <button type="button" class="secondary-button" data-show-all>Tüm Kampanyaları Gör</button>
@@ -1147,6 +1148,10 @@ function activeFilterContext() {
 function normalize(value) {
   value = String(value || "").replaceAll("yurtdışı", "yurt dışı").replaceAll("yurtdisi", "yurt disi");
   return String(value || "").toLocaleLowerCase("tr-TR").replaceAll("ı", "i").replaceAll("ğ", "g").replaceAll("ş", "s").replaceAll("ö", "o").replaceAll("ü", "u").replaceAll("ç", "c").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function normalizeSearch(value) {
+  return normalize(value).replace(/\s+/g, "");
 }
 
 function slug(value) {
