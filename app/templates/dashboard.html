@@ -24,19 +24,19 @@
     <div class="hero-grid">
       <section class="intro">
         <p class="eyebrow">Campaign intelligence <span>Created by MeRiC</span></p>
-        <h1>T&#252;m Kampanyalar TeK Ekranda</h1>
+        <h1>T&#252;m Kampanyalar Tek Ekranda</h1>
         <p class="lead">Kart f&#305;rsatlar&#305;n&#305; filtrele, favorilerine al ve g&#252;ncel kaynaklardan h&#305;zl&#305;ca takip et.</p>
       </section>
 
-      <section class="stats-panel" aria-label="Ozet">
+      <section class="stats-panel" aria-label="Özet">
         <div class="snapshot">
           <div class="stat-card">
-            <span>Aktif Kampanya</span>
+            <span>Aktif kampanya</span>
             <strong>{{ stats.active }}</strong>
             <i aria-hidden="true">&#9679;</i>
           </div>
           <div class="stat-card">
-            <span>Banka/Kart</span>
+            <span>Banka/kart</span>
             <strong>{{ stats.bank_count }}</strong>
             <i aria-hidden="true">&#9638;</i>
           </div>
@@ -46,7 +46,7 @@
             <i aria-hidden="true">&#9733;</i>
           </div>
           <div class="stat-card">
-            <span>Veri Deposu</span>
+            <span>Veri deposu</span>
             <strong>{{ stats.storage }}</strong>
             <i aria-hidden="true">&#9678;</i>
           </div>
@@ -105,20 +105,20 @@
         </label>
 
         <div class="filter-switches">
-          <label class="toggle {% if active_only %}field-active{% endif %}" title="Sadece aktif kampanyalari goster">
+          <label class="toggle {% if active_only %}field-active{% endif %}" title="Sadece aktif kampanyaları göster">
             <input type="hidden" name="active" value="0">
             <input type="checkbox" name="active" value="1" {% if active_only %}checked{% endif %}>
             <span>Aktif</span>
           </label>
 
-          <label class="toggle {% if favorites_only %}field-active{% endif %}" title="Favori kampanyalarim">
+          <label class="toggle {% if favorites_only %}field-active{% endif %}" title="Favori kampanyalarım">
             <input type="checkbox" name="favorites" value="1" {% if favorites_only %}checked{% endif %}>
             <span>Favoriler</span>
           </label>
 
-          <label class="toggle {% if my_cards_only %}field-active{% endif %}" title="Benim kartlarimdaki kampanyalar">
+          <label class="toggle {% if my_cards_only %}field-active{% endif %}" title="Benim kartlarımdaki kampanyalar">
             <input id="myCardsOnly" type="checkbox" value="1" {% if my_cards_only %}checked{% endif %}>
-            <span>Benim Kartlar&#305;m</span>
+            <span>Benim kartlar&#305;m</span>
           </label>
         </div>
 
@@ -227,7 +227,7 @@
         <button class="settings-close" type="button" data-settings-close aria-label="Kapat">x</button>
       </div>
 
-      <p class="settings-copy">Ana ekrani kampanyalara ayirdik. Kart secimi, sistem sagligi ve manuel favoriler burada duruyor.</p>
+      <p class="settings-copy">Ana ekranı kampanyalara ayırdık. Kart seçimi, sistem sağlığı ve manuel favoriler burada duruyor.</p>
 
       <details class="my-cards-panel" open>
         <summary>Kartlar&#305;m&#305; Se&#231;</summary>
@@ -273,7 +273,7 @@
             <span>G&#246;rsel</span>
             <input name="image_url" type="url" placeholder="https://...">
           </label>
-          <button class="apply-button" type="submit">Favoriye Ekle</button>
+          <button class="apply-button" type="submit">Favoriye ekle</button>
         </form>
       </details>
     </div>
@@ -289,7 +289,7 @@
         <span class="date-badge modal-date"></span>
       </div>
       <p class="modal-description"></p>
-      <a class="modal-link" href="#" target="_blank" rel="noreferrer">Kayna&#287;a Git <span class="external-icon" aria-hidden="true">↗</span></a>
+      <a class="modal-link" href="#" target="_blank" rel="noreferrer">Kayna&#287;a git <span class="external-icon" aria-hidden="true">↗</span></a>
     </div>
   </dialog>
 
@@ -384,7 +384,7 @@
         modal.querySelector(".modal-category").textContent = button.dataset.category;
         modal.querySelector(".modal-reward").textContent = button.dataset.reward;
         modal.querySelector(".modal-date").textContent = button.dataset.date;
-        modal.querySelector(".modal-description").textContent = button.dataset.description || "Aciklama kaynak sayfada.";
+        modal.querySelector(".modal-description").textContent = button.dataset.description || "Açıklama kaynak sayfada.";
         const link = modal.querySelector(".modal-link");
         link.href = button.dataset.url || "#";
         link.hidden = !button.dataset.url;

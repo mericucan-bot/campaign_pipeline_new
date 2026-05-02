@@ -85,7 +85,7 @@ fetch("./data/campaigns.json", { cache: "no-store" })
     applyFilters();
   })
   .catch(() => {
-    els.campaigns.innerHTML = emptyState("Veri okunamadi", "GitHub Actions henuz kampanya verisini uretmemis olabilir.");
+    els.campaigns.innerHTML = emptyState("Veri okunamadı", "GitHub Actions henüz kampanya verisini üretmemiş olabilir.");
   });
 
 function hydrateStats(payload) {
@@ -94,14 +94,14 @@ function hydrateStats(payload) {
   els.bankCount.textContent = stats.bank_count || unique(state.campaigns.map((item) => item.bank)).length;
   els.favoriteCount.textContent = state.favorites.size;
   if (payload.generated_at) {
-    els.generatedAt.textContent = `Son guncelleme: ${new Date(payload.generated_at).toLocaleString("tr-TR")}`;
+    els.generatedAt.textContent = `Son güncelleme: ${new Date(payload.generated_at).toLocaleString("tr-TR")}`;
   }
 }
 
 function hydrateFilters() {
-  fillSelect(els.bankFilter, "Tumu", unique(state.campaigns.map((item) => item.bank)), (bank) => bankLabel(bank));
-  fillSelect(els.categoryFilter, "Tum kategoriler", unique(state.campaigns.map((item) => item.category)));
-  fillSelect(els.rewardFilter, "Tum kazanimlar", unique(state.campaigns.map((item) => item.reward_type)));
+  fillSelect(els.bankFilter, "Tümü", unique(state.campaigns.map((item) => item.bank)), (bank) => bankLabel(bank));
+  fillSelect(els.categoryFilter, "Tüm kategoriler", unique(state.campaigns.map((item) => item.category)));
+  fillSelect(els.rewardFilter, "Tüm kazanımlar", unique(state.campaigns.map((item) => item.reward_type)));
   renderBankRail();
 }
 
@@ -170,7 +170,7 @@ function applyFilters() {
   renderCampaigns();
   const total = state.campaigns.length;
   const inactive = state.campaigns.filter((item) => !item.is_active).length;
-  els.statSubline.textContent = `${rows.length} sonuc · ${total} kayit · ${inactive} pasif`;
+  els.statSubline.textContent = `${rows.length} sonuç · ${total} kayıt · ${inactive} pasif`;
   els.favoriteCount.textContent = state.favorites.size;
 }
 
@@ -209,7 +209,7 @@ function sortRows(rows, sort) {
 function renderBankRail() {
   const banks = unique(state.campaigns.map((item) => item.bank));
   els.bankRail.innerHTML = [
-    chip("", "Tumu", !state.selectedBank),
+    chip("", "Tümü", !state.selectedBank),
     ...banks.map((bank) => chip(bank, bankLabel(bank), bank === state.selectedBank)),
   ].join("");
   els.bankRail.querySelectorAll("button").forEach((button) => {
@@ -223,8 +223,8 @@ function renderBankRail() {
 function renderCampaigns() {
   if (!state.filtered.length) {
     els.campaigns.innerHTML = els.favoritesOnly.checked
-      ? emptyState("Henuz favori kampanyan yok", "Begendigin kampanyalarin yildizina bas; sonra burada sadece takip ettiklerini gor.")
-      : emptyState("Kayit yok", "Filtreleri gevselt veya aramani degistir.");
+      ? emptyState("Henüz favori kampanyan yok", "Beğendiğin kampanyaların yıldızına bas; sonra burada sadece takip ettiklerini gör.")
+      : emptyState("Kayıt yok", "Filtreleri gevşet veya aramanı değiştir.");
     return;
   }
 
@@ -261,7 +261,7 @@ function card(item) {
         </div>
         <div class="badges">
           <span class="category-badge category-${slug(item.category)}">${escapeHtml(item.category || "Genel")}</span>
-          <span class="reward-badge reward-${slug(item.reward_type)}">${escapeHtml(item.reward_type || "Firsat")}</span>
+          <span class="reward-badge reward-${slug(item.reward_type)}">${escapeHtml(item.reward_type || "Fırsat")}</span>
           <span class="date-badge">${escapeHtml(item.deadline_label || "Tarih kaynakta")}</span>
           ${item.deadline_urgent ? `<span class="urgent-badge">Bitiyor</span>` : ""}
         </div>
@@ -274,7 +274,7 @@ function card(item) {
             data-title="${escapeAttr(item.title || "")}"
             data-bank="${escapeAttr(item.bank || "")}"
             data-category="${escapeAttr(item.category || "Genel")}"
-            data-reward="${escapeAttr(item.reward_type || "Firsat")}"
+            data-reward="${escapeAttr(item.reward_type || "Fırsat")}"
             data-date="${escapeAttr(item.deadline_label || "Tarih kaynakta")}"
             data-description="${escapeAttr(item.description || "")}"
             data-url="${escapeAttr(item.url || "")}">Detay</button>
@@ -307,7 +307,7 @@ function showDetail(data) {
   els.modal.querySelector(".modal-category").textContent = data.category || "";
   els.modal.querySelector(".modal-reward").textContent = data.reward || "";
   els.modal.querySelector(".modal-date").textContent = data.date || "";
-  els.modal.querySelector(".modal-description").textContent = data.description || "Aciklama kaynak sayfada.";
+  els.modal.querySelector(".modal-description").textContent = data.description || "Açıklama kaynak sayfada.";
   const link = els.modal.querySelector(".modal-link");
   link.href = data.url || "#";
   link.hidden = !data.url;
@@ -336,7 +336,7 @@ function addManualCampaign(event) {
     last_updated: now,
     is_active: true,
     category: "Genel",
-    reward_type: "Firsat",
+    reward_type: "Fırsat",
     favorite: true,
     brand_code: "MF",
     deadline: null,
@@ -361,7 +361,7 @@ function fillSelect(select, allLabel, values, labeler = (value) => value) {
 }
 
 function chip(value, label, selected) {
-  return `<button type="button" class="bank-chip ${selected ? "selected" : ""}" data-bank="${escapeAttr(value)}" title="${escapeAttr(value || "Tumu")}">${escapeHtml(label)}</button>`;
+  return `<button type="button" class="bank-chip ${selected ? "selected" : ""}" data-bank="${escapeAttr(value)}" title="${escapeAttr(value || "Tümü")}">${escapeHtml(label)}</button>`;
 }
 
 function emptyState(title, text) {
@@ -384,7 +384,7 @@ function gainScore(item) {
 
 function normalize(value) {
   value = String(value || "").replaceAll("yurtdışı", "yurt dışı").replaceAll("yurtdisi", "yurt disi");
-  return String(value || "").toLocaleLowerCase("tr-TR").replaceAll("ı", "i").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ğ/g, "g").replace(/ş/g, "s").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ç/g, "c");
+  return String(value || "").toLocaleLowerCase("tr-TR").replaceAll("ı", "i").replaceAll("ğ", "g").replaceAll("ş", "s").replaceAll("ö", "o").replaceAll("ü", "u").replaceAll("ç", "c").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function slug(value) {
