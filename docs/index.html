@@ -68,47 +68,61 @@
           <label class="toggle"><input id="favoritesOnly" type="checkbox"><span>Favoriler</span></label>
           <label class="toggle"><input id="myCardsOnly" type="checkbox"><span>Benim Kartlarim</span></label>
         </div>
+        <button class="settings-open" type="button" data-settings-open>Ayarlar</button>
       </form>
       <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
     </section>
-
-    <details class="my-cards-panel">
-      <summary>Kartlarimi Sec</summary>
-      <div class="my-cards-grid" id="myCardsGrid"></div>
-    </details>
-
-    <details class="health-panel">
-      <summary>Banka tarama sagligi</summary>
-      <div class="health-grid" id="healthGrid"></div>
-    </details>
-
-    <details class="manual-entry">
-      <summary>Manuel favori kampanya ekle</summary>
-      <form class="manual-form" id="manualForm">
-        <label>
-          <span>Baslik</span>
-          <input id="manualTitle" required placeholder="Kart kampanyasi basligi">
-        </label>
-        <label>
-          <span>Aciklama</span>
-          <input id="manualDescription" placeholder="Kisa not, kazanim veya tarih">
-        </label>
-        <label>
-          <span>Link</span>
-          <input id="manualUrl" type="url" placeholder="https://...">
-        </label>
-        <label>
-          <span>Gorsel</span>
-          <input id="manualImage" type="url" placeholder="https://...">
-        </label>
-        <button class="apply-button" type="submit">Favoriye Ekle</button>
-      </form>
-    </details>
 
     <section class="campaigns" id="campaigns">
       <div class="empty"><div class="empty-icon" aria-hidden="true">&#9678;</div><h2>Yukleniyor</h2><p>Kampanya verisi okunuyor.</p></div>
     </section>
   </main>
+
+  <dialog class="settings-drawer">
+    <div class="settings-shell">
+      <div class="settings-head">
+        <div>
+          <span>Kontrol merkezi</span>
+          <h2>Ayarlar</h2>
+        </div>
+        <button class="settings-close" type="button" data-settings-close aria-label="Kapat">x</button>
+      </div>
+      <p class="settings-copy">Ana ekrani kampanyalara ayirdik. Kart secimi, sistem sagligi ve manuel favoriler burada duruyor.</p>
+
+      <details class="my-cards-panel" open>
+        <summary>Kartlarimi Sec</summary>
+        <div class="my-cards-grid" id="myCardsGrid"></div>
+      </details>
+
+      <details class="health-panel">
+        <summary>Banka tarama sagligi</summary>
+        <div class="health-grid" id="healthGrid"></div>
+      </details>
+
+      <details class="manual-entry">
+        <summary>Manuel favori kampanya ekle</summary>
+        <form class="manual-form" id="manualForm">
+          <label>
+            <span>Baslik</span>
+            <input id="manualTitle" required placeholder="Kart kampanyasi basligi">
+          </label>
+          <label>
+            <span>Aciklama</span>
+            <input id="manualDescription" placeholder="Kisa not, kazanim veya tarih">
+          </label>
+          <label>
+            <span>Link</span>
+            <input id="manualUrl" type="url" placeholder="https://...">
+          </label>
+          <label>
+            <span>Gorsel</span>
+            <input id="manualImage" type="url" placeholder="https://...">
+          </label>
+          <button class="apply-button" type="submit">Favoriye Ekle</button>
+        </form>
+      </details>
+    </div>
+  </dialog>
 
   <dialog class="detail-modal">
     <div class="modal-card">

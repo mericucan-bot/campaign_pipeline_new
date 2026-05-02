@@ -122,6 +122,7 @@
           </label>
         </div>
 
+        <button class="settings-open" type="button" data-settings-open>Ayarlar</button>
         <button class="apply-button" type="submit">Uygula</button>
       </form>
       <div class="bank-rail" aria-label="Bankalar">
@@ -131,54 +132,6 @@
         {% endfor %}
       </div>
     </section>
-
-    <details class="my-cards-panel">
-      <summary>Kartlar&#305;m&#305; Se&#231;</summary>
-      <div class="my-cards-grid">
-        {% for bank in stats.banks %}
-          <label class="card-pick">
-            <input type="checkbox" value="{{ bank }}" data-card-pick>
-            <span>{{ bank_label(bank) }}</span>
-          </label>
-        {% endfor %}
-      </div>
-    </details>
-
-    <details class="health-panel">
-      <summary>Banka tarama sa&#287;l&#305;&#287;&#305;</summary>
-      <div class="health-grid">
-        {% for row in bank_health %}
-          <div class="health-item">
-            <strong>{{ bank_label(row.bank) }}</strong>
-            <span>{{ row.active }} aktif · {{ row.inactive }} pasif</span>
-            <small>{{ row.last_seen[:10] or 'Tarih yok' }}</small>
-          </div>
-        {% endfor %}
-      </div>
-    </details>
-
-    <details class="manual-entry">
-      <summary>Manuel favori kampanya ekle</summary>
-      <form action="{{ url_for('manual_campaign') }}" method="post" class="manual-form">
-        <label>
-          <span>Ba&#351;l&#305;k</span>
-          <input name="title" required placeholder="Kart kampanyas&#305; ba&#351;l&#305;&#287;&#305;">
-        </label>
-        <label>
-          <span>A&#231;&#305;klama</span>
-          <input name="description" placeholder="K&#305;sa not, kazan&#305;m veya tarih">
-        </label>
-        <label>
-          <span>Link</span>
-          <input name="url" type="url" placeholder="https://...">
-        </label>
-        <label>
-          <span>G&#246;rsel</span>
-          <input name="image_url" type="url" placeholder="https://...">
-        </label>
-        <button class="apply-button" type="submit">Favoriye Ekle</button>
-      </form>
-    </details>
 
     <section class="campaigns">
       <div class="skeleton-grid" aria-hidden="true">
@@ -264,6 +217,67 @@
     </section>
   </main>
 
+  <dialog class="settings-drawer">
+    <div class="settings-shell">
+      <div class="settings-head">
+        <div>
+          <span>Kontrol merkezi</span>
+          <h2>Ayarlar</h2>
+        </div>
+        <button class="settings-close" type="button" data-settings-close aria-label="Kapat">x</button>
+      </div>
+
+      <p class="settings-copy">Ana ekrani kampanyalara ayirdik. Kart secimi, sistem sagligi ve manuel favoriler burada duruyor.</p>
+
+      <details class="my-cards-panel" open>
+        <summary>Kartlar&#305;m&#305; Se&#231;</summary>
+        <div class="my-cards-grid">
+          {% for bank in stats.banks %}
+            <label class="card-pick">
+              <input type="checkbox" value="{{ bank }}" data-card-pick>
+              <span>{{ bank_label(bank) }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </details>
+
+      <details class="health-panel">
+        <summary>Banka tarama sa&#287;l&#305;&#287;&#305;</summary>
+        <div class="health-grid">
+          {% for row in bank_health %}
+            <div class="health-item">
+              <strong>{{ bank_label(row.bank) }}</strong>
+              <span>{{ row.active }} aktif · {{ row.inactive }} pasif</span>
+              <small>{{ row.last_seen[:10] or 'Tarih yok' }}</small>
+            </div>
+          {% endfor %}
+        </div>
+      </details>
+
+      <details class="manual-entry">
+        <summary>Manuel favori kampanya ekle</summary>
+        <form action="{{ url_for('manual_campaign') }}" method="post" class="manual-form">
+          <label>
+            <span>Ba&#351;l&#305;k</span>
+            <input name="title" required placeholder="Kart kampanyas&#305; ba&#351;l&#305;&#287;&#305;">
+          </label>
+          <label>
+            <span>A&#231;&#305;klama</span>
+            <input name="description" placeholder="K&#305;sa not, kazan&#305;m veya tarih">
+          </label>
+          <label>
+            <span>Link</span>
+            <input name="url" type="url" placeholder="https://...">
+          </label>
+          <label>
+            <span>G&#246;rsel</span>
+            <input name="image_url" type="url" placeholder="https://...">
+          </label>
+          <button class="apply-button" type="submit">Favoriye Ekle</button>
+        </form>
+      </details>
+    </div>
+  </dialog>
   <dialog class="detail-modal">
     <div class="modal-card">
       <button class="modal-close" type="button" aria-label="Kapat">×</button>
@@ -338,6 +352,23 @@
     if (myCardsOnlyInput) {
       myCardsOnlyInput.addEventListener("change", applyMyCardsFilter);
       applyMyCardsFilter();
+    }
+
+    const settingsDrawer = document.querySelector(".settings-drawer");
+    document.querySelectorAll("[data-settings-open]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (settingsDrawer) settingsDrawer.showModal();
+      });
+    });
+    document.querySelectorAll("[data-settings-close]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (settingsDrawer) settingsDrawer.close();
+      });
+    });
+    if (settingsDrawer) {
+      settingsDrawer.addEventListener("click", (event) => {
+        if (event.target === settingsDrawer) settingsDrawer.close();
+      });
     }
 
     const modal = document.querySelector(".detail-modal");

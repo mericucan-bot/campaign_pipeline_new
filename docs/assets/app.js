@@ -67,6 +67,9 @@ const els = {
   backToTop: document.querySelector(".back-to-top"),
   modal: document.querySelector(".detail-modal"),
   modalClose: document.querySelector(".modal-close"),
+  settingsDrawer: document.querySelector(".settings-drawer"),
+  settingsOpen: document.querySelector("[data-settings-open]"),
+  settingsClose: document.querySelector("[data-settings-close]"),
 };
 
 fetch("./data/campaigns.json", { cache: "no-store" })
@@ -121,6 +124,15 @@ function bindEvents() {
     els.modalClose.addEventListener("click", () => els.modal.close());
     els.modal.addEventListener("click", (event) => {
       if (event.target === els.modal) els.modal.close();
+    });
+  }
+  if (els.settingsOpen && els.settingsDrawer) {
+    els.settingsOpen.addEventListener("click", () => els.settingsDrawer.showModal());
+  }
+  if (els.settingsClose && els.settingsDrawer) {
+    els.settingsClose.addEventListener("click", () => els.settingsDrawer.close());
+    els.settingsDrawer.addEventListener("click", (event) => {
+      if (event.target === els.settingsDrawer) els.settingsDrawer.close();
     });
   }
 }
