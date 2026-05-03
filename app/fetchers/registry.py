@@ -1,15 +1,10 @@
-from .cards import fetch_bankkart, fetch_kuveytturk, fetch_maximum, fetch_nkolay, fetch_on_kart, fetch_teb_bonus, fetch_worldcard
+from .cards import fetch_axess, fetch_bankkart, fetch_kuveytturk, fetch_maximum, fetch_nkolay, fetch_on_kart, fetch_teb_bonus, fetch_worldcard
 from .generic import fetch_campaign_listing
 from .paraf import fetch_paraf, fetch_paraf_premium
 from .vakifkart import fetch_vakifkart
 
 
 BANK_SOURCES = [
-    {
-        "name": "akbank",
-        "url": "https://www.axess.com.tr/axess/kampanya/8/393/kampanyalar",
-        "display": "Akbank Axess",
-    },
     {
         "name": "garanti",
         "url": "https://www.bonus.com.tr/kampanyalar",
@@ -33,6 +28,7 @@ def _generic_fetcher(source):
 
 
 BANK_FETCHERS = {
+    "Akbank Axess": fetch_axess,
     "Paraf": fetch_paraf,
     "Paraf Premium": fetch_paraf_premium,
     "VakifBank": fetch_vakifkart,

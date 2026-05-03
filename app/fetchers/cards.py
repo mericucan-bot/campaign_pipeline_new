@@ -6,6 +6,99 @@ from bs4 import BeautifulSoup
 from .generic import HEADERS, clean_text
 
 
+def fetch_axess(max_pages=30):
+    base_url = "https://www.axess.com.tr/axess/kampanya/8/393/kampanyalar"
+    ajax_url = "https://www.axess.com.tr/ajax/kampanya-ajax.aspx"
+    session = requests.Session()
+    session.headers.update(
+        {
+            **HEADERS,
+            "Referer": base_url,
+            "X-Requested-With": "XMLHttpRequest",
+        }
+    )
+
+    items = []
+    seen = set()
+    for page in range(1, max_pages + 1):
+        response = session.get(
+            ajax_url,
+            params={
+                "checkBox": "[0]",
+                "searchWord": '""',
+                "page": str(page),
+            },
+            timeout=(10, 60),
+        )
+        response.raise_for_status()
+        response.encoding = "utf-8"
+        soup = BeautifulSoup(response.text, "html.parser")
+        cards = soup.select(".grid-3")
+        if not cards:
+            break
+
+        for card in cards:
+            link = card.select_one('a[href*="/kampanyadetay/"]')
+            if not link:
+                continue
+            detail_url = urljoin(base_url, link.get("href"))
+            if detail_url in seen:
+                continue
+            seen.add(detail_url)
+
+            title = clean_text((card.select_one(".textArea p") or card).get_text(" ", strip=True))
+            detail = fetch_axess_detail(session, detail_url)
+            if detail.get("title"):
+                title = detail["title"]
+            if not title:
+                continue
+
+            items.append(
+                {
+                    "bank": "Akbank Axess",
+                    "external_id": detail_url,
+                    "title": title,
+                    "description": detail.get("description"),
+                    "image_url": detail.get("image_url") or first_image(base_url, card),
+                    "url": detail_url,
+                }
+            )
+
+        if len(cards) < 9:
+            break
+
+    return items
+
+
+def fetch_axess_detail(session, url):
+    try:
+        response = session.get(url, timeout=(10, 60))
+        response.raise_for_status()
+        response.encoding = "utf-8"
+    except requests.RequestException:
+        return {}
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    title_el = soup.select_one(".pageTitle") or soup.select_one("h2") or soup.select_one("title")
+    title = clean_text(title_el.get_text(" ", strip=True) if title_el else "")
+    title = title.replace("| Axess", "").strip()
+    description_el = soup.select_one(".campaignDetail, .detailText, .contentText")
+    description = clean_text(description_el.get_text(" ", strip=True) if description_el else "")
+
+    image = None
+    for img in soup.select("img"):
+        src = img.get("src") or img.get("data-src")
+        if src and "CmsCampaign" in src:
+            image = urljoin(url, src)
+            break
+
+    return {
+        "title": title,
+        "description": description or None,
+        "image_url": image,
+    }
+
+
 def fetch_on_kart():
     url = "https://on.com.tr/kampanyalar"
     response = requests.get(url, headers=HEADERS, timeout=(10, 60))
