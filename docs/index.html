@@ -79,48 +79,11 @@
           <label class="toggle"><input id="favoritesOnly" type="checkbox"><span>Favoriler</span></label>
           <label class="toggle"><input id="myCardsOnly" type="checkbox"><span>Benim kartlarım</span></label>
           <label class="toggle"><input id="usedOnly" type="checkbox"><span>Kullandıklarım</span></label>
+          <label class="toggle"><input id="calculatorOnly" type="checkbox"><span>🧮 Hesaplayıcı</span></label>
         </div>
         <button class="settings-open" type="button" data-settings-open>Ayarlar</button>
       </form>
       <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
-      <button class="calculator-toggle" type="button" id="calculatorToggle" aria-expanded="false" aria-controls="calculatorPanel">Kazanım Hesaplayıcısı ▼</button>
-      <section class="calculator-panel" id="calculatorPanel" hidden>
-        <p>Bu ay ne kadar harcayacağını gir, sana en karlı kampanyaları sıralayayım:</p>
-        <div class="calculator-grid">
-          <div class="kr-slider-row">
-            <label for="slider-market">Market</label>
-            <input id="slider-market" type="range" min="0" max="10000" step="100" value="1500" oninput="syncInput('market', this.value)" onchange="syncInput('market', this.value)">
-            <input id="input-market" class="manual-spend" type="number" min="0" max="100000" step="100" value="1500" aria-label="Market harcaması" oninput="syncSlider('market', this.value)" onchange="syncSlider('market', this.value)">
-            <span id="v-market">1.500₺</span>
-          </div>
-          <div class="kr-slider-row">
-            <label for="slider-restoran">Restoran</label>
-            <input id="slider-restoran" type="range" min="0" max="10000" step="100" value="800" oninput="syncInput('restoran', this.value)" onchange="syncInput('restoran', this.value)">
-            <input id="input-restoran" class="manual-spend" type="number" min="0" max="100000" step="100" value="800" aria-label="Restoran harcaması" oninput="syncSlider('restoran', this.value)" onchange="syncSlider('restoran', this.value)">
-            <span id="v-restoran">800₺</span>
-          </div>
-          <div class="kr-slider-row">
-            <label for="slider-yakit">Yakıt</label>
-            <input id="slider-yakit" type="range" min="0" max="10000" step="100" value="300" oninput="syncInput('yakit', this.value)" onchange="syncInput('yakit', this.value)">
-            <input id="input-yakit" class="manual-spend" type="number" min="0" max="100000" step="100" value="300" aria-label="Yakıt harcaması" oninput="syncSlider('yakit', this.value)" onchange="syncSlider('yakit', this.value)">
-            <span id="v-yakit">300₺</span>
-          </div>
-          <div class="kr-slider-row">
-            <label for="slider-online">Online</label>
-            <input id="slider-online" type="range" min="0" max="10000" step="100" value="1000" oninput="syncInput('online', this.value)" onchange="syncInput('online', this.value)">
-            <input id="input-online" class="manual-spend" type="number" min="0" max="100000" step="100" value="1000" aria-label="Online harcama" oninput="syncSlider('online', this.value)" onchange="syncSlider('online', this.value)">
-            <span id="v-online">1.000₺</span>
-          </div>
-          <div class="kr-slider-row">
-            <label for="slider-diger">Diğer</label>
-            <input id="slider-diger" type="range" min="0" max="10000" step="100" value="500" oninput="syncInput('diger', this.value)" onchange="syncInput('diger', this.value)">
-            <input id="input-diger" class="manual-spend" type="number" min="0" max="100000" step="100" value="500" aria-label="Diğer harcama" oninput="syncSlider('diger', this.value)" onchange="syncSlider('diger', this.value)">
-            <span id="v-diger">500₺</span>
-          </div>
-        </div>
-        <div class="calculator-total">Toplam: <strong id="toplam-val">4.100₺</strong></div>
-        <div class="calculator-results" id="kalk-sonuc"></div>
-      </section>
     </section>
 
     <section class="campaigns" id="campaigns">
@@ -132,6 +95,43 @@
         <div class="skeleton-card"><span></span><b></b><i></i><i></i></div>
         <div class="skeleton-card"><span></span><b></b><i></i><i></i></div>
       </div>
+    </section>
+    <section class="calculator-panel" id="calculatorPanel" hidden>
+      <p>Bu ay ne kadar harcayacağını gir, sana en karlı kampanyaları sıralayayım:</p>
+      <div class="calculator-grid">
+        <div class="kr-slider-row">
+          <label for="slider-market">Market</label>
+          <input id="slider-market" type="range" min="0" max="10000" step="100" value="1500" oninput="syncInput('market', this.value)" onchange="syncInput('market', this.value)">
+          <input id="input-market" class="manual-spend" type="number" min="0" max="100000" step="100" value="1500" aria-label="Market harcaması" oninput="syncSlider('market', this.value)" onchange="syncSlider('market', this.value)">
+          <span id="v-market">1.500₺</span>
+        </div>
+        <div class="kr-slider-row">
+          <label for="slider-restoran">Restoran</label>
+          <input id="slider-restoran" type="range" min="0" max="10000" step="100" value="800" oninput="syncInput('restoran', this.value)" onchange="syncInput('restoran', this.value)">
+          <input id="input-restoran" class="manual-spend" type="number" min="0" max="100000" step="100" value="800" aria-label="Restoran harcaması" oninput="syncSlider('restoran', this.value)" onchange="syncSlider('restoran', this.value)">
+          <span id="v-restoran">800₺</span>
+        </div>
+        <div class="kr-slider-row">
+          <label for="slider-yakit">Yakıt</label>
+          <input id="slider-yakit" type="range" min="0" max="10000" step="100" value="300" oninput="syncInput('yakit', this.value)" onchange="syncInput('yakit', this.value)">
+          <input id="input-yakit" class="manual-spend" type="number" min="0" max="100000" step="100" value="300" aria-label="Yakıt harcaması" oninput="syncSlider('yakit', this.value)" onchange="syncSlider('yakit', this.value)">
+          <span id="v-yakit">300₺</span>
+        </div>
+        <div class="kr-slider-row">
+          <label for="slider-online">Online</label>
+          <input id="slider-online" type="range" min="0" max="10000" step="100" value="1000" oninput="syncInput('online', this.value)" onchange="syncInput('online', this.value)">
+          <input id="input-online" class="manual-spend" type="number" min="0" max="100000" step="100" value="1000" aria-label="Online harcama" oninput="syncSlider('online', this.value)" onchange="syncSlider('online', this.value)">
+          <span id="v-online">1.000₺</span>
+        </div>
+        <div class="kr-slider-row">
+          <label for="slider-diger">Diğer</label>
+          <input id="slider-diger" type="range" min="0" max="10000" step="100" value="500" oninput="syncInput('diger', this.value)" onchange="syncInput('diger', this.value)">
+          <input id="input-diger" class="manual-spend" type="number" min="0" max="100000" step="100" value="500" aria-label="Diğer harcama" oninput="syncSlider('diger', this.value)" onchange="syncSlider('diger', this.value)">
+          <span id="v-diger">500₺</span>
+        </div>
+      </div>
+      <div class="calculator-total">Toplam: <strong id="toplam-val">4.100₺</strong></div>
+      <div class="calculator-results" id="kalk-sonuc"></div>
     </section>
 
     <footer class="site-disclaimer">

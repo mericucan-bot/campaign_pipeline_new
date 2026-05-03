@@ -82,6 +82,7 @@ const els = {
   favoritesOnly: document.querySelector("#favoritesOnly"),
   myCardsOnly: document.querySelector("#myCardsOnly"),
   usedOnly: document.querySelector("#usedOnly"),
+  calculatorOnly: document.querySelector("#calculatorOnly"),
   bankRail: document.querySelector("#bankRail"),
   myCardsGrid: document.querySelector("#myCardsGrid"),
   healthGrid: document.querySelector("#healthGrid"),
@@ -103,7 +104,6 @@ const els = {
   settingsDrawer: document.querySelector(".settings-drawer"),
   settingsOpen: document.querySelector("[data-settings-open]"),
   settingsClose: document.querySelector("[data-settings-close]"),
-  calculatorToggle: document.querySelector("#calculatorToggle"),
   calculatorPanel: document.querySelector("#calculatorPanel"),
   calculatorResult: document.querySelector("#kalk-sonuc"),
   usedHistory: document.querySelector("#usedHistory"),
@@ -180,6 +180,18 @@ function bindEvents() {
     el.addEventListener("input", applyFilters);
     el.addEventListener("change", applyFilters);
   });
+  [els.activeOnly, els.favoritesOnly, els.myCardsOnly, els.usedOnly].forEach((el) => {
+    el.addEventListener("change", () => {
+      if (els.calculatorOnly) els.calculatorOnly.checked = false;
+      switchCalculatorMode(false);
+      applyFilters();
+    });
+  });
+  if (els.calculatorOnly) {
+    els.calculatorOnly.addEventListener("change", () => {
+      switchCalculatorMode(els.calculatorOnly.checked);
+    });
+  }
   if (els.monthlySpend) {
     els.monthlySpend.value = state.monthlySpend;
     updateMonthlySpendLabel();
@@ -222,20 +234,6 @@ function bindEvents() {
       if (event.target === els.settingsDrawer) els.settingsDrawer.close();
     });
   }
-  if (els.calculatorToggle && els.calculatorPanel) {
-    if (window.innerWidth <= 640) {
-      els.calculatorPanel.hidden = true;
-      els.calculatorToggle.setAttribute("aria-expanded", "false");
-      els.calculatorToggle.textContent = "Kazanım Hesaplayıcısı ▼";
-    }
-    els.calculatorToggle.addEventListener("click", () => {
-      const willOpen = els.calculatorPanel.hidden;
-      els.calculatorPanel.hidden = !willOpen;
-      els.calculatorToggle.setAttribute("aria-expanded", String(willOpen));
-      els.calculatorToggle.textContent = `Kazanım Hesaplayıcısı ${willOpen ? "▲" : "▼"}`;
-      if (willOpen) hesapla();
-    });
-  }
   if (els.exportUsed) els.exportUsed.addEventListener("click", exportData);
   if (els.clearUsed) els.clearUsed.addEventListener("click", clearUsedHistory);
 }
@@ -246,7 +244,21 @@ function initPreferredFlow() {
   }
 }
 
+function switchCalculatorMode(enabled) {
+  if (els.campaigns) els.campaigns.style.display = enabled ? "none" : "";
+  if (els.calculatorPanel) els.calculatorPanel.hidden = !enabled;
+  if (enabled) {
+    hesapla();
+    if (els.statSubline) els.statSubline.textContent = "Kazanım hesaplayıcısı";
+  }
+}
+
 function applyFilters() {
+  if (els.calculatorOnly?.checked) {
+    switchCalculatorMode(true);
+    return;
+  }
+  switchCalculatorMode(false);
   state.selectedBank = els.bankFilter.value;
   const query = normalizeSearch(els.searchInput.value);
   const category = els.categoryFilter.value;
