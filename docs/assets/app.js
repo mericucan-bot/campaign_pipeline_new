@@ -792,6 +792,14 @@ function hesapla() {
     .sort((a, b) => b.tahminiKazanim - a.tahminiKazanim)
     .slice(0, 5);
 
+  const tahminiKazanc = sonuclar.reduce((total, item) => total + item.tahminiKazanim, 0);
+  const gainEl = document.getElementById("kazanc-val");
+  if (gainEl) {
+    gainEl.textContent = tahminiKazanc > 0
+      ? `≈ ${Math.round(tahminiKazanc).toLocaleString("tr-TR")}₺`
+      : "-";
+  }
+
   const resultEl = document.getElementById("kalk-sonuc");
   const rozetler = ["🥇", "🥈", "🥉", "4.", "5."];
   if (resultEl) {
