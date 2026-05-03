@@ -71,6 +71,14 @@ const kategoriHaritasi = {
   "Ulaşım": "diger",
 };
 
+const HESAP_KATEGORILERI = new Set([
+  "market", "Market", "Süpermarket", "süpermarket",
+  "restoran", "Restoran", "Yemek", "yemek", "Cafe", "cafe",
+  "akaryakıt", "Akaryakıt", "yakıt", "Yakıt",
+  "online", "Online", "e-ticaret", "E-ticaret",
+  "ulaşım", "Ulaşım", "seyahat", "Seyahat",
+]);
+
 const els = {
   campaigns: document.querySelector("#campaigns"),
   bankFilter: document.querySelector("#bankFilter"),
@@ -754,8 +762,9 @@ function hesapla() {
 
   const sonuclar = state.campaigns
     .filter((item) => item.aktif ?? item.is_active)
-    .map((item) => {
-      const data = adaptCampaign(item);
+    .map((item) => adaptCampaign(item))
+    .filter((data) => isCalculatorCategory(data))
+    .map((data) => {
       if (!isCalculatorEligible(data, harcamalar)) return { ...data, tahminiKazanim: 0 };
       return { ...data, tahminiKazanim: normalizeKazanim(data, harcamalar) };
     })
@@ -966,6 +975,7 @@ function normalizeKazanim(kampanya, harcamalar = 2000) {
     : { market: Number(harcamalar) || 0, restoran: Number(harcamalar) || 0, yakit: Number(harcamalar) || 0, online: Number(harcamalar) || 0, diger: Number(harcamalar) || 0 };
   const sliderKey = sliderKeyForCampaign(kampanya);
   const ilgiliHarcama = Number(spendMap[sliderKey] || 0);
+  if (ilgiliHarcama === 0) return 0;
   const kazanim = parseMoney(kampanya.kazanim);
   const kazanimTuru = String(kampanya.kazanim_turu || "").trim().toLocaleLowerCase("tr-TR");
   const minHarcama = parseMoney(kampanya.min_harcama || 0);
@@ -986,7 +996,12 @@ function normalizeKazanim(kampanya, harcamalar = 2000) {
 }
 
 function isCalculatorEligible(item, harcamalar = 2000) {
-  return isSpendRewardCampaign(item) && normalizeKazanim(item, harcamalar) > 0;
+  return isCalculatorCategory(item) && isSpendRewardCampaign(item) && normalizeKazanim(item, harcamalar) > 0;
+}
+
+function isCalculatorCategory(item) {
+  const category = item.kategori || item.category || "";
+  return HESAP_KATEGORILERI.has(category);
 }
 
 function isSpendRewardCampaign(item) {
