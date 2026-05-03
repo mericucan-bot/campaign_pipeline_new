@@ -132,14 +132,14 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .bank-chip.selected::after { background: var(--primary); border-radius: 999px; bottom: -1px; content: ""; height: 2px; left: 12px; position: absolute; right: 12px; }
 .calculator-panel {
   background: linear-gradient(145deg, rgba(28,34,39,.96), rgba(21,26,31,.96)); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; box-shadow: 0 22px 58px rgba(0,0,0,.32), 0 0 42px rgba(26,86,219,.1);
-  display: grid; gap: 18px; margin: 16px auto 0; max-width: 1060px; padding: clamp(18px, 3vw, 30px); width: 100%;
+  display: grid; gap: 18px; margin: 16px auto 0; max-width: 1180px; padding: clamp(18px, 3vw, 30px); width: 100%;
 }
 .calculator-panel[hidden] { display: none; }
 .calculator-panel p { color: #b8c8cf; font-size: 14px; }
-.calculator-grid { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
+.calculator-grid { display: grid; gap: 12px; grid-template-columns: repeat(5, minmax(0, 1fr)); max-width: none; }
 .kr-slider-row {
   align-content: start; background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.08); border-radius: 14px;
-  display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr) 96px; margin: 0; padding: 12px;
+  display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr) 82px; margin: 0; padding: 12px;
 }
 .kr-slider-row label { color: #a8b4bb; font-size: 12px; font-weight: 800; grid-column: 1 / -1; }
 .kr-slider-row input[type="range"] { grid-column: 1 / -1; height: 30px; min-width: 0; padding: 0; width: 100%; }
@@ -162,8 +162,8 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .settings-open { align-self: end; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; color: #dce7eb; cursor: pointer; font-size: 17px; font-weight: 900; height: 40px; justify-self: end; min-height: 40px; padding: 0; white-space: nowrap; width: 42px; }
 .settings-open:hover { background: rgba(32,181,159,.13); border-color: rgba(32,181,159,.45); color: #f4f7f8; }
 .settings-hint {
-  align-self: start; color: rgba(167,179,186,.72); font-size: 11px; font-weight: 650; grid-column: 5 / -1;
-  line-height: 1.35; margin: -2px 2px 0; min-width: 0;
+  align-self: start; color: rgba(167,179,186,.72); font-size: 11px; font-weight: 650; grid-column: 1 / -1;
+  line-height: 1.35; margin: -2px 2px 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .settings-drawer { background: transparent; border: 0; color: var(--ink); height: 100vh; inset: 0 0 0 auto; margin: 0 0 0 auto; max-height: 100vh; max-width: min(500px, calc(100vw - 20px)); padding: 0; position: fixed; width: min(500px, calc(100vw - 20px)); }
 .settings-drawer::backdrop { background: rgba(0,0,0,.58); backdrop-filter: blur(6px); }
@@ -386,7 +386,7 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
 .back-to-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
 @media (max-width: 1180px) {
   .hero-grid, .filters { grid-template-columns: 1fr; }
-  .calculator-grid { grid-template-columns: 1fr; }
+  .calculator-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filter-switches, .settings-open { grid-column: auto; justify-self: stretch; }
   .settings-hint { grid-column: 1 / -1; margin-top: 0; }
   .snapshot { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -403,6 +403,7 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
   .health-item { align-items: start; grid-template-columns: 1fr; }
   .health-item small { text-align: left; }
   .snapshot { gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .calculator-grid { grid-template-columns: 1fr; }
   .snapshot div { padding: 10px 12px; }
   .snapshot strong { font-size: 22px; }
   .snapshot span { font-size: 10px; }

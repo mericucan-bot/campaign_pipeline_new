@@ -7,16 +7,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%231a56db"/%3E%3Ctext x="16" y="20.5" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="white"%3EKR%3C/text%3E%3C/svg%3E'>
+  <link rel="icon" type="image/svg+xml" href='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"%3E%3Ccircle cx="32" cy="32" r="30" fill="%2304130a" stroke="%2300ff40" stroke-width="3"/%3E%3Ccircle cx="32" cy="32" r="20" fill="none" stroke="%2300ff40" stroke-width="2"/%3E%3Ccircle cx="32" cy="32" r="10" fill="none" stroke="%2300ff40" stroke-width="1.6"/%3E%3Cpath d="M32 32 54 10 A31 31 0 0 1 60 32Z" fill="%2300ff40" opacity=".34"/%3E%3Cg stroke="%2300ff40" stroke-width="1.4" opacity=".8"%3E%3Cpath d="M32 2v60M2 32h60M11 11l42 42M53 11 11 53"/%3E%3C/g%3E%3Ccircle cx="48" cy="16" r="4" fill="%23c6ff8f"/%3E%3Ccircle cx="32" cy="24" r="3" fill="%2387ff64"/%3E%3C/svg%3E'>
   <link rel="stylesheet" href="./assets/styles.css">
 </head>
 <body>
   <header class="hero">
     <nav class="nav top-bar">
       <a class="brand" href="./" aria-label="Kampanya Radar">
-        <svg class="brand-logo" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-          <circle cx="16" cy="16" r="16" fill="#1a56db"></circle>
-          <text x="16" y="20.5" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff" font-family="Inter, system-ui, sans-serif">KR</text>
+        <svg class="brand-logo" width="42" height="42" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <circle cx="32" cy="32" r="30" fill="#04130a" stroke="#00ff40" stroke-width="3"></circle>
+          <circle cx="32" cy="32" r="20" fill="none" stroke="#00ff40" stroke-width="2"></circle>
+          <circle cx="32" cy="32" r="10" fill="none" stroke="#00ff40" stroke-width="1.6"></circle>
+          <path d="M32 32 54 10 A31 31 0 0 1 60 32Z" fill="#00ff40" opacity=".34"></path>
+          <g stroke="#00ff40" stroke-width="1.4" opacity=".8">
+            <path d="M32 2v60M2 32h60M11 11l42 42M53 11 11 53"></path>
+          </g>
+          <circle cx="48" cy="16" r="4" fill="#c6ff8f"></circle>
+          <circle cx="32" cy="24" r="3" fill="#87ff64"></circle>
         </svg>
         <span>Kampanya Radar</span>
       </a>
@@ -86,7 +93,7 @@
           <input id="searchInput" placeholder="market, yakıt, yurt dışı, taksit...">
         </label>
         <button class="settings-open" type="button" data-settings-open aria-label="Ayarlar" title="Ayarlar">&#9881;</button>
-        <p class="settings-hint">Ayarlar’dan kartlarını seçebilir, manuel favori ekleyebilir ve geçmişini görebilirsin.</p>
+        <p class="settings-hint">⚙ Ayarlar’dan kartlarını seçebilir, manuel favori ekleyebilir ve geçmişini görebilirsin.</p>
       </form>
       <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
     </section>
