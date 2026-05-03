@@ -1,4 +1,4 @@
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -12,7 +12,7 @@ HEADERS = {
 }
 
 
-def fetch_campaign_listing(bank, url, selectors=None, limit=80):
+def fetch_campaign_listing(bank, url, selectors=None, limit=500):
     selectors = selectors or {}
     response = requests.get(url, headers=HEADERS, timeout=25)
     response.raise_for_status()
@@ -79,6 +79,10 @@ def looks_like_campaign(title, href):
     normalized_title = title.lower()
     ignored_titles = {"kampanyalar", "menuye git", "detayli bilgi", "detaylı bilgi"}
     if normalized_title in ignored_titles:
+        return False
+
+    path = urlparse(href).path.lower()
+    if "kampanya" not in path and "campaign" not in path:
         return False
 
     haystack = f"{title} {href}".lower()
