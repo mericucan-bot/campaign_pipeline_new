@@ -112,6 +112,7 @@ const els = {
   settingsDrawer: document.querySelector(".settings-drawer"),
   settingsOpen: document.querySelector("[data-settings-open]"),
   settingsClose: document.querySelector("[data-settings-close]"),
+  toolbar: document.querySelector(".filter-toolbar"),
   calculatorPanel: document.querySelector("#calculatorPanel"),
   calculatorResult: document.querySelector("#kalk-sonuc"),
   usedHistory: document.querySelector("#usedHistory"),
@@ -243,8 +244,16 @@ function bindEvents() {
       if (event.target === els.settingsDrawer) els.settingsDrawer.close();
     });
   }
+  bindToolbarScroll();
   if (els.exportUsed) els.exportUsed.addEventListener("click", exportData);
   if (els.clearUsed) els.clearUsed.addEventListener("click", clearUsedHistory);
+}
+
+function bindToolbarScroll() {
+  if (!els.toolbar) return;
+  const update = () => els.toolbar.classList.toggle("is-stuck", window.scrollY > 24);
+  update();
+  window.addEventListener("scroll", update, { passive: true });
 }
 
 function initPreferredFlow() {

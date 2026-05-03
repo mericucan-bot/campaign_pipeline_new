@@ -12,7 +12,7 @@
 </head>
 <body>
   <header class="hero">
-    <nav class="nav">
+    <nav class="nav top-bar">
       <a class="brand" href="./" aria-label="Kampanya Radar">
         <svg class="brand-logo" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
           <circle cx="16" cy="16" r="16" fill="#1a56db"></circle>
@@ -20,7 +20,10 @@
         </svg>
         <span>Kampanya Radar</span>
       </a>
-      <span class="sync" id="generatedAt">Veri hazırlanıyor</span>
+      <div class="top-bar-meta">
+        <span class="sync" id="generatedAt">Veri hazırlanıyor</span>
+        <span class="top-avatar" aria-hidden="true">KR</span>
+      </div>
     </nav>
 
     <div id="info-banner" class="info-banner">
@@ -28,13 +31,14 @@
       <button type="button" onclick="closeBanner()" aria-label="Bilgi bandını kapat">×</button>
     </div>
 
-    <div class="hero-grid">
+    <div class="hero-grid hero-content">
       <section class="intro">
         <p class="eyebrow">Kampanya zekası <span>by MeRiC UcAn</span></p>
-        <h1>T&#252;m Kampanyalar Tek Ekranda</h1>
+        <h1>T&#252;m Kampanyalar</h1>
+        <p class="hero-subtitle">Kart fırsatlarını tek ekranda filtrele, karşılaştır ve takip et.</p>
       </section>
 
-      <section class="stats-panel" aria-label="Özet">
+      <section class="stats-panel stats-glass-panel" aria-label="Özet">
         <div class="snapshot">
           <div><span>Aktif kampanya</span><strong id="activeCount">0</strong><i aria-hidden="true">&#9679;</i></div>
           <div><span>Banka/kart</span><strong id="bankCount">0</strong><i aria-hidden="true">&#9638;</i></div>
@@ -47,7 +51,7 @@
   </header>
 
   <main>
-    <section class="toolbar">
+    <section class="toolbar filter-toolbar">
       <form class="filters" id="filters">
         <label>
           <span>Banka</span>
@@ -81,7 +85,7 @@
           <label class="toggle"><input id="usedOnly" type="checkbox"><span>Kullandıklarım</span></label>
           <label class="toggle"><input id="calculatorOnly" type="checkbox"><span>🧮 Hesaplayıcı</span></label>
         </div>
-        <button class="settings-open" type="button" data-settings-open>Ayarlar</button>
+        <button class="settings-open" type="button" data-settings-open aria-label="Ayarlar" title="Ayarlar">&#9881;</button>
       </form>
       <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
     </section>
