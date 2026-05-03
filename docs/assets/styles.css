@@ -374,7 +374,10 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
   .toggle, .settings-open { flex: 0 0 auto; }
   .health-item { align-items: start; grid-template-columns: 1fr; }
   .health-item small { text-align: left; }
-  .snapshot { grid-template-columns: 1fr; }
+  .snapshot { gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .snapshot div { padding: 10px 12px; }
+  .snapshot strong { font-size: 22px; }
+  .snapshot span { font-size: 10px; }
   .campaigns { gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .skeleton-state-grid { grid-template-columns: 1fr; }
   .campaign-card { border-radius: 7px; }
