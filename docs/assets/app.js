@@ -264,6 +264,7 @@ function initPreferredFlow() {
 
 function switchCalculatorMode(enabled) {
   if (enabled) clearFlowToggles();
+  if (els.toolbar) els.toolbar.style.display = enabled ? "none" : "";
   if (els.campaigns) els.campaigns.style.display = enabled ? "none" : "";
   if (els.calculatorPanel) els.calculatorPanel.hidden = !enabled;
   if (els.statSubline) els.statSubline.style.display = enabled ? "none" : "";
