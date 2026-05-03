@@ -122,6 +122,9 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .toggle:has(input:checked)::before { background: var(--primary); border-color: transparent; box-shadow: 0 0 0 4px rgba(32,181,159,.14); }
 .toggle input { height: 1px; opacity: 0; position: absolute; width: 1px; }
 .toggle span { font-size: 12px; margin: 0; white-space: nowrap; }
+.action-toggle { color: #dce7eb; font: inherit; font-weight: 800; }
+.action-toggle::before { display: none; }
+.action-toggle:hover { color: #f4f7f8; transform: translateY(-1px); }
 .bank-rail { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 8px; }
 .bank-chip {
   background: var(--panel); border: 1px solid var(--line); border-radius: 8px; color: var(--muted); flex: 0 0 auto;

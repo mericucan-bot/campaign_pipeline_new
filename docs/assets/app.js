@@ -112,6 +112,12 @@ const els = {
   settingsDrawer: document.querySelector(".settings-drawer"),
   settingsOpen: document.querySelector("[data-settings-open]"),
   settingsClose: document.querySelector("[data-settings-close]"),
+  statusDrawer: document.querySelector(".status-drawer"),
+  statusOpen: document.querySelector("[data-status-open]"),
+  statusClose: document.querySelector("[data-status-close]"),
+  manualDrawer: document.querySelector(".manual-drawer"),
+  manualOpen: document.querySelector("[data-manual-open]"),
+  manualClose: document.querySelector("[data-manual-close]"),
   toolbar: document.querySelector(".filter-toolbar"),
   calculatorPanel: document.querySelector("#calculatorPanel"),
   calculatorResult: document.querySelector("#kalk-sonuc"),
@@ -244,6 +250,8 @@ function bindEvents() {
       if (event.target === els.settingsDrawer) els.settingsDrawer.close();
     });
   }
+  bindDrawer(els.statusOpen, els.statusClose, els.statusDrawer);
+  bindDrawer(els.manualOpen, els.manualClose, els.manualDrawer);
   bindToolbarScroll();
   if (els.exportUsed) els.exportUsed.addEventListener("click", exportData);
   if (els.clearUsed) els.clearUsed.addEventListener("click", clearUsedHistory);
@@ -254,6 +262,15 @@ function bindToolbarScroll() {
   const update = () => els.toolbar.classList.toggle("is-stuck", window.scrollY > 24);
   update();
   window.addEventListener("scroll", update, { passive: true });
+}
+
+function bindDrawer(openButton, closeButton, drawer) {
+  if (!drawer) return;
+  if (openButton) openButton.addEventListener("click", () => drawer.showModal());
+  if (closeButton) closeButton.addEventListener("click", () => drawer.close());
+  drawer.addEventListener("click", (event) => {
+    if (event.target === drawer) drawer.close();
+  });
 }
 
 function initPreferredFlow() {
@@ -975,6 +992,7 @@ function addManualCampaign(event) {
   localStorage.setItem("manualCampaigns", JSON.stringify(state.manualCampaigns));
   persistFavorites();
   els.manualForm.reset();
+  if (els.manualDrawer?.open) els.manualDrawer.close();
   els.favoritesOnly.checked = true;
   hydrateFilters();
   applyFilters();

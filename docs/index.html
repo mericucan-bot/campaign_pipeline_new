@@ -49,6 +49,8 @@
           <label class="toggle"><input id="myCardsOnly" type="checkbox"><span>Benim kartlarım</span></label>
           <label class="toggle"><input id="usedOnly" type="checkbox"><span>Kullandıklarım</span></label>
           <label class="toggle"><input id="calculatorOnly" type="checkbox"><span>🧮 Hesaplayıcı</span></label>
+          <button class="toggle action-toggle" type="button" data-manual-open><span>+ Manuel kampanya</span></button>
+          <button class="toggle action-toggle" type="button" data-status-open><span>Durum</span></button>
         </div>
       </section>
 
@@ -93,7 +95,7 @@
           <input id="searchInput" placeholder="market, yakıt, yurt dışı, taksit...">
         </label>
         <button class="settings-open" type="button" data-settings-open aria-label="Ayarlar" title="Ayarlar">&#9881;</button>
-        <p class="settings-hint">⚙ Ayarlar’dan kartlarını seçebilir, manuel favori ekleyebilir ve geçmişini görebilirsin.</p>
+        <p class="settings-hint">⚙ Ayarlar’dan kartlarını seçebilirsin. Manuel giriş ve durum paneli üstteki kısayollarda.</p>
       </form>
       <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
     </section>
@@ -158,29 +160,30 @@
     <div class="settings-shell">
       <div class="settings-head">
         <div>
-          <span>Kontrol merkezi</span>
+          <span>Kart ayarı</span>
           <h2>Ayarlar</h2>
         </div>
         <button class="settings-close" type="button" data-settings-close aria-label="Kapat">x</button>
       </div>
-      <p class="settings-copy">Ana ekranı kampanyalara ayırdık. Kart seçimi, sistem sağlığı ve manuel favoriler burada duruyor.</p>
+      <p class="settings-copy">Sana ait kartları seç; “Benim kartlarım” filtresi sadece bu bankaları gösterir.</p>
 
       <details class="my-cards-panel" open>
         <summary>Kartlarımı seç</summary>
         <div class="my-cards-grid" id="myCardsGrid"></div>
       </details>
+    </div>
+  </dialog>
 
-      <details class="value-panel" open>
-        <summary>Kazanç ayarı</summary>
-        <div class="spend-control">
-          <label for="monthlySpend">
-            <span>Aylık tahmini harcama</span>
-            <strong id="harcama-val">2.000₺</strong>
-          </label>
-          <input id="monthlySpend" type="range" min="500" max="10000" step="100" value="2000">
-          <p class="conversion-note">Karşılaştırma için kullanılan tahmini dönüşüm oranları: 1 Puan = 0,01₺ | 1 Mil = 0,03₺</p>
+  <dialog class="settings-drawer status-drawer">
+    <div class="settings-shell">
+      <div class="settings-head">
+        <div>
+          <span>Radar durumu</span>
+          <h2>Durum</h2>
         </div>
-      </details>
+        <button class="settings-close" type="button" data-status-close aria-label="Kapat">x</button>
+      </div>
+      <p class="settings-copy">Banka tarama sağlığı ve kullandığın kampanya geçmişi burada durur.</p>
 
       <details class="health-panel">
         <summary>Banka tarama sağlığı</summary>
@@ -198,7 +201,19 @@
           </div>
         </div>
       </details>
+    </div>
+  </dialog>
 
+  <dialog class="settings-drawer manual-drawer">
+    <div class="settings-shell">
+      <div class="settings-head">
+        <div>
+          <span>Favori kayıt</span>
+          <h2>Manuel kampanya</h2>
+        </div>
+        <button class="settings-close" type="button" data-manual-close aria-label="Kapat">x</button>
+      </div>
+      <p class="settings-copy">Kaynaklarda görünmeyen özel veya ön ödemeli kart kampanyalarını favorilerine ekle.</p>
       <details class="manual-entry">
         <summary>Manuel favori kampanya ekle</summary>
         <form class="manual-form" id="manualForm">
