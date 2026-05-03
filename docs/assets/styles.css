@@ -242,7 +242,7 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .bank-logo img { display: block; height: 100%; object-fit: cover; width: 100%; }
 .bank-logo span { color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }
 .card-bank-meta { display: grid; gap: 4px; min-width: 0; }
-.card-bank-meta strong { color: #eef5f7; font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-bank-meta strong { color: #eef5f7; font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-bank-meta .category-badge { align-self: start; font-size: 10px; padding: 5px 7px; }
 .card-body { display: grid; gap: 4px; }
 .card-title { display: -webkit-box; font-size: 14px; font-weight: 600; line-height: 1.35; margin: 0 0 4px; overflow: hidden; text-overflow: ellipsis; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
@@ -368,6 +368,7 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
   .radar-card { gap: 10px; padding: 10px; }
   .radar-card .card-description { display: -webkit-box; }
   .card-header { gap: 8px; grid-template-columns: 32px minmax(0, 1fr) 32px; }
+  .card-bank-meta strong { font-size: 11px; }
   .card-footer { align-items: flex-start; flex-direction: column; }
   .status, .category-badge, .reward-badge, .date-badge, .urgent-badge { font-size: 10px; padding: 6px 7px; }
   .kr-slider-row { grid-template-columns: 1fr; }

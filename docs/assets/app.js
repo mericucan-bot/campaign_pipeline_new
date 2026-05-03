@@ -298,7 +298,7 @@ function sortRows(rows, sort) {
   }
   if (sort === "gain") {
     return clone
-      .map((item) => ({ ...item, normalized: normalizeKazanim(item, state.monthlySpend) }))
+      .map((item) => ({ ...item, normalized: normalizeKazanim(item, calculatorSpendMap()) }))
       .sort((a, b) => b.normalized - a.normalized);
   }
   if (sort === "bank") {
@@ -367,7 +367,7 @@ function card(item) {
   const reward = rewardBadge(data);
   const deadline = deadlineInfo(data);
   const urgent = urgencyInfo(data);
-  const normalized = Math.round(normalizeKazanim(data, state.monthlySpend));
+  const normalized = normalizeKazanim(data, calculatorSpendMap());
   const logoStyle = `--logo-bg:${bankColor(data.banka)}`;
   const logo = data.gorsel_url
     ? `<img src="${escapeAttr(data.gorsel_url)}" alt="" loading="lazy">`
@@ -393,7 +393,7 @@ function card(item) {
 
       <div class="card-footer">
         ${reward ? `<span class="reward-badge ${reward.className}">${escapeHtml(reward.label)}</span>` : ""}
-        ${normalized > 0 && isSpendRewardCampaign(data) ? `<span class="gain-badge">≈ ${normalized.toLocaleString("tr-TR")}₺ değerinde</span>` : ""}
+        ${normalized >= 1 && isSpendRewardCampaign(data) ? `<span class="gain-badge">≈ ${Math.round(normalized).toLocaleString("tr-TR")}₺ değerinde</span>` : ""}
         ${deadline.hidden ? "" : `<span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>`}
         ${urgent.badge ? `<span class="urgent-badge ${urgent.badgeClass}">${escapeHtml(urgent.badge)}</span>` : ""}
       </div>
@@ -461,7 +461,7 @@ function rewardBadge(data) {
   const type = String(data.kazanim_turu || "").toLowerCase();
   const value = rewardValueText(data.kazanim);
   const amount = parseMoney(value);
-  if (!value || !amount) return null;
+  if (!value || !amount || amount <= 0 || Number.isNaN(amount)) return null;
   if (type === "tl") return { className: "reward-card-tl", label: `+${value}₺ cashback` };
   if (type === "%") return { className: "reward-card-percent", label: `+${value}% indirim` };
   if (type === "puan") return { className: "reward-card-puan", label: `+${value} puan` };
@@ -769,6 +769,17 @@ function calculatorSpend(key) {
   if (manual && manual.value !== String(amount)) manual.value = amount;
   if (slider) slider.value = Math.min(amount, Number(slider.max) || 10000);
   return amount;
+}
+
+function calculatorSpendMap() {
+  const defaults = { market: 2000, restoran: 1000, yakit: 500, online: 1000, diger: 500 };
+  try {
+    const saved = JSON.parse(localStorage.getItem("kr-harcamalar") || "{}") || {};
+    return Object.fromEntries(Object.entries(defaults).map(([key, value]) => [key, Number(saved[key]) || value]));
+  } catch (err) {
+    console.error(err);
+    return defaults;
+  }
 }
 
 function syncInput(key, val) {
