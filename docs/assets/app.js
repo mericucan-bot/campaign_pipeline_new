@@ -258,6 +258,8 @@ function switchCalculatorMode(enabled) {
   if (els.campaigns) els.campaigns.style.display = enabled ? "none" : "";
   if (els.calculatorPanel) els.calculatorPanel.hidden = !enabled;
   if (els.statSubline) els.statSubline.style.display = enabled ? "none" : "";
+  const footer = document.querySelector(".site-disclaimer");
+  if (footer) footer.style.display = enabled ? "none" : "";
   if (enabled) {
     hesapla();
   }
