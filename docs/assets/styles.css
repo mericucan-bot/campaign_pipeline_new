@@ -229,7 +229,7 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .campaign-card.urgent-days-card { border-left: 4px solid #f59e0b; }
 .campaign-card.calculator-highlight { outline: 2px solid #1a56db; outline-offset: 3px; }
 .campaign-card.used-card { border-left: 4px solid #10b981; }
-.radar-card { gap: 12px; padding: 14px; }
+.radar-card { display: flex; flex-direction: column; gap: 12px; padding: 14px; }
 .radar-card.is-expired { filter: grayscale(1); opacity: .5; }
 .card-header { align-items: center; display: grid; gap: 10px; grid-template-columns: 32px minmax(0, 1fr) 34px; }
 .bank-logo { align-items: center; background: var(--logo-bg, #3b82f6); border-radius: 999px; display: inline-flex; height: 32px; justify-content: center; overflow: hidden; width: 32px; }
@@ -238,11 +238,11 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .card-bank-meta { display: grid; gap: 4px; min-width: 0; }
 .card-bank-meta strong { color: #eef5f7; font-size: 13px; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-bank-meta .category-badge { align-self: start; font-size: 10px; padding: 5px 7px; }
-.card-body { display: grid; gap: 4px; }
+.card-body { align-content: start; display: grid; gap: 4px; min-height: 72px; }
 .card-title { display: -webkit-box; font-size: 14px; font-weight: 600; line-height: 1.35; margin: 0 0 4px; overflow: hidden; text-overflow: ellipsis; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .card-description { color: var(--muted); display: -webkit-box; font-size: 12px; line-height: 1.45; margin: 0; overflow: hidden; text-overflow: ellipsis; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.card-footer { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; }
-.card-source { display: grid; gap: 10px; padding-top: 2px; }
+.card-footer { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; min-height: 32px; }
+.card-source { display: grid; gap: 10px; margin-top: auto; padding-top: 2px; }
 .card-source span { color: var(--faint); font-size: 10px; font-weight: 500; }
 .source-disclaimer { border-top: 1px solid #f3f4f6; color: #9ca3af; display: block; font-size: 10px; margin-top: 6px; padding-top: 6px; }
 .source-button { align-items: center; background: transparent; border: 1px solid rgba(26,86,219,.72); border-radius: 8px; color: #8fb4ff; cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 700; gap: 6px; justify-content: center; min-height: 36px; padding: 0 12px; transition: background 180ms ease, border-color 180ms ease, color 180ms ease; }
