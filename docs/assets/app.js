@@ -739,7 +739,7 @@ function checkNotifs() {
       if (!uyari.gosterildi && new Date(uyari.zaman) <= simdi) {
         const kampanya = state.campaigns.find((item) => String(item.id) === String(id));
         const data = kampanya ? adaptCampaign(kampanya) : null;
-        if (data) new Notification("Kampanya Radar ⏰", { body: `${data.baslik} — ${uyari.mesaj}`, icon: "/favicon.ico" });
+        if (data) new Notification("Kampanya Radarı ⏰", { body: `${data.baslik} — ${uyari.mesaj}`, icon: "./assets/radar-logo.svg" });
         uyari.gosterildi = true;
       }
     });

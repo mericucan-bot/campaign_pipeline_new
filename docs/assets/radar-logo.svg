@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Kampanya Radarı">
+  <defs>
+    <radialGradient id="screen" cx="44%" cy="38%" r="62%">
+      <stop offset="0" stop-color="#b7ff9a"/>
+      <stop offset=".18" stop-color="#4dff58"/>
+      <stop offset=".48" stop-color="#0f6f24"/>
+      <stop offset="1" stop-color="#020b05"/>
+    </radialGradient>
+    <radialGradient id="rim" cx="42%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#d7ffd4"/>
+      <stop offset=".34" stop-color="#57d663"/>
+      <stop offset=".72" stop-color="#0e7a22"/>
+      <stop offset="1" stop-color="#021306"/>
+    </radialGradient>
+    <linearGradient id="sweep" x1="18" y1="118" x2="134" y2="91" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c9ffbe" stop-opacity=".9"/>
+      <stop offset=".5" stop-color="#71ff67" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#00ff4c" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-35%" y="-35%" width="170%" height="170%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="scanlines" width="1" height="5" patternUnits="userSpaceOnUse">
+      <path d="M0 0h1v1H0z" fill="#eaffdf" opacity=".13"/>
+    </pattern>
+  </defs>
+
+  <circle cx="128" cy="128" r="122" fill="#06250e"/>
+  <circle cx="128" cy="128" r="120" fill="url(#rim)"/>
+  <circle cx="128" cy="128" r="111" fill="url(#screen)" stroke="#5bea62" stroke-width="2"/>
+  <circle cx="128" cy="128" r="111" fill="url(#scanlines)" opacity=".9"/>
+  <circle cx="128" cy="128" r="108" fill="none" stroke="#a8ff9e" stroke-opacity=".28" stroke-width="1"/>
+
+  <g stroke="#b8ffad" stroke-linecap="round" opacity=".62">
+    <circle cx="128" cy="128" r="36" fill="none" stroke-width="1.7"/>
+    <circle cx="128" cy="128" r="68" fill="none" stroke-width="1.4"/>
+    <path d="M128 21v214M21 128h214M128 128 204 52M128 128 52 204" stroke-width="1.3"/>
+  </g>
+
+  <path d="M21 128 128 128 62 74A110 110 0 0 0 21 128Z" fill="url(#sweep)" filter="url(#glow)"/>
+  <path d="M21 128h107" stroke="#d9ffd3" stroke-opacity=".64" stroke-width="2"/>
+
+  <g fill="#d9ffd3" filter="url(#glow)">
+    <circle cx="91" cy="88" r="4"/>
+    <circle cx="162" cy="75" r="3"/>
+    <circle cx="166" cy="150" r="4"/>
+    <circle cx="75" cy="162" r="3"/>
+  </g>
+  <g stroke="#d9ffd3" stroke-width="2" stroke-linecap="round" filter="url(#glow)">
+    <path d="M47 119l7 7 8-14"/>
+    <path d="M121 73h14"/>
+    <path d="M121 91h10"/>
+    <path d="M167 126h12"/>
+  </g>
+</svg>

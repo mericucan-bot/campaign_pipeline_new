@@ -50,7 +50,10 @@ a { color: inherit; }
 .nav { align-items: center; display: flex; gap: 18px; justify-content: space-between; }
 .top-bar { min-height: 46px; }
 .brand { align-items: center; display: inline-flex; font-size: 18px; font-weight: 850; gap: 12px; text-decoration: none; }
-.brand-logo { display: block; flex: 0 0 auto; height: 42px; width: 42px; }
+.brand-logo {
+  border-radius: 999px; display: block; flex: 0 0 auto; height: 42px;
+  filter: drop-shadow(0 0 10px rgba(74,222,128,.38)); object-fit: contain; width: 42px;
+}
 .top-bar-meta { align-items: center; color: var(--muted); display: inline-flex; gap: 10px; min-width: 0; }
 .top-avatar {
   align-items: center; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); border-radius: 999px;
