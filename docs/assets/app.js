@@ -378,7 +378,7 @@ function card(item) {
         <div class="bank-logo" style="${logoStyle}">${logo}</div>
         <div class="card-bank-meta">
           <strong>${escapeHtml(data.banka)}</strong>
-          <span class="category-badge ${categoryClass(data.kategori)}">${escapeHtml(data.kategori)}</span>
+          <span class="category-badge badge-kategori ${categoryClass(data.kategori)}" data-kategori="${escapeAttr(data.kategori || "Genel")}">${escapeHtml(data.kategori)}</span>
         </div>
         <div class="favorite-wrap">
           <button class="favorite-button ${favorite ? "selected" : ""}" data-id="${escapeAttr(data.id)}" title="Favorilere ekle" aria-label="Favorilere ekle">${favorite ? "★" : "☆"}</button>

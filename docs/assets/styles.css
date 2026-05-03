@@ -283,6 +283,23 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .category-online { background: rgba(139,92,246,.17); color: #c4b5fd; }
 .category-opportunity { background: rgba(245,158,11,.17); color: #fcd34d; }
 .category-general { background: rgba(156,163,175,.14); color: #cbd5e1; }
+.badge-kategori { background: #1f2937; color: #9ca3af; }
+.badge-kategori[data-kategori="Market"],
+.badge-kategori[data-kategori="market"],
+.badge-kategori[data-kategori="Süpermarket"] { background: #14532d; color: #4ade80; }
+.badge-kategori[data-kategori="Restoran"],
+.badge-kategori[data-kategori="restoran"],
+.badge-kategori[data-kategori="Yemek"] { background: #7f1d1d; color: #f87171; }
+.badge-kategori[data-kategori="Akaryakıt"],
+.badge-kategori[data-kategori="Yakıt"],
+.badge-kategori[data-kategori="akaryakıt"] { background: #7c2d12; color: #fb923c; }
+.badge-kategori[data-kategori="Seyahat"],
+.badge-kategori[data-kategori="seyahat"] { background: #1e3a5f; color: #60a5fa; }
+.badge-kategori[data-kategori="Online"],
+.badge-kategori[data-kategori="online"],
+.badge-kategori[data-kategori="E-ticaret"] { background: #4c1d95; color: #c4b5fd; }
+.badge-kategori[data-kategori="Genel"],
+.badge-kategori[data-kategori="genel"] { background: #1f2937; color: #9ca3af; }
 .reward-badge { background: rgba(103,167,255,.13); color: var(--blue); }
 .reward-tl, .reward-indirim { background: rgba(91,210,139,.16); color: #7ff0a7; }
 .reward-card-tl { background: #d1fae5; color: #065f46; }
