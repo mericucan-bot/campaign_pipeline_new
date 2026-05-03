@@ -2,7 +2,8 @@ import { loadingStateHtml, emptyStateHtml, errorStateHtml } from "../components/
 import { fetchCampaignPayload } from "../services/campaignService.js";
 import { BANK_LABELS, DEFAULT_MY_CARDS, HESAP_KATEGORILERI, KATEGORI_HARITASI } from "../data/config.js";
 import { escapeAttr, escapeHtml } from "../utils/html.js";
-import { formatCurrency, normalize, normalizeSearch, parseMoney, shortenText, slug } from "../utils/format.js";
+import { formatCurrency, normalize, normalizeSearch, shortenText } from "../utils/format.js";
+import { normalizeCampaign } from "../utils/campaignSchema.js";
 
 export function startDashboard() {
 const state = {
@@ -12,7 +13,7 @@ const state = {
   favorites: loadFavoriteSet(),
   used: loadUsed(),
   pendingUsedId: null,
-  manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]"),
+  manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]").map((item, index) => normalizeCampaign(item, { index })),
   monthlySpend: Number(localStorage.getItem("kr-aylik-harcama") || localStorage.getItem("monthlySpend") || 2000),
   myCards: new Set(JSON.parse(localStorage.getItem("myCards") || "null") || DEFAULT_MY_CARDS),
 };
@@ -126,7 +127,7 @@ function hydrateStats(payload) {
 function hydrateFilters() {
   fillSelect(els.bankFilter, "Tümü", unique(state.campaigns.map((item) => item.bank)), (bank) => bankLabel(bank));
   fillSelect(els.categoryFilter, "Tüm kategoriler", unique(state.campaigns.map((item) => item.category)));
-  fillSelect(els.rewardFilter, "Tüm kazanımlar", unique(state.campaigns.map((item) => item.reward_type)));
+  fillSelect(els.rewardFilter, "Tüm kazanımlar", unique(state.campaigns.map((item) => item.rewardType)), rewardTypeLabel);
   renderBankRail();
 }
 
@@ -258,8 +259,8 @@ function applyFilters() {
     const haystack = normalizeSearch(`${item.title || ""} ${item.description || ""} ${item.bank || ""} ${item.highlight || ""} ${item.category || ""}`);
     return (!state.selectedBank || item.bank === state.selectedBank)
       && (!category || item.category === category)
-      && (!reward || item.reward_type === reward)
-      && (!activeOnly || item.is_active)
+      && (!reward || item.rewardType === reward)
+      && (!activeOnly || item.isActive)
       && (!favoritesOnly || state.favorites.has(String(item.id)))
       && (!myCardsOnly || state.myCards.has(item.bank))
       && (!usedOnly || Boolean(state.used[String(item.id)]))
@@ -271,7 +272,7 @@ function applyFilters() {
   renderBankRail();
   renderCampaigns();
   const total = state.campaigns.length;
-  const inactive = state.campaigns.filter((item) => !item.is_active).length;
+  const inactive = state.campaigns.filter((item) => !item.isActive).length;
   els.statSubline.textContent = `${rows.length} sonuç · ${total} kayıt · ${inactive} pasif`;
   els.favoriteCount.textContent = state.favorites.size;
 }
@@ -297,7 +298,7 @@ function hydrateMyCards() {
 function sortRows(rows, sort) {
   const clone = [...rows];
   if (sort === "deadline") {
-    return clone.sort((a, b) => (a.deadline || "9999-12-31").localeCompare(b.deadline || "9999-12-31"));
+    return clone.sort((a, b) => (a.validTo || "9999-12-31").localeCompare(b.validTo || "9999-12-31"));
   }
   if (sort === "gain") {
     return clone
@@ -307,7 +308,7 @@ function sortRows(rows, sort) {
   if (sort === "bank") {
     return clone.sort((a, b) => `${a.bank}${a.title}`.localeCompare(`${b.bank}${b.title}`));
   }
-  return clone.sort((a, b) => String(b.last_seen || "").localeCompare(String(a.last_seen || "")));
+  return clone.sort((a, b) => String(b.validFrom || "").localeCompare(String(a.validFrom || "")));
 }
 
 function renderBankRail() {
@@ -411,25 +412,27 @@ function card(item) {
 }
 
 function adaptCampaign(item) {
-  const rawTitle = item.baslik || item.title || "";
-  const rawDescription = item.aciklama || item.description || "";
+  const rawTitle = item.title || "";
+  const rawDescription = item.description || item.conditions?.join(" ") || "";
   const text = compactCampaignText(rawTitle, rawDescription);
   return {
     id: item.id,
     baslik: text.baslik,
     aciklama: text.aciklama,
     fullTitle: String(rawTitle || "").replace(/\s+/g, " ").trim(),
-    banka: item.banka || item.bank || "Kampanya",
-    kategori: item.kategori || item.category || "Genel",
-    kazanim: item.kazanim || item.highlight || normalizeKazanim(item, state.monthlySpend),
-    kazanim_turu: item.kazanim_turu || rewardLabelFor(item),
-    min_harcama: parseMoney(item.min_harcama || item.min_spend || 0),
-    max_kazanim: parseMoney(item.max_kazanim || item.max_reward || 0),
-    bitis_tarihi: item.bitis_tarihi || item.deadline || null,
-    kaynak_url: item.kaynak_url || item.url || "",
-    gorsel_url: item.gorsel_url || item.image_url || "",
-    aktif: item.aktif ?? item.is_active ?? true,
-    sourceDate: String(item.last_seen || item.first_seen || "").slice(0, 10) || "Tarih yok",
+    banka: item.bank || "Kampanya",
+    kategori: item.category || "Genel",
+    kazanim: item.rewardRate || item.highlight || 0,
+    kazanim_turu: rewardLabelFor(item),
+    rewardType: item.rewardType || "cashback",
+    rewardRate: Number(item.rewardRate || 0),
+    min_harcama: Number(item.minSpend || 0),
+    max_kazanim: Number(item.maxReward || 0),
+    bitis_tarihi: item.validTo || null,
+    kaynak_url: item.sourceUrl || "",
+    gorsel_url: item.imageUrl || "",
+    aktif: item.isActive ?? true,
+    sourceDate: item.sourceDate || String(item.validFrom || "").slice(0, 10) || "Tarih yok",
   };
 }
 
@@ -453,20 +456,14 @@ function isDeadlineOnlyText(text) {
 
 function rewardBadge(data) {
   if (!isSpendRewardCampaign(data)) return null;
-  const type = String(data.kazanim_turu || "").toLowerCase();
-  const value = rewardValueText(data.kazanim);
-  const amount = parseMoney(value);
-  if (!value || !amount || amount <= 0 || Number.isNaN(amount)) return null;
-  if (type === "tl") return { className: "reward-card-tl", label: `+${value}₺ cashback` };
-  if (type === "%") return { className: "reward-card-percent", label: `+${value}% indirim` };
-  if (type === "puan") return { className: "reward-card-puan", label: `+${value} puan` };
-  if (type === "mil") return { className: "reward-card-mil", label: `+${value} mil` };
+  const type = String(data.rewardType || "").toLowerCase();
+  const value = Number(data.rewardRate || 0);
+  if (!value || value <= 0 || Number.isNaN(value)) return null;
+  if (type === "installment") return { className: "reward-card-installment", label: `+${value} taksit` };
+  if (type === "points") return { className: "reward-card-puan", label: `+${value} puan` };
+  if (type === "cashback" && /%/.test(`${data.fullTitle || ""} ${data.aciklama || ""}`)) return { className: "reward-card-percent", label: `+${value}% indirim` };
+  if (type === "cashback") return { className: "reward-card-tl", label: `+${value}₺ cashback` };
   return null;
-}
-
-function rewardValueText(value) {
-  const match = String(value || "").match(/\d+(?:[.,]\d+)?/);
-  return match ? match[0] : String(value || "").trim();
 }
 
 function bankInitials(name) {
@@ -641,7 +638,7 @@ function requestNotificationPermission() {
 }
 
 function scheduleNotif(kampanya) {
-  const bitisTarihi = parseDeadline(kampanya.bitis_tarihi);
+  const bitisTarihi = parseDeadline(kampanya.bitis_tarihi || kampanya.validTo);
   if (!bitisTarihi) return;
   const uyarilar = [
     { zaman: new Date(bitisTarihi - 24 * 3600 * 1000), mesaj: "24 saat kaldı" },
@@ -731,7 +728,7 @@ function hesapla() {
   if (totalEl) totalEl.textContent = `${toplam.toLocaleString("tr-TR")}₺`;
 
   const sonuclar = state.campaigns
-    .filter((item) => item.aktif ?? item.is_active)
+    .filter((item) => item.isActive)
     .map((item) => adaptCampaign(item))
     .filter((data) => isCalculatorCategory(data))
     .map((data) => {
@@ -895,29 +892,20 @@ function addManualCampaign(event) {
 
   const now = new Date().toISOString();
   const id = `manual-${Date.now()}`;
-  const item = {
+  const item = normalizeCampaign({
     id,
     bank: "Manuel Favori",
-    bank_label: "Manuel",
-    external_id: id,
     title,
     description: els.manualDescription.value.trim(),
-    image_url: els.manualImage.value.trim(),
-    url: els.manualUrl.value.trim(),
-    version: 1,
-    first_seen: now,
-    last_seen: now,
-    last_updated: now,
-    is_active: true,
+    imageUrl: els.manualImage.value.trim(),
+    sourceUrl: els.manualUrl.value.trim(),
+    validFrom: now,
+    isActive: true,
     category: "Genel",
-    reward_type: "Fırsat",
-    favorite: true,
-    brand_code: "MF",
-    deadline: null,
-    deadline_label: "Manuel",
-    deadline_urgent: false,
-    highlight: "",
-  };
+    rewardType: "cashback",
+    rewardRate: 0,
+    brandCode: "MF",
+  });
 
   state.manualCampaigns.unshift(item);
   state.campaigns.unshift(item);
@@ -947,6 +935,34 @@ function bankLabel(bank) {
   return BANK_LABELS[bank] || bank;
 }
 
+function rewardTypeLabel(type) {
+  if (type === "cashback") return "Nakit/indirim";
+  if (type === "points") return "Puan";
+  if (type === "installment") return "Taksit";
+  return type || "Fırsat";
+}
+
+function normalizeKazanim(kampanya, harcamalar = 2000) {
+  const sliderKey = sliderKeyForCampaign(kampanya);
+  const ilgiliHarcama = typeof harcamalar === "object"
+    ? Number(harcamalar[sliderKey] || 0)
+    : Number(harcamalar || 0);
+  if (ilgiliHarcama === 0) return 0;
+
+  const kazanim = Number(kampanya.rewardRate || 0);
+  const minSpend = Number(kampanya.min_harcama ?? kampanya.minSpend ?? 0);
+  const maxReward = Number(kampanya.max_kazanim ?? kampanya.maxReward ?? 0) || Infinity;
+  if (!kazanim || kazanim <= 0) return 0;
+  if (ilgiliHarcama < minSpend) return 0;
+
+  if (kampanya.rewardType === "points") return Math.min(kazanim * 0.01, maxReward);
+  if (kampanya.rewardType === "installment") return 0;
+  if (/%/.test(`${kampanya.fullTitle || ""} ${kampanya.aciklama || ""} ${kampanya.highlight || ""}`)) {
+    return Math.min((ilgiliHarcama * kazanim) / 100, maxReward);
+  }
+  return Math.min(kazanim, maxReward);
+}
+
 function isCalculatorEligible(item, harcamalar = 2000) {
   return isCalculatorCategory(item) && isSpendRewardCampaign(item) && normalizeKazanim(item, harcamalar) > 0;
 }
@@ -957,9 +973,10 @@ function isCalculatorCategory(item) {
 }
 
 function isSpendRewardCampaign(item) {
-  const text = normalize(`${item.kazanim || ""} ${item.highlight || ""} ${item.title || ""} ${item.baslik || ""} ${item.description || ""} ${item.aciklama || ""} ${item.reward_type || ""}`);
+  if (item.rewardType === "installment") return false;
+  const text = normalize(`${item.kazanim || ""} ${item.highlight || ""} ${item.title || ""} ${item.baslik || ""} ${item.description || ""} ${item.aciklama || ""} ${item.rewardType || ""}`);
   if (/(faiz|mevduat|nakit avans|fatura ode|hesap ac|vadeli|vade|fon|yatirim|sigorta)/.test(text)) return false;
-  return /(tl|₺|indirim|iade|cashback|puan|bonus|chip|worldpuan|bankkart lira|mil|oran|%)/.test(text);
+  return item.rewardRate > 0 || /(tl|₺|indirim|iade|cashback|puan|bonus|chip|worldpuan|bankkart lira|mil|oran|%)/.test(text);
 }
 
 function sliderKeyForCampaign(kampanya) {
@@ -968,22 +985,11 @@ function sliderKeyForCampaign(kampanya) {
 }
 
 function rewardKindFor(item) {
-  const text = `${item.highlight || ""} ${item.title || ""} ${item.description || ""} ${item.reward_type || ""}`;
-  const normalized = normalize(text);
-  if (/%\s*\d+/.test(text)) return "percent";
-  if (/(tl|₺)/i.test(text)) return "tl";
-  if (normalized.includes("puan") || normalized.includes("chip") || normalized.includes("bonus")) return "puan";
-  if (normalized.includes("mil")) return "mil";
-  return slug(item.reward_type || "firsat");
+  return item.rewardType || "cashback";
 }
 
 function rewardLabelFor(item) {
-  const kind = rewardKindFor(item);
-  if (kind === "tl") return "TL";
-  if (kind === "percent") return "%";
-  if (kind === "puan") return "Puan";
-  if (kind === "mil") return "Mil";
-  return item.reward_type || "Fırsat";
+  return rewardTypeLabel(rewardKindFor(item));
 }
 
 function deadlineInfo(item) {
@@ -1103,6 +1109,7 @@ function activeFilterContext() {
 }
 
   window.closeBanner = closeBanner;
+  window.highlightCard = highlightCard;
   window.syncInput = syncInput;
   window.syncSlider = syncSlider;
 }
