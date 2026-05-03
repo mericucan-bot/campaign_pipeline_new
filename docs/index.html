@@ -50,7 +50,8 @@
           <label class="toggle"><input id="usedOnly" type="checkbox"><span>Kullandıklarım</span></label>
           <label class="toggle"><input id="calculatorOnly" type="checkbox"><span>🧮 Hesaplayıcı</span></label>
           <button class="toggle action-toggle" type="button" data-manual-open><span>+ Manuel kampanya</span></button>
-          <button class="toggle action-toggle" type="button" data-status-open><span>Durum</span></button>
+          <button class="toggle action-toggle" type="button" data-health-open><span>Banka verileri</span></button>
+          <button class="toggle action-toggle" type="button" data-history-open><span>Geçmişim</span></button>
         </div>
       </section>
 
@@ -95,7 +96,7 @@
           <input id="searchInput" placeholder="market, yakıt, yurt dışı, taksit...">
         </label>
         <button class="settings-open" type="button" data-settings-open aria-label="Ayarlar" title="Ayarlar">&#9881;</button>
-        <p class="settings-hint">⚙ Ayarlar’dan kartlarını seçebilirsin. Manuel giriş ve durum paneli üstteki kısayollarda.</p>
+        <p class="settings-hint">⚙ Ayarlar’dan kartlarını seçebilirsin. Manuel giriş, banka verileri ve geçmiş üstteki kısayollarda.</p>
       </form>
       <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
     </section>
@@ -174,23 +175,36 @@
     </div>
   </dialog>
 
-  <dialog class="settings-drawer status-drawer">
+  <dialog class="settings-drawer health-drawer">
     <div class="settings-shell">
       <div class="settings-head">
         <div>
           <span>Radar durumu</span>
-          <h2>Durum</h2>
+          <h2>Banka verileri</h2>
         </div>
-        <button class="settings-close" type="button" data-status-close aria-label="Kapat">x</button>
+        <button class="settings-close" type="button" data-health-close aria-label="Kapat">x</button>
       </div>
-      <p class="settings-copy">Banka tarama sağlığı ve kullandığın kampanya geçmişi burada durur.</p>
+      <p class="settings-copy">Bankaların son tarama sağlığını ve aktif/pasif kayıt durumunu takip et.</p>
 
-      <details class="health-panel">
+      <details class="health-panel" open>
         <summary>Banka tarama sağlığı</summary>
         <div class="health-grid" id="healthGrid"></div>
       </details>
+    </div>
+  </dialog>
 
-      <details class="history-panel">
+  <dialog class="settings-drawer history-drawer">
+    <div class="settings-shell">
+      <div class="settings-head">
+        <div>
+          <span>Kazanç geçmişi</span>
+          <h2>Geçmişim</h2>
+        </div>
+        <button class="settings-close" type="button" data-history-close aria-label="Kapat">x</button>
+      </div>
+      <p class="settings-copy">Kullandığın kampanyalar ve tahmini toplam kazancın burada durur.</p>
+
+      <details class="history-panel" open>
         <summary>Geçmişim</summary>
         <div class="history-shell">
           <p class="history-summary" id="usedSummary">0 kampanya kullanıldı • Toplam ≈ 0₺ kazanıldı</p>
@@ -214,7 +228,7 @@
         <button class="settings-close" type="button" data-manual-close aria-label="Kapat">x</button>
       </div>
       <p class="settings-copy">Kaynaklarda görünmeyen özel veya ön ödemeli kart kampanyalarını favorilerine ekle.</p>
-      <details class="manual-entry">
+      <details class="manual-entry" open>
         <summary>Manuel favori kampanya ekle</summary>
         <form class="manual-form" id="manualForm">
           <label>

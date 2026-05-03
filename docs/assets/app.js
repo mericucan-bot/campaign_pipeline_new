@@ -112,9 +112,12 @@ const els = {
   settingsDrawer: document.querySelector(".settings-drawer"),
   settingsOpen: document.querySelector("[data-settings-open]"),
   settingsClose: document.querySelector("[data-settings-close]"),
-  statusDrawer: document.querySelector(".status-drawer"),
-  statusOpen: document.querySelector("[data-status-open]"),
-  statusClose: document.querySelector("[data-status-close]"),
+  healthDrawer: document.querySelector(".health-drawer"),
+  healthOpen: document.querySelector("[data-health-open]"),
+  healthClose: document.querySelector("[data-health-close]"),
+  historyDrawer: document.querySelector(".history-drawer"),
+  historyOpen: document.querySelector("[data-history-open]"),
+  historyClose: document.querySelector("[data-history-close]"),
   manualDrawer: document.querySelector(".manual-drawer"),
   manualOpen: document.querySelector("[data-manual-open]"),
   manualClose: document.querySelector("[data-manual-close]"),
@@ -250,7 +253,8 @@ function bindEvents() {
       if (event.target === els.settingsDrawer) els.settingsDrawer.close();
     });
   }
-  bindDrawer(els.statusOpen, els.statusClose, els.statusDrawer);
+  bindDrawer(els.healthOpen, els.healthClose, els.healthDrawer);
+  bindDrawer(els.historyOpen, els.historyClose, els.historyDrawer);
   bindDrawer(els.manualOpen, els.manualClose, els.manualDrawer);
   bindToolbarScroll();
   if (els.exportUsed) els.exportUsed.addEventListener("click", exportData);

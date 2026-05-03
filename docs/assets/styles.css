@@ -249,6 +249,14 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
   cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 800; justify-content: center; min-height: 40px; padding: 0 14px; text-decoration: none;
 }
 .secondary-button:hover, .secondary-link:hover { background: rgba(255,255,255,.08); border-color: rgba(32,181,159,.38); color: #f4f7f8; }
+.apply-button {
+  align-items: center; background: linear-gradient(135deg, rgba(74,222,128,.96), rgba(32,181,159,.94));
+  border: 1px solid rgba(134,239,172,.55); border-radius: 10px; box-shadow: 0 12px 24px rgba(16,185,129,.18);
+  color: #04110f; cursor: pointer; display: inline-flex; font-size: 13px; font-weight: 950; justify-content: center;
+  min-height: 40px; padding: 0 16px; text-decoration: none; transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+}
+.apply-button:hover { box-shadow: 0 16px 30px rgba(16,185,129,.25); filter: brightness(1.05); transform: translateY(-1px); }
+.apply-button:active { transform: translateY(0); }
 .urgent-banner {
   background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.36); border-radius: 8px; color: #fde68a;
   display: grid; gap: 10px; grid-column: 1/-1; padding: 14px;
