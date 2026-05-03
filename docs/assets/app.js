@@ -255,9 +255,9 @@ function initPreferredFlow() {
 function switchCalculatorMode(enabled) {
   if (els.campaigns) els.campaigns.style.display = enabled ? "none" : "";
   if (els.calculatorPanel) els.calculatorPanel.hidden = !enabled;
+  if (els.statSubline) els.statSubline.style.display = enabled ? "none" : "";
   if (enabled) {
     hesapla();
-    if (els.statSubline) els.statSubline.textContent = "Kazanım hesaplayıcısı";
   }
 }
 
