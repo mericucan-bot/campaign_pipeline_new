@@ -44,6 +44,33 @@ const myCards = new Set([
   "Yapi Kredi World",
 ]);
 
+const kategoriHaritasi = {
+  market: "market",
+  Market: "market",
+  "süpermarket": "market",
+  supermarket: "market",
+  "Süpermarket": "market",
+  restoran: "restoran",
+  Restoran: "restoran",
+  yemek: "restoran",
+  akaryakıt: "yakit",
+  akaryakit: "yakit",
+  "Akaryakıt": "yakit",
+  yakıt: "yakit",
+  yakit: "yakit",
+  online: "online",
+  Online: "online",
+  "e-ticaret": "online",
+  eticaret: "online",
+  seyahat: "diger",
+  Seyahat: "diger",
+  genel: "diger",
+  Genel: "diger",
+  ulaşım: "diger",
+  ulasim: "diger",
+  "Ulaşım": "diger",
+};
+
 const els = {
   campaigns: document.querySelector("#campaigns"),
   bankFilter: document.querySelector("#bankFilter"),
@@ -664,15 +691,15 @@ function initCalculator() {
   const saved = JSON.parse(localStorage.getItem("kr-harcamalar") || "{}");
   const defaults = { market: 1500, restoran: 800, yakit: 300, online: 1000, diger: 500 };
   Object.entries({ ...defaults, ...saved }).forEach(([key, value]) => {
-    const slider = document.getElementById(`s-${key}`);
-    const manual = document.getElementById(`m-${key}`);
+    const slider = document.getElementById(`slider-${key}`);
+    const manual = document.getElementById(`input-${key}`);
     const amount = Math.max(0, Number(value) || 0);
     if (slider) slider.value = Math.min(amount, Number(slider.max) || 10000);
     if (manual) manual.value = amount;
   });
   ["market", "restoran", "yakit", "online", "diger"].forEach((key) => {
-    const slider = document.getElementById(`s-${key}`);
-    const manual = document.getElementById(`m-${key}`);
+    const slider = document.getElementById(`slider-${key}`);
+    const manual = document.getElementById(`input-${key}`);
     if (slider) {
       slider.addEventListener("input", () => {
         if (manual) manual.value = slider.value;
@@ -712,9 +739,8 @@ function hesapla() {
     .filter((item) => item.aktif ?? item.is_active)
     .map((item) => {
       const data = adaptCampaign(item);
-      if (!isCalculatorEligible(data)) return { ...data, tahminiKazanim: 0 };
-      const ilgiliHarcama = harcamalar[calculatorCategory(data)] || 0;
-      return { ...data, tahminiKazanim: normalizeKazanim(data, ilgiliHarcama) };
+      if (!isCalculatorEligible(data, harcamalar)) return { ...data, tahminiKazanim: 0 };
+      return { ...data, tahminiKazanim: normalizeKazanim(data, harcamalar) };
     })
     .filter((item) => item.tahminiKazanim > 0)
     .sort((a, b) => b.tahminiKazanim - a.tahminiKazanim)
@@ -737,21 +763,28 @@ function hesapla() {
 }
 
 function calculatorSpend(key) {
-  const manual = document.getElementById(`m-${key}`);
-  const slider = document.getElementById(`s-${key}`);
+  const manual = document.getElementById(`input-${key}`);
+  const slider = document.getElementById(`slider-${key}`);
   const amount = Math.max(0, Number(manual?.value || slider?.value || 0));
   if (manual && manual.value !== String(amount)) manual.value = amount;
   if (slider) slider.value = Math.min(amount, Number(slider.max) || 10000);
   return amount;
 }
 
+function syncInput(key, val) {
+  const input = document.getElementById(`input-${key}`);
+  if (input) input.value = val;
+  hesapla();
+}
+
+function syncSlider(key, val) {
+  const slider = document.getElementById(`slider-${key}`);
+  if (slider) slider.value = Math.min(Math.max(0, Number(val) || 0), Number(slider.max) || 10000);
+  hesapla();
+}
+
 function calculatorCategory(item) {
-  const text = normalize(`${item.kategori || ""} ${item.baslik || ""} ${item.aciklama || ""}`);
-  if (text.includes("market") || text.includes("supermarket") || text.includes("gida")) return "market";
-  if (text.includes("restoran") || text.includes("yemek") || text.includes("cafe") || text.includes("kafe")) return "restoran";
-  if (text.includes("yakit") || text.includes("akaryakit") || text.includes("benzin") || text.includes("petrol")) return "yakit";
-  if (text.includes("online") || text.includes("internet") || text.includes("e-ticaret") || text.includes("eticaret")) return "online";
-  return "diger";
+  return sliderKeyForCampaign(item);
 }
 
 function categoryClass(category) {
@@ -898,30 +931,34 @@ function bankLabel(bank) {
   return labels[bank] || bank;
 }
 
-function normalizeKazanim(kampanya, aylikHarcama = 2000) {
+function normalizeKazanim(kampanya, harcamalar = 2000) {
   if (!isSpendRewardCampaign(kampanya)) return 0;
-  const structured = normalizeStructuredKazanim(kampanya, aylikHarcama);
-  if (structured > 0) return structured;
+  const spendMap = typeof harcamalar === "object" && harcamalar !== null
+    ? harcamalar
+    : { market: Number(harcamalar) || 0, restoran: Number(harcamalar) || 0, yakit: Number(harcamalar) || 0, online: Number(harcamalar) || 0, diger: Number(harcamalar) || 0 };
+  const sliderKey = sliderKeyForCampaign(kampanya);
+  const ilgiliHarcama = Number(spendMap[sliderKey] || 0);
+  const kazanim = parseMoney(kampanya.kazanim);
+  const kazanimTuru = String(kampanya.kazanim_turu || "").trim().toLocaleLowerCase("tr-TR");
+  const minHarcama = parseMoney(kampanya.min_harcama || 0);
+  const maxKazanim = parseMoney(kampanya.max_kazanim || 0);
 
-  const text = `${kampanya.kazanim || ""} ${kampanya.highlight || ""} ${kampanya.title || ""} ${kampanya.baslik || ""} ${kampanya.description || ""} ${kampanya.aciklama || ""}`;
-  const normalized = normalize(text);
-  const tl = [...text.matchAll(/(\d{2,6}(?:[.,]\d{1,2})?)\s*(?:tl|₺)/gi)].map((match) => parseMoney(match[1]));
-  if (tl.length) return Math.max(...tl);
-
-  const percent = [...text.matchAll(/%[\s]*(\d{1,2}(?:[.,]\d{1,2})?)/g)].map((match) => parseMoney(match[1]));
-  if (percent.length) return Math.round(aylikHarcama * (Math.max(...percent) / 100));
-
-  const points = [...text.matchAll(/(\d{2,6})\s*(?:puan|chip|bonus|para|worldpuan|bankkart lira)/gi)].map((match) => Number(match[1]));
-  if (points.length || normalized.includes("puan")) return Math.round(Math.max(0, ...points) * 0.01);
-
-  const miles = [...text.matchAll(/(\d{2,6})\s*(?:mil|mile)/gi)].map((match) => Number(match[1]));
-  if (miles.length || normalized.includes("mil")) return Math.round(Math.max(0, ...miles) * 0.03);
-
+  if (!kazanim || !kazanimTuru) return 0;
+  if (kazanimTuru === "%") {
+    let hesap = (ilgiliHarcama * kazanim) / 100;
+    if (maxKazanim) hesap = Math.min(hesap, maxKazanim);
+    return hesap;
+  }
+  if (kazanimTuru === "tl") {
+    return ilgiliHarcama >= minHarcama ? kazanim : 0;
+  }
+  if (kazanimTuru === "puan") return kazanim * 0.01;
+  if (kazanimTuru === "mil") return kazanim * 0.03;
   return 0;
 }
 
-function isCalculatorEligible(item) {
-  return isSpendRewardCampaign(item) && normalizeKazanim(item, 2000) > 0;
+function isCalculatorEligible(item, harcamalar = 2000) {
+  return isSpendRewardCampaign(item) && normalizeKazanim(item, harcamalar) > 0;
 }
 
 function isSpendRewardCampaign(item) {
@@ -930,19 +967,9 @@ function isSpendRewardCampaign(item) {
   return /(tl|₺|indirim|iade|cashback|puan|bonus|chip|worldpuan|bankkart lira|mil|oran|%)/.test(text);
 }
 
-function normalizeStructuredKazanim(kampanya, aylikHarcama = 2000) {
-  const kazanim = parseMoney(kampanya.kazanim);
-  const kazanimTuru = String(kampanya.kazanim_turu || "").trim().toLocaleLowerCase("tr-TR");
-  const minHarcama = parseMoney(kampanya.min_harcama || 0);
-  const maxKazanim = parseMoney(kampanya.max_kazanim || 0) || Infinity;
-  const harcama = Math.max(Number(aylikHarcama) || 2000, minHarcama || 0);
-
-  if (!kazanim || !kazanimTuru) return 0;
-  if (kazanimTuru === "tl") return Math.min(kazanim, maxKazanim);
-  if (kazanimTuru === "%") return Math.min((harcama * kazanim) / 100, maxKazanim);
-  if (kazanimTuru === "puan") return kazanim * 0.01;
-  if (kazanimTuru === "mil") return kazanim * 0.03;
-  return 0;
+function sliderKeyForCampaign(kampanya) {
+  const category = kampanya.kategori || kampanya.category || "Genel";
+  return kategoriHaritasi[category] || kategoriHaritasi[normalize(category)] || "diger";
 }
 
 function rewardKindFor(item) {
