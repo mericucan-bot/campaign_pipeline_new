@@ -22,17 +22,34 @@ def fetch_on_kart():
 
 
 def fetch_bankkart():
-    url = "https://www.bankkart.com.tr/kampanyalar"
-    response = requests.get(url, headers=HEADERS, timeout=(10, 60))
+    base_url = "https://www.bankkart.com.tr/kampanyalar"
+    response = requests.get(base_url, headers=HEADERS, timeout=(10, 60))
     response.raise_for_status()
     response.encoding = "utf-8"
     soup = BeautifulSoup(response.text, "html.parser")
 
+    category_urls = [base_url]
+    for link in soup.select('a[href^="/kampanyalar/"]'):
+        href = (link.get("href") or "").split("#", 1)[0].rstrip("/")
+        parts = [part for part in href.split("/") if part]
+        if len(parts) == 2:
+            full_url = urljoin(base_url, href)
+            if full_url not in category_urls:
+                category_urls.append(full_url)
+
     items = []
-    for card in soup.select("section.col-md-3 .block"):
-        item = card_item("Ziraat Bankkart", url, card)
-        if item:
+    seen = set()
+    for url in category_urls:
+        page_soup = soup if url == base_url else BeautifulSoup(
+            requests.get(url, headers=HEADERS, timeout=(10, 60)).text,
+            "html.parser",
+        )
+        for card in page_soup.select("section.col-md-3 .block"):
+            item = card_item("Ziraat Bankkart", url, card)
+            if not item or item["external_id"] in seen:
+                continue
             item["title"] = item["title"].split(" Son Gün ")[0].strip()
+            seen.add(item["external_id"])
             items.append(item)
     return items
 
