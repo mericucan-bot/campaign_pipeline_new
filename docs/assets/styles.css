@@ -391,8 +391,13 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
   .card-bank-meta strong { font-size: 11px; }
   .card-footer { align-items: flex-start; flex-direction: column; }
   .status, .category-badge, .reward-badge, .date-badge, .urgent-badge { font-size: 10px; padding: 6px 7px; }
-  .kr-slider-row { grid-template-columns: 1fr; }
-  .kr-slider-row span { text-align: left; }
+  .kr-slider-row { align-items: center; display: grid; gap: 8px; grid-template-columns: 70px 1fr 80px; margin: 8px 0; }
+  .kr-slider-row label { color: var(--kr-muted); font-size: 12px; }
+  .kr-slider-row input[type="range"] { width: 100%; }
+  .kr-slider-row input[type="number"] { background: var(--kr-surface); border: 1px solid var(--kr-border); border-radius: 6px; color: var(--kr-text); font-size: 12px; padding: 4px 6px; width: 100%; }
+  .kr-slider-row span { display: none; }
+  #kalk-sonuc .calculator-result { font-size: 11px; min-height: 36px; padding: 8px; }
+  #kalk-sonuc .kampanya-adi { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .campaign-card h2 { font-size: 13px; line-height: 1.25; }
   .card-title { -webkit-line-clamp: 2; }
   .campaign-highlight { font-size: 13px; padding: 7px 8px; }

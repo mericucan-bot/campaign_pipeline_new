@@ -223,6 +223,11 @@ function bindEvents() {
     });
   }
   if (els.calculatorToggle && els.calculatorPanel) {
+    if (window.innerWidth <= 640) {
+      els.calculatorPanel.hidden = true;
+      els.calculatorToggle.setAttribute("aria-expanded", "false");
+      els.calculatorToggle.textContent = "Kazanım Hesaplayıcısı ▼";
+    }
     els.calculatorToggle.addEventListener("click", () => {
       const willOpen = els.calculatorPanel.hidden;
       els.calculatorPanel.hidden = !willOpen;
@@ -753,7 +758,7 @@ function hesapla() {
       ? `<p>Eşleşen kampanya bulunamadı.</p>`
       : sonuclar.map((item, index) => `
         <button class="calculator-result" type="button" onclick="highlightCard('${escapeAttr(item.id)}')">
-          <span title="${escapeAttr(item.baslik)}">${rozetler[index]} ${escapeHtml(item.banka)} — ${escapeHtml(shortenText(item.baslik, 44))}</span>
+          <span class="kampanya-adi" title="${escapeAttr(item.baslik)}">${rozetler[index]} ${escapeHtml(item.banka)} — ${escapeHtml(shortenText(item.baslik, 50))}</span>
           <strong>≈ +${Math.round(item.tahminiKazanim).toLocaleString("tr-TR")}₺</strong>
         </button>
       `).join("");
