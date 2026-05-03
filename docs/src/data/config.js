@@ -1,0 +1,61 @@
+export const BANK_LABELS = {
+  "Akbank Axess": "Axess",
+  "DenizBank Bonus": "DenizBank",
+  "Garanti BBVA Bonus": "Garanti",
+  "Is Bankasi Maximum": "Maximum",
+  "Kuveyt Turk Saglam Kart": "Kuveyt",
+  "N Kolay": "N Kolay",
+  "On Kart": "On",
+  "Paraf": "Paraf",
+  "Paraf Premium": "Paraf Premium",
+  "QNB CardFinans": "QNB",
+  "TEB Bonus": "TEB",
+  "VakifBank": "Vakif",
+  "Yapi Kredi World": "YKB",
+  "Ziraat Bankkart": "Ziraat",
+  "Manuel Favori": "Manuel",
+};
+
+export const DEFAULT_MY_CARDS = [
+  "Akbank Axess",
+  "Is Bankasi Maximum",
+  "Paraf",
+  "Paraf Premium",
+  "VakifBank",
+  "Yapi Kredi World",
+];
+
+export const KATEGORI_HARITASI = {
+  market: "market",
+  Market: "market",
+  "süpermarket": "market",
+  supermarket: "market",
+  "Süpermarket": "market",
+  restoran: "restoran",
+  Restoran: "restoran",
+  yemek: "restoran",
+  akaryakıt: "yakit",
+  akaryakit: "yakit",
+  "Akaryakıt": "yakit",
+  yakıt: "yakit",
+  yakit: "yakit",
+  online: "online",
+  Online: "online",
+  "e-ticaret": "online",
+  eticaret: "online",
+  seyahat: "diger",
+  Seyahat: "diger",
+  genel: "diger",
+  Genel: "diger",
+  ulaşım: "diger",
+  ulasim: "diger",
+  "Ulaşım": "diger",
+};
+
+export const HESAP_KATEGORILERI = new Set([
+  "market", "Market", "Süpermarket", "süpermarket",
+  "restoran", "Restoran", "Yemek", "yemek", "Cafe", "cafe",
+  "akaryakıt", "Akaryakıt", "yakıt", "Yakıt",
+  "online", "Online", "e-ticaret", "E-ticaret",
+  "ulaşım", "Ulaşım", "seyahat", "Seyahat",
+]);
