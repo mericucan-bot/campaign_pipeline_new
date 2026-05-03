@@ -198,6 +198,7 @@ function bindEvents() {
   if (els.calculatorOnly) {
     els.calculatorOnly.addEventListener("change", () => {
       switchCalculatorMode(els.calculatorOnly.checked);
+      if (!els.calculatorOnly.checked) applyFilters();
     });
   }
   if (els.monthlySpend) {
@@ -253,12 +254,19 @@ function initPreferredFlow() {
 }
 
 function switchCalculatorMode(enabled) {
+  if (enabled) clearFlowToggles();
   if (els.campaigns) els.campaigns.style.display = enabled ? "none" : "";
   if (els.calculatorPanel) els.calculatorPanel.hidden = !enabled;
   if (els.statSubline) els.statSubline.style.display = enabled ? "none" : "";
   if (enabled) {
     hesapla();
   }
+}
+
+function clearFlowToggles() {
+  [els.activeOnly, els.favoritesOnly, els.myCardsOnly, els.usedOnly].forEach((input) => {
+    if (input) input.checked = false;
+  });
 }
 
 function applyFilters() {
