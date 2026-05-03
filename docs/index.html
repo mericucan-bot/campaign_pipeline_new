@@ -36,6 +36,13 @@
         <p class="eyebrow">Kampanya zekası <span>by MeRiC UcAn</span></p>
         <h1>T&#252;m Kampanyalar</h1>
         <p class="hero-subtitle">Kart fırsatlarını tek ekranda filtrele, karşılaştır ve takip et.</p>
+        <div class="filter-switches hero-switches">
+          <label class="toggle"><input id="activeOnly" type="checkbox" checked><span>Aktif</span></label>
+          <label class="toggle"><input id="favoritesOnly" type="checkbox"><span>Favoriler</span></label>
+          <label class="toggle"><input id="myCardsOnly" type="checkbox"><span>Benim kartlarım</span></label>
+          <label class="toggle"><input id="usedOnly" type="checkbox"><span>Kullandıklarım</span></label>
+          <label class="toggle"><input id="calculatorOnly" type="checkbox"><span>🧮 Hesaplayıcı</span></label>
+        </div>
       </section>
 
       <section class="stats-panel stats-glass-panel" aria-label="Özet">
@@ -78,13 +85,6 @@
           <span>Arama</span>
           <input id="searchInput" placeholder="market, yakıt, yurt dışı, taksit...">
         </label>
-        <div class="filter-switches">
-          <label class="toggle"><input id="activeOnly" type="checkbox" checked><span>Aktif</span></label>
-          <label class="toggle"><input id="favoritesOnly" type="checkbox"><span>Favoriler</span></label>
-          <label class="toggle"><input id="myCardsOnly" type="checkbox"><span>Benim kartlarım</span></label>
-          <label class="toggle"><input id="usedOnly" type="checkbox"><span>Kullandıklarım</span></label>
-          <label class="toggle"><input id="calculatorOnly" type="checkbox"><span>🧮 Hesaplayıcı</span></label>
-        </div>
         <button class="settings-open" type="button" data-settings-open aria-label="Ayarlar" title="Ayarlar">&#9881;</button>
       </form>
       <div class="bank-rail" id="bankRail" aria-label="Bankalar"></div>
