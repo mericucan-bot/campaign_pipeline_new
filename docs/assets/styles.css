@@ -328,7 +328,7 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .campaign-topline { justify-content: space-between; }
 .campaign-meta { flex: 1; min-width: 0; }
 .bank-name { color: #dce7eb; display: block; font-size: 12px; font-weight: 950; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.status, .category-badge, .reward-badge, .date-badge, .gain-badge, .urgent-badge, .effective-return-badge { border-radius: 999px; display: inline-flex; flex: 0 0 auto; font-size: 11px; font-weight: 950; line-height: 1; padding: 7px 9px; }
+.status, .category-badge, .reward-badge, .date-badge, .gain-badge, .urgent-badge, .effective-return-badge, .opportunity-score-badge { border-radius: 999px; display: inline-flex; flex: 0 0 auto; font-size: 11px; font-weight: 950; line-height: 1; padding: 7px 9px; }
 .status.active { background: rgba(91,210,139,.13); color: var(--green); }
 .status.inactive { background: rgba(227,109,90,.13); color: var(--coral); }
 .favorite-button { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; color: #9ca3af; cursor: pointer; font-size: 19px; height: 34px; line-height: 1; transition: transform 150ms ease, background 150ms ease, color 150ms ease; width: 34px; }
@@ -380,6 +380,9 @@ select:focus, input:focus { border-color: rgba(32,181,159,.85); box-shadow: 0 0 
 .date-badge { background: rgba(214,169,74,.13); color: #e9c878; }
 .gain-badge { background: rgba(26,86,219,.18); color: #93c5fd; }
 .effective-return-badge { background: rgba(16,185,129,.13); color: #86efac; }
+.opportunity-great { background: rgba(239,68,68,.18); color: #fecaca; }
+.opportunity-good { background: rgba(34,197,94,.15); color: #bbf7d0; }
+.opportunity-weak { background: rgba(107,114,128,.16); color: #cbd5e1; }
 .deadline-neutral { background: rgba(107,114,128,.18); color: #cbd5e1; }
 .deadline-warning { background: rgba(245,158,11,.18); color: #facc15; }
 .deadline-danger { background: rgba(239,68,68,.2); color: #fca5a5; }
@@ -463,7 +466,7 @@ p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 0; }
   .card-header { gap: 8px; grid-template-columns: 32px minmax(0, 1fr) 32px; }
   .card-bank-meta strong { font-size: 11px; }
   .card-footer { align-items: flex-start; flex-direction: column; }
-  .status, .category-badge, .reward-badge, .date-badge, .urgent-badge, .effective-return-badge { font-size: 10px; padding: 6px 7px; }
+  .status, .category-badge, .reward-badge, .date-badge, .urgent-badge, .effective-return-badge, .opportunity-score-badge { font-size: 10px; padding: 6px 7px; }
   .kr-slider-row { align-items: center; display: grid; gap: 8px; grid-template-columns: 70px 1fr 80px; margin: 8px 0; }
   .kr-slider-row label { color: var(--kr-muted); font-size: 12px; }
   .kr-slider-row input[type="range"] { width: 100%; }

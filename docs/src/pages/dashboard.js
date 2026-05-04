@@ -5,6 +5,7 @@ import { escapeAttr, escapeHtml } from "../utils/html.js";
 import { formatCurrency, normalize, normalizeSearch, shortenText } from "../utils/format.js";
 import { normalizeCampaign } from "../utils/campaignSchema.js";
 import { calculateEffectiveReturn } from "../utils/valueCalculator.js";
+import { calculateOpportunityScore, opportunityLabel } from "../utils/opportunityScore.js";
 
 export function startDashboard() {
 const state = {
@@ -381,6 +382,7 @@ function card(item) {
   const urgent = urgencyInfo(data);
   const normalized = normalizeKazanim(data, calculatorSpendMap());
   const effective = calculateEffectiveReturn(item, state.effectiveSpend);
+  const opportunity = opportunityLabel(calculateOpportunityScore(item));
   const logoStyle = `--logo-bg:${bankColor(data.banka)}`;
   const logo = data.gorsel_url
     ? `<img src="${escapeAttr(data.gorsel_url)}" alt="" loading="lazy">`
@@ -408,6 +410,7 @@ function card(item) {
         ${reward ? `<span class="reward-badge ${reward.className}">${escapeHtml(reward.label)}</span>` : ""}
         ${normalized >= 1 && isSpendRewardCampaign(data) ? `<span class="gain-badge">≈ ${Math.round(normalized).toLocaleString("tr-TR")}₺ değerinde</span>` : ""}
         <span class="effective-return-badge">Etkin getiri: %${formatPercent(effective.effectiveRate)}</span>
+        <span class="opportunity-score-badge ${opportunity.className}">${escapeHtml(opportunity.text)}</span>
         ${deadline.hidden ? "" : `<span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>`}
         ${urgent.badge ? `<span class="urgent-badge ${urgent.badgeClass}">${escapeHtml(urgent.badge)}</span>` : ""}
       </div>
