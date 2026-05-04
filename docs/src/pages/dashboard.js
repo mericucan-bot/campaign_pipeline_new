@@ -4,6 +4,7 @@ import { BANK_LABELS, DEFAULT_MY_CARDS, HESAP_KATEGORILERI, KATEGORI_HARITASI } 
 import { escapeAttr, escapeHtml } from "../utils/html.js";
 import { formatCurrency, normalize, normalizeSearch, shortenText } from "../utils/format.js";
 import { normalizeCampaign } from "../utils/campaignSchema.js";
+import { calculateEffectiveReturn } from "../utils/valueCalculator.js";
 
 export function startDashboard() {
 const state = {
@@ -15,6 +16,7 @@ const state = {
   pendingUsedId: null,
   manualCampaigns: JSON.parse(localStorage.getItem("manualCampaigns") || "[]").map((item, index) => normalizeCampaign(item, { index })),
   monthlySpend: Number(localStorage.getItem("kr-aylik-harcama") || localStorage.getItem("monthlySpend") || 2000),
+  effectiveSpend: Number(localStorage.getItem("kr-effective-spend") || 1000),
   myCards: new Set(JSON.parse(localStorage.getItem("myCards") || "null") || DEFAULT_MY_CARDS),
 };
 
@@ -25,6 +27,7 @@ const els = {
   rewardFilter: document.querySelector("#rewardFilter"),
   sortFilter: document.querySelector("#sortFilter"),
   searchInput: document.querySelector("#searchInput"),
+  effectiveSpendInput: document.querySelector("#effectiveSpendInput"),
   activeOnly: document.querySelector("#activeOnly"),
   favoritesOnly: document.querySelector("#favoritesOnly"),
   myCardsOnly: document.querySelector("#myCardsOnly"),
@@ -155,6 +158,11 @@ function bindEvents() {
     els.monthlySpend.addEventListener("input", () => {
       updateHarcama(els.monthlySpend.value);
     });
+  }
+  if (els.effectiveSpendInput) {
+    els.effectiveSpendInput.value = state.effectiveSpend;
+    els.effectiveSpendInput.addEventListener("input", updateEffectiveSpend);
+    els.effectiveSpendInput.addEventListener("change", updateEffectiveSpend);
   }
   if (els.manualForm) {
     els.manualForm.addEventListener("submit", addManualCampaign);
@@ -372,6 +380,7 @@ function card(item) {
   const deadline = deadlineInfo(data);
   const urgent = urgencyInfo(data);
   const normalized = normalizeKazanim(data, calculatorSpendMap());
+  const effective = calculateEffectiveReturn(item, state.effectiveSpend);
   const logoStyle = `--logo-bg:${bankColor(data.banka)}`;
   const logo = data.gorsel_url
     ? `<img src="${escapeAttr(data.gorsel_url)}" alt="" loading="lazy">`
@@ -398,6 +407,7 @@ function card(item) {
       <div class="card-footer">
         ${reward ? `<span class="reward-badge ${reward.className}">${escapeHtml(reward.label)}</span>` : ""}
         ${normalized >= 1 && isSpendRewardCampaign(data) ? `<span class="gain-badge">≈ ${Math.round(normalized).toLocaleString("tr-TR")}₺ değerinde</span>` : ""}
+        <span class="effective-return-badge">Etkin getiri: %${formatPercent(effective.effectiveRate)}</span>
         ${deadline.hidden ? "" : `<span class="date-badge ${deadline.badgeClass}">${escapeHtml(deadline.label)}</span>`}
         ${urgent.badge ? `<span class="urgent-badge ${urgent.badgeClass}">${escapeHtml(urgent.badge)}</span>` : ""}
       </div>
@@ -1052,8 +1062,20 @@ function updateHarcama(val) {
   rerenderCards();
 }
 
+function updateEffectiveSpend() {
+  state.effectiveSpend = Math.max(0, Number(els.effectiveSpendInput?.value || 0));
+  localStorage.setItem("kr-effective-spend", String(state.effectiveSpend));
+  renderCampaigns();
+}
+
 function rerenderCards() {
   applyFilters();
+}
+
+function formatPercent(value) {
+  const percent = Math.max(0, Number(value || 0) * 100);
+  if (percent >= 100) return Math.round(percent).toLocaleString("tr-TR");
+  return percent.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
 }
 
 function showLoadingState() {
