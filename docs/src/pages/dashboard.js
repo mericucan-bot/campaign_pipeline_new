@@ -19,6 +19,12 @@ const state = {
   monthlySpend: Number(localStorage.getItem("kr-aylik-harcama") || localStorage.getItem("monthlySpend") || 2000),
   effectiveSpend: Number(localStorage.getItem("kr-effective-spend") || 1000),
   myCards: new Set(JSON.parse(localStorage.getItem("myCards") || "null") || DEFAULT_MY_CARDS),
+  cardCache: new Map(),
+  searchCache: new Map(),
+  renderSignature: "",
+  bankRailSignature: "",
+  filterSignature: "",
+  inactiveCount: 0,
 };
 
 const els = {
@@ -97,6 +103,7 @@ showLoadingState();
 fetchCampaignPayload()
   .then((payload) => {
     state.campaigns = [...(payload.campaigns || []), ...state.manualCampaigns];
+    resetDerivedCaches();
     hydrateStats(payload);
     hydrateHealth(payload.health || []);
     hydrateFilters();
@@ -126,6 +133,20 @@ function hydrateStats(payload) {
   if (payload.generated_at) {
     els.generatedAt.textContent = `Son güncelleme: ${new Date(payload.generated_at).toLocaleString("tr-TR")}`;
   }
+}
+
+function resetDerivedCaches() {
+  state.cardCache.clear();
+  state.searchCache.clear();
+  state.renderSignature = "";
+  state.bankRailSignature = "";
+  state.filterSignature = "";
+  state.inactiveCount = state.campaigns.filter((item) => !item.isActive).length;
+}
+
+function invalidateRenderCache() {
+  state.cardCache.clear();
+  state.renderSignature = "";
 }
 
 function hydrateFilters() {
@@ -263,9 +284,30 @@ function applyFilters() {
   const favoritesOnly = els.favoritesOnly.checked;
   const myCardsOnly = els.myCardsOnly.checked;
   const usedOnly = els.usedOnly.checked;
+  const filterSignature = [
+    state.selectedBank,
+    query,
+    category,
+    reward,
+    activeOnly,
+    favoritesOnly,
+    myCardsOnly,
+    usedOnly,
+    els.sortFilter.value,
+    state.campaigns.length,
+    state.favorites.size,
+    Object.keys(state.used).length,
+    [...state.myCards].join("|"),
+  ].join("::");
+
+  if (filterSignature === state.filterSignature) {
+    renderCampaigns();
+    els.favoriteCount.textContent = state.favorites.size;
+    return;
+  }
+  state.filterSignature = filterSignature;
 
   let rows = state.campaigns.filter((item) => {
-    const haystack = normalizeSearch(`${item.title || ""} ${item.description || ""} ${item.bank || ""} ${item.highlight || ""} ${item.category || ""}`);
     return (!state.selectedBank || item.bank === state.selectedBank)
       && (!category || item.category === category)
       && (!reward || item.rewardType === reward)
@@ -273,7 +315,7 @@ function applyFilters() {
       && (!favoritesOnly || state.favorites.has(String(item.id)))
       && (!myCardsOnly || state.myCards.has(item.bank))
       && (!usedOnly || Boolean(state.used[String(item.id)]))
-      && (!query || haystack.includes(query));
+      && (!query || searchTextFor(item).includes(query));
   });
 
   rows = sortRows(rows, els.sortFilter.value);
@@ -281,7 +323,7 @@ function applyFilters() {
   renderBankRail();
   renderCampaigns();
   const total = state.campaigns.length;
-  const inactive = state.campaigns.filter((item) => !item.isActive).length;
+  const inactive = state.inactiveCount;
   els.statSubline.textContent = `${rows.length} sonuç · ${total} kayıt · ${inactive} pasif`;
   els.favoriteCount.textContent = state.favorites.size;
 }
@@ -299,6 +341,7 @@ function hydrateMyCards() {
     input.addEventListener("change", () => {
       state.myCards = new Set([...els.myCardsGrid.querySelectorAll("input:checked")].map((item) => item.value));
       localStorage.setItem("myCards", JSON.stringify([...state.myCards]));
+      state.filterSignature = "";
       applyFilters();
     });
   });
@@ -322,6 +365,9 @@ function sortRows(rows, sort) {
 
 function renderBankRail() {
   const banks = unique(state.campaigns.map((item) => item.bank));
+  const signature = `${state.selectedBank}::${banks.join("|")}`;
+  if (signature === state.bankRailSignature) return;
+  state.bankRailSignature = signature;
   els.bankRail.innerHTML = [
     chip("", "Tümü", !state.selectedBank),
     ...banks.map((bank) => chip(bank, bankLabel(bank), bank === state.selectedBank)),
@@ -335,11 +381,15 @@ function renderBankRail() {
 }
 
 function renderCampaigns() {
+  const signature = renderSignature();
+  if (signature === state.renderSignature) return;
   if (!state.filtered.length) {
+    state.renderSignature = signature;
     showEmptyState(activeFilterContext());
     return;
   }
 
+  state.renderSignature = signature;
   els.campaigns.innerHTML = `${urgentFavoritesBanner()}${state.filtered.map((item) => card(item)).join("")}`;
   const urgentButton = els.campaigns.querySelector("[data-filter-urgent]");
   if (urgentButton) urgentButton.addEventListener("click", filterUrgent);
@@ -373,7 +423,42 @@ function renderCampaigns() {
   });
 }
 
+function renderSignature() {
+  return [
+    state.filterSignature,
+    state.filtered.map((item) => item.id).join("|"),
+    [...state.favorites].sort().join("|"),
+    Object.keys(state.used).sort().join("|"),
+    state.effectiveSpend,
+    JSON.stringify(calculatorSpendMap()),
+  ].join("::");
+}
+
+function cardCacheKey(item) {
+  const id = String(item.id);
+  const used = state.used[id];
+  return [
+    id,
+    state.favorites.has(id) ? 1 : 0,
+    used ? `${used.tarih}-${used.kazanilan || ""}` : "",
+    state.effectiveSpend,
+    JSON.stringify(calculatorSpendMap()),
+  ].join("::");
+}
+
+function searchTextFor(item) {
+  const id = String(item.id);
+  const cached = state.searchCache.get(id);
+  if (cached) return cached;
+  const value = normalizeSearch(`${item.title || ""} ${item.description || ""} ${item.bank || ""} ${item.highlight || ""} ${item.category || ""}`);
+  state.searchCache.set(id, value);
+  return value;
+}
+
 function card(item) {
+  const cacheKey = cardCacheKey(item);
+  const cached = state.cardCache.get(cacheKey);
+  if (cached) return cached;
   const data = adaptCampaign(item);
   const favorite = state.favorites.has(String(data.id));
   const usedData = state.used[String(data.id)];
@@ -387,7 +472,7 @@ function card(item) {
   const logo = data.gorsel_url
     ? `<img src="${escapeAttr(data.gorsel_url)}" alt="" loading="lazy">`
     : `<span style="${logoStyle}">${escapeHtml(bankInitials(data.banka))}</span>`;
-  return `
+  const html = `
     <article id="card-${escapeAttr(data.id)}" class="campaign-card radar-card ${deadline.cardClass} ${urgent.cardClass} ${usedData ? "used-card" : ""}" data-id="${escapeAttr(data.id)}">
       <div class="card-header">
         <div class="bank-logo" style="${logoStyle}">${logo}</div>
@@ -422,6 +507,8 @@ function card(item) {
       </div>
     </article>
   `;
+  state.cardCache.set(cacheKey, html);
+  return html;
 }
 
 function adaptCampaign(item) {
@@ -922,6 +1009,7 @@ function addManualCampaign(event) {
 
   state.manualCampaigns.unshift(item);
   state.campaigns.unshift(item);
+  resetDerivedCaches();
   state.favorites.add(String(id));
   localStorage.setItem("manualCampaigns", JSON.stringify(state.manualCampaigns));
   persistFavorites();
@@ -1062,12 +1150,14 @@ function updateHarcama(val) {
   updateMonthlySpendLabel();
   localStorage.setItem("kr-aylik-harcama", String(state.monthlySpend));
   localStorage.setItem("monthlySpend", String(state.monthlySpend));
+  invalidateRenderCache();
   rerenderCards();
 }
 
 function updateEffectiveSpend() {
   state.effectiveSpend = Math.max(0, Number(els.effectiveSpendInput?.value || 0));
   localStorage.setItem("kr-effective-spend", String(state.effectiveSpend));
+  invalidateRenderCache();
   renderCampaigns();
 }
 
