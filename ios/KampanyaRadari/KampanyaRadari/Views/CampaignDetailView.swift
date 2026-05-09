@@ -5,62 +5,78 @@ struct CampaignDetailView: View {
     @Bindable var favorites: FavoritesStore
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                AsyncImage(url: campaign.imageURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .scaledToFill()
-                    case .failure:
-                        placeholder
-                    case .empty:
-                        placeholder.overlay {
-                            ProgressView()
+        ZStack {
+            AppTheme.blueBackground
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 18) {
+                        AsyncImage(url: campaign.imageURL) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                            case .failure:
+                                placeholder
+                            case .empty:
+                                placeholder.overlay {
+                                    ProgressView()
+                                }
+                            @unknown default:
+                                placeholder
+                            }
                         }
-                    @unknown default:
-                        placeholder
-                    }
-                }
-                .frame(height: 220)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .frame(height: 220)
+                        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                        .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 10)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(campaign.displayBank)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.green)
-                    Text(campaign.title)
-                        .font(.title2.weight(.bold))
-                    Text(campaign.deadlineText)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.orange)
-                }
-
-                Text(campaign.displaySummary)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-
-                HStack {
-                    Button {
-                        favorites.toggle(campaign)
-                    } label: {
-                        Label(
-                            favorites.contains(campaign) ? "Favorilerden cikar" : "Favoriye ekle",
-                            systemImage: favorites.contains(campaign) ? "star.fill" : "star"
-                        )
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    if let sourceURL = campaign.sourceURL {
-                        Link(destination: sourceURL) {
-                            Label("Kaynak", systemImage: "safari")
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(campaign.displayBank)
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(AppTheme.electricBlue)
+                            Text(campaign.title)
+                                .font(.title2.weight(.bold))
+                                .foregroundStyle(AppTheme.ink)
+                            Text(campaign.deadlineText)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.orange)
                         }
-                        .buttonStyle(.bordered)
+
+                        Text(campaign.displaySummary)
+                            .font(.body)
+                            .foregroundStyle(AppTheme.muted)
+
+                        HStack {
+                            Button {
+                                favorites.toggle(campaign)
+                            } label: {
+                                Label(
+                                    favorites.contains(campaign) ? "Favorilerden cikar" : "Favoriye ekle",
+                                    systemImage: favorites.contains(campaign) ? "star.fill" : "star"
+                                )
+                                .font(.subheadline.weight(.bold))
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(AppTheme.coral)
+
+                            if let sourceURL = campaign.sourceURL {
+                                Link(destination: sourceURL) {
+                                    Label("Kaynak", systemImage: "safari")
+                                        .font(.subheadline.weight(.bold))
+                                }
+                                .buttonStyle(.bordered)
+                                .tint(AppTheme.electricBlue)
+                            }
+                        }
                     }
+                    .padding(20)
+                    .background(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
                 }
+                .padding(18)
             }
-            .padding()
         }
         .navigationTitle("Detay")
         #if os(iOS)
@@ -70,11 +86,11 @@ struct CampaignDetailView: View {
 
     private var placeholder: some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(.secondary.opacity(0.15))
+            .fill(AppTheme.softBlue)
             .overlay {
                 Image(systemName: "creditcard")
                     .font(.largeTitle)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(AppTheme.electricBlue)
             }
     }
 }

@@ -9,54 +9,56 @@ struct CampaignListView: View {
         NavigationStack {
             let filteredCampaigns = viewModel.filteredCampaigns(favoriteIDs: favorites.ids)
 
-            Group {
+            ZStack {
+                AppTheme.blueBackground
+                    .ignoresSafeArea()
+
                 if viewModel.isLoading && viewModel.campaigns.isEmpty {
                     ProgressView("Kampanyalar yukleniyor")
+                        .tint(.white)
+                        .foregroundStyle(.white)
                 } else if let errorMessage = viewModel.errorMessage {
                     ContentUnavailableView("Baglanti hatasi", systemImage: "wifi.exclamationmark", description: Text(errorMessage))
+                        .foregroundStyle(.white)
                 } else {
-                    List {
-                        bankFilter
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
+                    ScrollView {
+                        VStack(spacing: 18) {
+                            dashboardHeader(total: viewModel.campaigns.count, count: filteredCampaigns.count)
+                            bankFilter
 
-                        resultSummary(count: filteredCampaigns.count)
-                            .listRowSeparator(.hidden)
+                            VStack(spacing: 16) {
+                                resultSummary(count: filteredCampaigns.count)
 
-                        if filteredCampaigns.isEmpty {
-                            ContentUnavailableView("Sonuc bulunamadi", systemImage: "line.3.horizontal.decrease.circle", description: Text("Filtreleri gevsetip tekrar dene."))
-                                .listRowSeparator(.hidden)
-                        }
+                                if filteredCampaigns.isEmpty {
+                                    ContentUnavailableView("Sonuc bulunamadi", systemImage: "line.3.horizontal.decrease.circle", description: Text("Filtreleri gevsetip tekrar dene."))
+                                        .padding(.vertical, 40)
+                                }
 
-                        ForEach(filteredCampaigns) { campaign in
-                            NavigationLink {
-                                CampaignDetailView(campaign: campaign, favorites: favorites)
-                            } label: {
-                                CampaignCardView(
-                                    campaign: campaign,
-                                    isFavorite: favorites.contains(campaign)
-                                )
+                                ForEach(filteredCampaigns) { campaign in
+                                    NavigationLink {
+                                        CampaignDetailView(campaign: campaign, favorites: favorites)
+                                    } label: {
+                                        CampaignCardView(
+                                            campaign: campaign,
+                                            isFavorite: favorites.contains(campaign)
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
+                            .padding(18)
+                            .frame(maxWidth: .infinity)
+                            .background(.white)
+                            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 34, topTrailingRadius: 34))
                         }
+                        .padding(.top, 8)
                     }
-                    .listStyle(.plain)
                     .refreshable {
                         await viewModel.load()
                     }
                 }
             }
-            .navigationTitle("Kampanya Radar")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        isShowingFilters = true
-                    } label: {
-                        Image(systemName: viewModel.hasAdvancedFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                    }
-                    .accessibilityLabel("Filtreler")
-                }
-            }
-            .searchable(text: $viewModel.searchText, prompt: "Market, taksit, seyahat")
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $isShowingFilters) {
                 FilterSheet(viewModel: viewModel, favoriteCount: favorites.ids.count)
                     .presentationDetents([.medium, .large])
@@ -68,6 +70,55 @@ struct CampaignListView: View {
                 }
             }
         }
+    }
+
+    private func dashboardHeader(total: Int, count: Int) -> some View {
+        VStack(alignment: .leading, spacing: 22) {
+            HStack {
+                CircleIconButton(systemName: "line.3.horizontal") {
+                    isShowingFilters = true
+                }
+                Spacer()
+                CircleIconButton(systemName: viewModel.hasAdvancedFilters ? "slider.horizontal.3" : "line.3.horizontal.decrease") {
+                    isShowingFilters = true
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Kampanya Radarı")
+                    .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(.white)
+                Text("Kart fırsatlarını tek ekranda keşfet")
+                    .font(.headline)
+                    .foregroundStyle(.white.opacity(0.82))
+            }
+
+            HStack(spacing: 12) {
+                StatTile(title: "Aktif", value: "\(total)")
+                StatTile(title: "Sonuc", value: "\(count)")
+                StatTile(title: "Favori", value: "\(favorites.ids.count)")
+            }
+
+            searchField
+        }
+        .padding(.horizontal, 22)
+        .padding(.top, 18)
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(AppTheme.ink)
+            TextField("Market, taksit, seyahat", text: $viewModel.searchText)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
+        .background(.white)
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(0.18), radius: 18, x: 0, y: 10)
     }
 
     private var bankFilter: some View {
@@ -83,7 +134,6 @@ struct CampaignListView: View {
                 }
             }
             .padding(.horizontal)
-            .padding(.vertical, 8)
         }
     }
 
@@ -91,7 +141,7 @@ struct CampaignListView: View {
         HStack(spacing: 10) {
             Label("\(count) sonuc", systemImage: "rectangle.stack")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppTheme.muted)
             Spacer()
             if viewModel.hasAdvancedFilters {
                 Button("Temizle") {
@@ -113,13 +163,54 @@ private struct BankChip: View {
         Button(action: action) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.green.opacity(0.18) : Color.secondary.opacity(0.12))
-                .foregroundStyle(isSelected ? .green : .primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 11)
+                .background(isSelected ? AppTheme.coral : .white.opacity(0.18))
+                .foregroundStyle(isSelected ? .white : .white)
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct CircleIconButton: View {
+    let systemName: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(AppTheme.ink)
+                .frame(width: 46, height: 46)
+                .background(.white)
+                .clipShape(Circle())
+                .shadow(color: .black.opacity(0.16), radius: 12, x: 0, y: 8)
+        }
+    }
+}
+
+private struct StatTile: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.75))
+            Text(value)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(.white.opacity(0.14))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(.white.opacity(0.16), lineWidth: 1)
+        }
     }
 }
 
