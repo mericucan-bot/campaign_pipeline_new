@@ -279,7 +279,16 @@ private struct CampaignListScreen: View {
                             }
                             .padding(18)
                             .frame(maxWidth: .infinity)
-                            .background(AppTheme.softGreen.opacity(0.58))
+                            .background(
+                                LinearGradient(
+                                    colors: [
+                                        AppTheme.nearBlack.opacity(0.94),
+                                        Color(red: 0.02, green: 0.10, blue: 0.10).opacity(0.92)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
                             .clipShape(UnevenRoundedRectangle(topLeadingRadius: 34, topTrailingRadius: 34))
                         }
                         .padding(.top, 8)
@@ -411,13 +420,14 @@ private struct CampaignListScreen: View {
         HStack(spacing: 10) {
             Label("\(count) sonuc", systemImage: "rectangle.stack")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(AppTheme.muted)
+                .foregroundStyle(.white.opacity(0.72))
             Spacer()
             if viewModel.hasAdvancedFilters {
                 Button("Temizle") {
                     viewModel.clearAdvancedFilters()
                 }
                 .font(.footnote.weight(.semibold))
+                .foregroundStyle(AppTheme.dashboardGreen)
             }
         }
         .padding(.vertical, 4)
