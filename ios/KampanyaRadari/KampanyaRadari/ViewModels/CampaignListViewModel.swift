@@ -17,13 +17,37 @@ struct CategorySummary: Identifiable, Hashable {
     var id: String { name }
 }
 
+enum CampaignCategory: String, CaseIterable, Identifiable {
+    case fuel = "Akaryakıt"
+    case electronics = "Elektronik"
+    case fashion = "Giyim"
+    case market = "Market"
+    case online = "Online"
+    case restaurant = "Restoran"
+    case travel = "Seyahat"
+
+    var id: String { rawValue }
+
+    var iconName: String {
+        switch self {
+        case .fuel: return "fuelpump.fill"
+        case .electronics: return "desktopcomputer"
+        case .fashion: return "tshirt.fill"
+        case .market: return "cart.fill"
+        case .online: return "network"
+        case .restaurant: return "fork.knife"
+        case .travel: return "airplane"
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class CampaignListViewModel {
     var campaigns: [Campaign] = []
     var searchText = ""
-    var selectedBank: String?
-    var selectedCategory: String?
+    var selectedBanks: Set<String> = []
+    var selectedCategories: Set<String> = []
     var selectedRewardType: String?
     var showFavoritesOnly = false
     var sortOption: CampaignSortOption = .expiringSoon
@@ -39,7 +63,11 @@ final class CampaignListViewModel {
     }
 
     var categories: [String] {
-        sortedUniqueValues(campaigns.compactMap(\.category))
+        CampaignCategory.allCases
+            .map(\.rawValue)
+            .filter { category in
+                campaigns.contains { canonicalCategory(for: $0) == category }
+            }
     }
 
     var rewardTypes: [String] {
@@ -47,21 +75,15 @@ final class CampaignListViewModel {
     }
 
     var categorySummaries: [CategorySummary] {
-        let grouped = Dictionary(grouping: campaigns) { campaign in
-            let category = campaign.category?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return category.isEmpty ? "Genel" : category
+        CampaignCategory.allCases.compactMap { category in
+            let count = campaigns.filter { canonicalCategory(for: $0) == category.rawValue }.count
+            guard count > 0 else { return nil }
+            return CategorySummary(name: category.rawValue, count: count)
         }
-
-        return grouped
-            .map { CategorySummary(name: $0.key, count: $0.value.count) }
-            .sorted {
-                if $0.count != $1.count { return $0.count > $1.count }
-                return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
-            }
     }
 
     var topCategorySummaries: [CategorySummary] {
-        Array(categorySummaries.prefix(4))
+        categorySummaries
     }
 
     var bankCount: Int {
@@ -69,13 +91,13 @@ final class CampaignListViewModel {
     }
 
     var hasAdvancedFilters: Bool {
-        selectedCategory != nil || selectedRewardType != nil || showFavoritesOnly || sortOption != .expiringSoon
+        !selectedBanks.isEmpty || !selectedCategories.isEmpty || selectedRewardType != nil || showFavoritesOnly || sortOption != .expiringSoon
     }
 
     func filteredCampaigns(favoriteIDs: Set<String>) -> [Campaign] {
         let filtered = campaigns.filter { campaign in
-            let bankMatches = selectedBank == nil || campaign.bank == selectedBank
-            let categoryMatches = selectedCategory == nil || campaign.category == selectedCategory
+            let bankMatches = selectedBanks.isEmpty || selectedBanks.contains(campaign.bank)
+            let categoryMatches = selectedCategories.isEmpty || selectedCategories.contains(canonicalCategory(for: campaign))
             let rewardMatches = selectedRewardType == nil || campaign.rewardType == selectedRewardType
             let favoriteMatches = !showFavoritesOnly || favoriteIDs.contains(campaign.id)
             let search = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -91,15 +113,16 @@ final class CampaignListViewModel {
     }
 
     func resetFilters() {
-        selectedBank = nil
-        selectedCategory = nil
+        selectedBanks = []
+        selectedCategories = []
         selectedRewardType = nil
         showFavoritesOnly = false
         sortOption = .expiringSoon
     }
 
     func clearAdvancedFilters() {
-        selectedCategory = nil
+        selectedBanks = []
+        selectedCategories = []
         selectedRewardType = nil
         showFavoritesOnly = false
         sortOption = .expiringSoon
@@ -112,21 +135,82 @@ final class CampaignListViewModel {
 
     func showCampaigns(category: String) {
         searchText = ""
-        selectedBank = nil
-        selectedCategory = category
+        selectedBanks = []
+        selectedCategories = [category]
         selectedRewardType = nil
         showFavoritesOnly = false
         sortOption = .expiringSoon
+    }
+
+    func toggleBank(_ bank: String) {
+        if selectedBanks.contains(bank) {
+            selectedBanks.remove(bank)
+        } else {
+            selectedBanks.insert(bank)
+        }
+    }
+
+    func clearBanks() {
+        selectedBanks = []
+    }
+
+    func toggleCategory(_ category: String) {
+        if selectedCategories.contains(category) {
+            selectedCategories.remove(category)
+        } else {
+            selectedCategories.insert(category)
+        }
+    }
+
+    func clearCategories() {
+        selectedCategories = []
     }
 
     func label(for bank: String) -> String {
         campaigns.first(where: { $0.bank == bank })?.displayBank ?? bank
     }
 
+    func iconName(for category: String) -> String {
+        CampaignCategory.allCases.first(where: { $0.rawValue == category })?.iconName ?? "tag.fill"
+    }
+
     private func sortedUniqueValues(_ values: [String]) -> [String] {
         Array(Set(values.filter { !$0.isEmpty })).sorted {
             $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
         }
+    }
+
+    private func canonicalCategory(for campaign: Campaign) -> String {
+        let haystack = [
+            campaign.category,
+            campaign.title,
+            campaign.summary,
+            campaign.description
+        ]
+            .compactMap { $0 }
+            .joined(separator: " ")
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+            .lowercased()
+
+        if haystack.contains("akaryakit") || haystack.contains("yakit") || haystack.contains("petrol") || haystack.contains("shell") || haystack.contains("opet") || haystack.contains("total") {
+            return CampaignCategory.fuel.rawValue
+        }
+        if haystack.contains("elektronik") || haystack.contains("teknosa") || haystack.contains("mediamarkt") || haystack.contains("vatan") || haystack.contains("bilgisayar") || haystack.contains("telefon") {
+            return CampaignCategory.electronics.rawValue
+        }
+        if haystack.contains("giyim") || haystack.contains("moda") || haystack.contains("zara") || haystack.contains("defacto") || haystack.contains("lc waikiki") || haystack.contains("ipekyol") || haystack.contains("vakko") {
+            return CampaignCategory.fashion.rawValue
+        }
+        if haystack.contains("market") || haystack.contains("migros") || haystack.contains("a101") || haystack.contains("sok") || haystack.contains("carrefour") {
+            return CampaignCategory.market.rawValue
+        }
+        if haystack.contains("restoran") || haystack.contains("restaurant") || haystack.contains("cafe") || haystack.contains("yemek") || haystack.contains("bigchefs") || haystack.contains("cookshop") {
+            return CampaignCategory.restaurant.rawValue
+        }
+        if haystack.contains("seyahat") || haystack.contains("otel") || haystack.contains("ucak") || haystack.contains("bilet") || haystack.contains("tatil") || haystack.contains("jolly") || haystack.contains("enuygun") {
+            return CampaignCategory.travel.rawValue
+        }
+        return CampaignCategory.online.rawValue
     }
 
     private func sort(_ campaigns: [Campaign]) -> [Campaign] {

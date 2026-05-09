@@ -81,15 +81,10 @@ private struct IntroView: View {
 
                 Spacer()
 
-                Image("Radar")
+                Image("NewRadar")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 300, height: 300)
-                    .clipShape(Circle())
-                    .overlay {
-                        Circle()
-                            .stroke(AppTheme.dashboardGreen.opacity(0.75), lineWidth: 3)
-                    }
+                    .frame(maxWidth: 330)
                     .shadow(color: AppTheme.dashboardGreen.opacity(0.26), radius: 28, x: 0, y: 12)
                     .padding(.bottom, 22)
             }
@@ -185,7 +180,7 @@ private struct DashboardHomeView: View {
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
                 ForEach(viewModel.topCategorySummaries) { summary in
-                    CategoryTile(summary: summary) {
+                    CategoryTile(summary: summary, iconName: viewModel.iconName(for: summary.name)) {
                         openCategory(summary.name)
                     }
                 }
@@ -284,7 +279,7 @@ private struct CampaignListScreen: View {
                             }
                             .padding(18)
                             .frame(maxWidth: .infinity)
-                            .background(.white)
+                            .background(AppTheme.softGreen.opacity(0.58))
                             .clipShape(UnevenRoundedRectangle(topLeadingRadius: 34, topTrailingRadius: 34))
                         }
                         .padding(.top, 8)
@@ -387,18 +382,24 @@ private struct CampaignListScreen: View {
     private var bankFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                Image(systemName: "line.3.horizontal.decrease")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 38, height: 38)
-                    .background(.white.opacity(0.18))
-                    .clipShape(Circle())
-                BankChip(title: "Tumu", isSelected: viewModel.selectedBank == nil) {
-                    viewModel.selectedBank = nil
+                Button {
+                    isShowingFilters = true
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 38, height: 38)
+                        .background(viewModel.selectedBanks.isEmpty ? .white.opacity(0.18) : AppTheme.dashboardGreen.opacity(0.88))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+
+                BankChip(title: "Tümü", isSelected: viewModel.selectedBanks.isEmpty) {
+                    viewModel.clearBanks()
                 }
                 ForEach(viewModel.banks, id: \.self) { bank in
-                    BankChip(title: viewModel.label(for: bank), isSelected: viewModel.selectedBank == bank) {
-                        viewModel.selectedBank = bank
+                    BankChip(title: viewModel.label(for: bank), isSelected: viewModel.selectedBanks.contains(bank)) {
+                        viewModel.toggleBank(bank)
                     }
                 }
             }
@@ -502,6 +503,7 @@ private struct CategoryDonutChart: View {
 
 private struct CategoryTile: View {
     let summary: CategorySummary
+    let iconName: String
     let action: () -> Void
 
     var body: some View {
@@ -549,20 +551,6 @@ private struct CategoryTile: View {
         }
     }
 
-    private var iconName: String {
-        switch summary.name.lowercased() {
-        case let name where name.contains("market"):
-            return "cart.fill"
-        case let name where name.contains("akaryakit") || name.contains("yakıt") || name.contains("yakit"):
-            return "fuelpump.fill"
-        case let name where name.contains("seyahat"):
-            return "airplane"
-        case let name where name.contains("online"):
-            return "network"
-        default:
-            return "tag.fill"
-        }
-    }
 }
 
 private struct StatLine: View {
@@ -628,15 +616,28 @@ private struct FilterSheet: View {
                             }
                         }
 
+                        FilterPanel(title: "Banka/Kart", systemImage: "creditcard") {
+                            VStack(spacing: 10) {
+                                FilterOptionPill(title: "Tümü", isSelected: viewModel.selectedBanks.isEmpty) {
+                                    viewModel.clearBanks()
+                                }
+                                ForEach(viewModel.banks, id: \.self) { bank in
+                                    FilterOptionPill(title: viewModel.label(for: bank), isSelected: viewModel.selectedBanks.contains(bank)) {
+                                        viewModel.toggleBank(bank)
+                                    }
+                                }
+                            }
+                        }
+
                         if showsCategoryFilter {
                             FilterPanel(title: "Kategori", systemImage: "square.grid.2x2") {
                                 VStack(spacing: 10) {
-                                    FilterOptionPill(title: "Tümü", isSelected: viewModel.selectedCategory == nil) {
-                                        viewModel.selectedCategory = nil
+                                    FilterOptionPill(title: "Tümü", isSelected: viewModel.selectedCategories.isEmpty) {
+                                        viewModel.clearCategories()
                                     }
                                     ForEach(viewModel.categories, id: \.self) { category in
-                                        FilterOptionPill(title: category, isSelected: viewModel.selectedCategory == category) {
-                                            viewModel.selectedCategory = category
+                                        FilterOptionPill(title: category, isSelected: viewModel.selectedCategories.contains(category)) {
+                                            viewModel.toggleCategory(category)
                                         }
                                     }
                                 }
@@ -680,6 +681,7 @@ private struct FilterSheet: View {
                             if showsCategoryFilter {
                                 viewModel.resetFilters()
                             } else {
+                                viewModel.clearBanks()
                                 viewModel.selectedRewardType = nil
                                 viewModel.showFavoritesOnly = false
                                 viewModel.sortOption = .expiringSoon
