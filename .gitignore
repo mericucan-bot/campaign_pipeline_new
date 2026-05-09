@@ -5,6 +5,8 @@
 node_modules/
 dist/
 build/
+.build/
+.swiftpm/
 coverage/
 .cache/
 .parcel-cache/
