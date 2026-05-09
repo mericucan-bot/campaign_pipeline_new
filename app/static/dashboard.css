@@ -762,6 +762,16 @@ input:focus {
   transform: scale(1.035);
 }
 
+.campaign-card p {
+  display: -webkit-box;
+  line-height: 1.45;
+  margin: 0;
+  max-height: 5.8em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+
 .media span {
   color: #dbe4e8;
   font-size: 42px;

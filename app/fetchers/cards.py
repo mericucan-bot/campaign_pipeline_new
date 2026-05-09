@@ -82,8 +82,15 @@ def fetch_axess_detail(session, url):
     title_el = soup.select_one(".pageTitle") or soup.select_one("h2") or soup.select_one("title")
     title = clean_text(title_el.get_text(" ", strip=True) if title_el else "")
     title = title.replace("| Axess", "").strip()
+    description = ""
     description_el = soup.select_one(".cmsContent, .campaignDetail, .detailText, .contentText")
-    description = clean_text(description_el.get_text(" ", strip=True) if description_el else "")
+    if description_el:
+        first_paragraph = description_el.select_one("p")
+        description = clean_text(
+            first_paragraph.get_text(" ", strip=True)
+            if first_paragraph
+            else description_el.get_text(" ", strip=True)
+        )
 
     image = None
     for img in soup.select("img"):
