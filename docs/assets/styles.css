@@ -116,6 +116,7 @@ h1 { font-size: clamp(19px, 1.58vw, 24px); letter-spacing: 0; line-height: 1.08;
 .snapshot div:hover { border-color: rgba(134,239,172,.44); box-shadow: 0 0 28px rgba(74,222,128,.13); transform: translateY(-1px); }
 .snapshot span { color: var(--kr-muted); display: block; font-size: 10px; font-weight: 500; letter-spacing: .05em; margin-bottom: 5px; text-transform: uppercase; }
 .snapshot strong { color: #f8fafc; display: block; font-size: 23px; font-weight: 700; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; transition: color 180ms ease; white-space: nowrap; }
+#activeCount { color: #22c55e; }
 .snapshot div:hover strong { color: #bbf7d0; }
 .snapshot i { bottom: 6px; color: rgba(32,181,159,.22); font-size: 29px; font-style: normal; position: absolute; right: 8px; }
 .hero-results { align-items: center; background: rgba(32,181,159,.08); border: 1px solid rgba(32,181,159,.22); border-radius: 8px; color: var(--muted); display: flex; font-size: 10px; font-weight: 900; min-height: 27px; overflow: hidden; padding: 7px 10px; text-overflow: ellipsis; white-space: nowrap; }
