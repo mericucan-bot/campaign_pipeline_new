@@ -1,7 +1,8 @@
 import hashlib
+import re
 import sqlite3
 import unicodedata
-from datetime import datetime
+from datetime import date, datetime
 
 from supabase import create_client
 
@@ -12,6 +13,52 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if USE_SUPABASE else None
 
 EXCLUDED_BANKS = {"HSBC", "ING", "Odeabank", "DenizBank", "QNB Finansbank", "TEB", "Halkbank"}
 EXCLUDED_URL_PARTS = ["yapikredi.com.tr"]
+
+BANK_LABELS = {
+    "Akbank Axess": "Axess",
+    "DenizBank Bonus": "DenizBank",
+    "Garanti BBVA Bonus": "Garanti",
+    "Is Bankasi Maximum": "Maximum",
+    "Kuveyt Turk Saglam Kart": "Kuveyt",
+    "N Kolay": "N Kolay",
+    "On Kart": "On",
+    "Paraf": "Paraf",
+    "Paraf Premium": "Paraf Premium",
+    "QNB CardFinans": "QNB",
+    "TEB Bonus": "TEB",
+    "VakifBank": "Vakif",
+    "Yapi Kredi World": "YKB",
+    "Ziraat Bankkart": "Ziraat",
+    "Manuel Favori": "Manuel",
+}
+
+CATEGORIES = {
+    "Market": ["market", "supermarket", "migros", "carrefour", "sok", "a101", "bim", "gida"],
+    "Akaryakit": ["akaryakit", "yakit", "benzin", "petrol", "shell", "opet", "bp", "aytemiz", "total"],
+    "Restoran": ["restoran", "yemek", "cafe", "kahve", "burger", "pizza", "getir", "yemeksepeti"],
+    "Giyim": ["giyim", "moda", "ayakkabi", "tekstil", "lc waikiki", "boyner", "defacto"],
+    "Seyahat": ["tatil", "otel", "ucak", "seyahat", "havalimani", "lounge", "yurt disi", "yurtdisi", "harc"],
+    "Online": ["online", "e-ticaret", "eticaret", "internet", "amazon", "trendyol", "hepsiburada", "n11"],
+    "Elektronik": ["elektronik", "teknoloji", "telefon", "bilgisayar", "beyaz esya"],
+    "Saglik": ["saglik", "eczane", "hastane", "medikal"],
+    "Aidat/Harc": ["aidat", "harc", "vergi", "mtv"],
+    "Premium": ["premium", "lounge", "otopark", "prime", "ayricalik"],
+}
+
+MONTHS = {
+    "ocak": 1,
+    "subat": 2,
+    "mart": 3,
+    "nisan": 4,
+    "mayis": 5,
+    "haziran": 6,
+    "temmuz": 7,
+    "agustos": 8,
+    "eylul": 9,
+    "ekim": 10,
+    "kasim": 11,
+    "aralik": 12,
+}
 
 
 def now_iso():
@@ -44,11 +91,21 @@ def init_local_db():
             CREATE TABLE IF NOT EXISTS campaigns (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 bank TEXT NOT NULL,
+                bank_label TEXT,
                 external_id TEXT NOT NULL,
                 title TEXT NOT NULL,
+                summary TEXT,
                 description TEXT,
+                conditions TEXT,
                 image_url TEXT,
                 url TEXT,
+                source_url TEXT,
+                category TEXT,
+                reward_type TEXT,
+                reward_value REAL,
+                valid_from TEXT,
+                valid_to TEXT,
+                opportunity_score INTEGER,
                 hash TEXT NOT NULL,
                 version INTEGER NOT NULL DEFAULT 1,
                 first_seen TEXT NOT NULL,
@@ -59,8 +116,10 @@ def init_local_db():
             )
             """
         )
+        ensure_local_columns(conn)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_campaigns_bank ON campaigns(bank)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_campaigns_active ON campaigns(is_active)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_campaigns_valid_to ON campaigns(valid_to)")
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS favorites (
@@ -71,14 +130,57 @@ def init_local_db():
         )
 
 
+def ensure_local_columns(conn):
+    existing = {row["name"] for row in conn.execute("PRAGMA table_info(campaigns)").fetchall()}
+    columns = {
+        "bank_label": "TEXT",
+        "summary": "TEXT",
+        "conditions": "TEXT",
+        "source_url": "TEXT",
+        "category": "TEXT",
+        "reward_type": "TEXT",
+        "reward_value": "REAL",
+        "valid_from": "TEXT",
+        "valid_to": "TEXT",
+        "opportunity_score": "INTEGER",
+    }
+    for name, column_type in columns.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE campaigns ADD COLUMN {name} {column_type}")
+
+
 def normalize_item(item):
+    bank = item["bank"]
+    description = item.get("description")
+    text = " ".join([item.get("title") or "", description or ""])
+    category = item.get("category") or classify_category(text)
+    reward_type, reward_value = detect_reward(text)
+    valid_to = item.get("valid_to") or extract_deadline(text)
+    source_url = item.get("source_url") or item.get("url") or item.get("external_id")
+    summary = item.get("summary") or build_summary(description)
+
     return {
+        "bank_label": item.get("bank_label") or BANK_LABELS.get(bank, bank),
         "bank": item["bank"],
         "external_id": item["external_id"],
         "title": item["title"],
+        "summary": summary,
         "description": item.get("description"),
+        "conditions": item.get("conditions"),
         "image_url": item.get("image_url"),
         "url": item.get("url") or item.get("external_id"),
+        "source_url": source_url,
+        "category": category,
+        "reward_type": item.get("reward_type") or reward_type,
+        "reward_value": item.get("reward_value") or reward_value,
+        "valid_from": item.get("valid_from"),
+        "valid_to": valid_to,
+        "opportunity_score": item.get("opportunity_score") or calculate_opportunity_score(
+            text,
+            reward_type,
+            reward_value,
+            valid_to,
+        ),
     }
 
 
@@ -102,17 +204,29 @@ def upsert_local(item):
             conn.execute(
                 """
                 INSERT INTO campaigns (
-                    bank, external_id, title, description, image_url, url, hash,
-                    version, first_seen, last_seen, last_updated, is_active
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, 1)
+                    bank, bank_label, external_id, title, summary, description, conditions,
+                    image_url, url, source_url, category, reward_type, reward_value,
+                    valid_from, valid_to, opportunity_score, hash, version,
+                    first_seen, last_seen, last_updated, is_active
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, 1)
                 """,
                 (
                     clean_item["bank"],
+                    clean_item["bank_label"],
                     clean_item["external_id"],
                     clean_item["title"],
+                    clean_item["summary"],
                     clean_item["description"],
+                    clean_item["conditions"],
                     clean_item["image_url"],
                     clean_item["url"],
+                    clean_item["source_url"],
+                    clean_item["category"],
+                    clean_item["reward_type"],
+                    clean_item["reward_value"],
+                    clean_item["valid_from"] or timestamp,
+                    clean_item["valid_to"],
+                    clean_item["opportunity_score"],
                     item_hash,
                     timestamp,
                     timestamp,
@@ -123,23 +237,56 @@ def upsert_local(item):
 
         if existing["hash"] == item_hash:
             conn.execute(
-                "UPDATE campaigns SET last_seen = ?, is_active = 1 WHERE id = ?",
-                (timestamp, existing["id"]),
+                """
+                UPDATE campaigns
+                SET bank_label = ?, summary = ?, conditions = ?, source_url = ?,
+                    category = ?, reward_type = ?, reward_value = ?,
+                    valid_from = COALESCE(valid_from, ?), valid_to = ?,
+                    opportunity_score = ?, last_seen = ?, is_active = 1
+                WHERE id = ?
+                """,
+                (
+                    clean_item["bank_label"],
+                    clean_item["summary"],
+                    clean_item["conditions"],
+                    clean_item["source_url"],
+                    clean_item["category"],
+                    clean_item["reward_type"],
+                    clean_item["reward_value"],
+                    clean_item["valid_from"] or existing["first_seen"],
+                    clean_item["valid_to"],
+                    clean_item["opportunity_score"],
+                    timestamp,
+                    existing["id"],
+                ),
             )
             return "NO_CHANGE"
 
         conn.execute(
             """
             UPDATE campaigns
-            SET title = ?, description = ?, image_url = ?, url = ?, hash = ?,
-                version = ?, last_seen = ?, last_updated = ?, is_active = 1
+            SET bank_label = ?, title = ?, summary = ?, description = ?, conditions = ?,
+                image_url = ?, url = ?, source_url = ?, category = ?, reward_type = ?,
+                reward_value = ?, valid_from = COALESCE(valid_from, ?), valid_to = ?,
+                opportunity_score = ?, hash = ?, version = ?, last_seen = ?,
+                last_updated = ?, is_active = 1
             WHERE id = ?
             """,
             (
+                clean_item["bank_label"],
                 clean_item["title"],
+                clean_item["summary"],
                 clean_item["description"],
+                clean_item["conditions"],
                 clean_item["image_url"],
                 clean_item["url"],
+                clean_item["source_url"],
+                clean_item["category"],
+                clean_item["reward_type"],
+                clean_item["reward_value"],
+                clean_item["valid_from"] or existing["first_seen"],
+                clean_item["valid_to"],
+                clean_item["opportunity_score"],
                 item_hash,
                 existing["version"] + 1,
                 timestamp,
@@ -180,9 +327,22 @@ def upsert_supabase(item):
     db_item = existing.data[0]
 
     if db_item["hash"] == item_hash:
-        supabase.table("campaigns").update({"last_seen": timestamp, "is_active": True}).eq(
-            "id", db_item["id"]
-        ).execute()
+        supabase.table("campaigns").update(
+            {
+                "bank_label": clean_item["bank_label"],
+                "summary": clean_item["summary"],
+                "conditions": clean_item["conditions"],
+                "source_url": clean_item["source_url"],
+                "category": clean_item["category"],
+                "reward_type": clean_item["reward_type"],
+                "reward_value": clean_item["reward_value"],
+                "valid_from": clean_item["valid_from"] or db_item.get("first_seen"),
+                "valid_to": clean_item["valid_to"],
+                "opportunity_score": clean_item["opportunity_score"],
+                "last_seen": timestamp,
+                "is_active": True,
+            }
+        ).eq("id", db_item["id"]).execute()
         return "NO_CHANGE"
 
     supabase.table("campaigns").update(
@@ -438,3 +598,84 @@ def normalize_search(value):
     value = unicodedata.normalize("NFKD", value)
     value = "".join(ch for ch in value if not unicodedata.combining(ch))
     return " ".join(value.split())
+
+
+def build_summary(description, max_chars=320):
+    summary = " ".join((description or "").split())
+    if len(summary) <= max_chars:
+        return summary or None
+    return summary[:max_chars].rsplit(" ", 1)[0].rstrip(" .,;") + "..."
+
+
+def classify_category(text):
+    haystack = normalize_search(text)
+    for label, keywords in CATEGORIES.items():
+        if any(normalize_search(keyword) in haystack for keyword in keywords):
+            return label
+    return "Genel"
+
+
+def detect_reward(text):
+    normalized = normalize_search(text)
+    money = re.search(r"\b(\d{2,5})\s*(?:tl|₺)\s*(?:chip|para|parafpara|bonus|worldpuan|maxipuan|puan|iade|indirim)?", normalized)
+    percent = re.search(r"%\s?(\d{1,2}(?:[.,]\d+)?)", text)
+    installment = re.search(r"\b(\d{1,2})\s*(?:taksit|ay)\b", normalized)
+
+    if installment:
+        return "Taksit", float(installment.group(1))
+    if percent:
+        return "Indirim", float(percent.group(1).replace(",", "."))
+    if "puan" in normalized or "bonus" in normalized or "chip" in normalized:
+        return "Puan", float(money.group(1)) if money else None
+    if money:
+        return "Indirim", float(money.group(1))
+    return "Firsat", None
+
+
+def extract_deadline(text):
+    normalized = normalize_search(text)
+    candidates = []
+    current_year = date.today().year
+
+    for day, month, year in re.findall(r"\b(\d{1,2})[./](\d{1,2})[./](20\d{2})\b", normalized):
+        candidates.append(safe_date(int(year), int(month), int(day)))
+
+    for day, month_name, year in re.findall(r"\b(\d{1,2})\s+([a-z]+)\s+(20\d{2})\b", normalized):
+        month = MONTHS.get(month_name)
+        if month:
+            candidates.append(safe_date(int(year), month, int(day)))
+
+    for day, month_name in re.findall(r"\b(\d{1,2})\s+([a-z]+)(?:\s+tarihine|\s+arasında|\s+arası|\s+sonuna)?\b", normalized):
+        month = MONTHS.get(month_name)
+        if month:
+            candidates.append(safe_date(current_year, month, int(day)))
+
+    valid = [item for item in candidates if item]
+    if not valid:
+        return None
+    future = [item for item in valid if item >= date.today()]
+    return max(future or valid).isoformat()
+
+
+def safe_date(year, month, day):
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
+def calculate_opportunity_score(text, reward_type, reward_value, valid_to):
+    score = 40
+    normalized = normalize_search(text)
+    if reward_value:
+        score += min(30, int(float(reward_value) // 100) if reward_type != "Taksit" else int(float(reward_value) * 3))
+    if any(keyword in normalized for keyword in ["market", "akaryakit", "restoran", "online", "seyahat"]):
+        score += 10
+    if valid_to:
+        try:
+            days_left = (date.fromisoformat(valid_to) - date.today()).days
+            if 0 <= days_left <= 7:
+                score += 10
+        except ValueError:
+            pass
+    return max(0, min(score, 100))
