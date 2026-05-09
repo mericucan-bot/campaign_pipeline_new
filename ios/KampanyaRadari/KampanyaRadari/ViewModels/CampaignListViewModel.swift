@@ -10,6 +10,13 @@ enum CampaignSortOption: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+struct CategorySummary: Identifiable, Hashable {
+    let name: String
+    let count: Int
+
+    var id: String { name }
+}
+
 @MainActor
 @Observable
 final class CampaignListViewModel {
@@ -37,6 +44,28 @@ final class CampaignListViewModel {
 
     var rewardTypes: [String] {
         sortedUniqueValues(campaigns.compactMap(\.rewardType))
+    }
+
+    var categorySummaries: [CategorySummary] {
+        let grouped = Dictionary(grouping: campaigns) { campaign in
+            let category = campaign.category?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return category.isEmpty ? "Genel" : category
+        }
+
+        return grouped
+            .map { CategorySummary(name: $0.key, count: $0.value.count) }
+            .sorted {
+                if $0.count != $1.count { return $0.count > $1.count }
+                return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+            }
+    }
+
+    var topCategorySummaries: [CategorySummary] {
+        Array(categorySummaries.prefix(4))
+    }
+
+    var bankCount: Int {
+        Set(campaigns.map(\.bank)).count
     }
 
     var hasAdvancedFilters: Bool {
@@ -71,6 +100,20 @@ final class CampaignListViewModel {
 
     func clearAdvancedFilters() {
         selectedCategory = nil
+        selectedRewardType = nil
+        showFavoritesOnly = false
+        sortOption = .expiringSoon
+    }
+
+    func showAllCampaigns() {
+        resetFilters()
+        searchText = ""
+    }
+
+    func showCampaigns(category: String) {
+        searchText = ""
+        selectedBank = nil
+        selectedCategory = category
         selectedRewardType = nil
         showFavoritesOnly = false
         sortOption = .expiringSoon
