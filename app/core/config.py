@@ -11,5 +11,7 @@ DB_PATH = DATA_DIR / "campaigns.db"
 load_dotenv(BASE_DIR / ".env", override=True)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "").strip()
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "").strip()
+SUPABASE_KEY = (SUPABASE_SERVICE_KEY or os.getenv("SUPABASE_KEY", "")).strip()
 USE_SUPABASE = bool(SUPABASE_URL and SUPABASE_KEY)

@@ -25,6 +25,20 @@ Supabase bilgisi girilmezse veriler yerel SQLite veritabanina yazilir:
 
 Supabase kullanmak isterseniz `supabase_schema.sql` dosyasindaki tabloyu Supabase SQL editor'de calistirin ve `.env` icine proje URL/key bilgilerinizi yazin.
 
+Pipeline veriyi yazmak icin `SUPABASE_SERVICE_KEY` kullanir. Bu key gizlidir; telefona, web istemcisine veya repo'ya konmaz. iOS uygulama sadece okuma icin `SUPABASE_ANON_KEY` / publishable key kullanir.
+
+```env
+SUPABASE_URL=https://proje-ref.supabase.co
+SUPABASE_SERVICE_KEY=service-role-veya-secret-key
+SUPABASE_ANON_KEY=anon-veya-publishable-key
+```
+
+Public okuma testini calistirmak icin:
+
+```bash
+python -m app.check_public_read
+```
+
 ## Sadece veri cekmek
 
 `run_pipeline.bat` dosyasina cift tiklayin.
