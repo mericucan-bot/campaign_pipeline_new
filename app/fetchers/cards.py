@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from .generic import HEADERS, clean_text
+from .generic import HEADERS, clean_text, fetch_detail_summary
 
 
 def fetch_axess(max_pages=30):
@@ -177,7 +177,7 @@ def fetch_nkolay():
                 "bank": "N Kolay",
                 "external_id": full_url,
                 "title": text,
-                "description": None,
+                "description": fetch_detail_summary(full_url),
                 "image_url": first_image(url, link),
                 "url": full_url,
             }
@@ -211,7 +211,7 @@ def fetch_qnb_cardfinans():
                 "bank": "QNB CardFinans",
                 "external_id": detail_url,
                 "title": title,
-                "description": None,
+                "description": fetch_detail_summary(detail_url),
                 "image_url": first_image(url, card),
                 "url": detail_url,
             }
@@ -244,6 +244,7 @@ def fetch_worldcard(max_pages=40):
 
         for item in page_items:
             detail_url = item.get("Url")
+            detail_url = urljoin("https://www.worldcard.com.tr", detail_url) if detail_url else None
             title = clean_text(item.get("Title") or item.get("PageTitle") or item.get("SpotTitle"))
             if not detail_url or not title or detail_url in seen:
                 continue
@@ -254,7 +255,8 @@ def fetch_worldcard(max_pages=40):
                     "bank": "Yapi Kredi World",
                     "external_id": detail_url,
                     "title": title,
-                    "description": clean_text(item.get("DaysLeft") or ""),
+                    "description": fetch_detail_summary(detail_url, session=session)
+                    or clean_text(item.get("DaysLeft") or ""),
                     "image_url": urljoin("https://www.worldcard.com.tr", image_url) if image_url else None,
                     "url": detail_url,
                 }
@@ -304,7 +306,7 @@ def fetch_teb_bonus():
                 "bank": "TEB Bonus",
                 "external_id": full_url,
                 "title": title,
-                "description": None,
+                "description": fetch_detail_summary(full_url),
                 "image_url": first_image(url, link),
                 "url": full_url,
             }
@@ -360,7 +362,7 @@ def fetch_maximum():
             "bank": "Is Bankasi Maximum",
             "external_id": full_url,
             "title": title,
-            "description": None,
+            "description": fetch_detail_summary(full_url),
             "image_url": first_image_near(url, link),
             "url": full_url,
         }
@@ -387,7 +389,7 @@ def card_item(bank, page_url, card):
         "bank": bank,
         "external_id": full_url,
         "title": title,
-        "description": None,
+        "description": fetch_detail_summary(full_url),
         "image_url": first_image(page_url, card),
         "url": full_url,
     }

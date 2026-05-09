@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from .generic import HEADERS, clean_text
+from .generic import HEADERS, clean_text, fetch_detail_summary
 
 
 BASE_URL = "https://www.vakifkart.com.tr"
@@ -64,7 +64,7 @@ def parse_campaigns(html, page_url):
                 "bank": "VakifBank",
                 "external_id": detail_url,
                 "title": title,
-                "description": None,
+                "description": fetch_detail_summary(detail_url),
                 "image_url": urljoin(page_url, image_url) if image_url else None,
                 "url": detail_url,
             }
