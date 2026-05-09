@@ -9,14 +9,19 @@ from .generic import HEADERS, clean_text
 BASE_URL = "https://www.vakifkart.com.tr"
 
 
-def fetch_vakifkart(max_pages=12):
+def fetch_vakifkart(max_pages=9):
     items = []
     seen = set()
 
     for page in range(1, max_pages + 1):
         url = f"{BASE_URL}/kampanyalar" if page == 1 else f"{BASE_URL}/kampanyalar/sayfa/{page}"
-        response = requests.get(url, headers=HEADERS, timeout=(10, 75))
-        response.raise_for_status()
+        print(f"VakifBank page {page}/{max_pages} taraniyor...")
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=(10, 25))
+            response.raise_for_status()
+        except requests.RequestException as exc:
+            print(f"VakifBank page {page} skipped: {exc}")
+            break
         response.encoding = "utf-8"
 
         page_items = parse_campaigns(response.text, url)
@@ -28,6 +33,7 @@ def fetch_vakifkart(max_pages=12):
             items.append(item)
             new_count += 1
 
+        print(f"VakifBank page {page}: {new_count} yeni kampanya")
         if new_count == 0:
             break
 
