@@ -1,25 +1,20 @@
 import Foundation
 
 enum AppConfig {
+    private static let fallbackSupabaseURL = "https://elzosfogvbybieyvojek.supabase.co"
+    private static let fallbackSupabaseAnonKey = "sb_publishable_8qo0lf-XuimNd1ZIIU5xLg_DXLFCsbd"
+
     static var supabaseURL: URL {
-        guard
-            let raw = Bundle.main.object(forInfoDictionaryKey: "SupabaseURL") as? String,
-            let url = URL(string: raw),
-            !raw.isEmpty
-        else {
-            fatalError("SupabaseURL Info.plist icinde tanimli olmali.")
+        let raw = Bundle.main.object(forInfoDictionaryKey: "SupabaseURL") as? String ?? fallbackSupabaseURL
+        guard let url = URL(string: raw), !raw.isEmpty else {
+            fatalError("SupabaseURL gecersiz.")
         }
         return url
     }
 
     static var supabaseAnonKey: String {
-        guard
-            let key = Bundle.main.object(forInfoDictionaryKey: "SupabaseAnonKey") as? String,
-            !key.isEmpty
-        else {
-            fatalError("SupabaseAnonKey Info.plist icinde tanimli olmali.")
-        }
+        let key = Bundle.main.object(forInfoDictionaryKey: "SupabaseAnonKey") as? String ?? fallbackSupabaseAnonKey
+        guard !key.isEmpty else { fatalError("SupabaseAnonKey gecersiz.") }
         return key
     }
 }
-
