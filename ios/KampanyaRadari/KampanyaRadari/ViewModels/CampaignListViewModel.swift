@@ -144,6 +144,15 @@ final class CampaignListViewModel {
         sortOption = .expiringSoon
     }
 
+    func showFavoriteCampaigns() {
+        searchText = ""
+        selectedBanks = []
+        selectedCategories = []
+        selectedRewardType = nil
+        showFavoritesOnly = true
+        sortOption = .expiringSoon
+    }
+
     func toggleBank(_ bank: String) {
         if selectedBanks.contains(bank) {
             selectedBanks.remove(bank)

@@ -17,6 +17,9 @@ struct CampaignListView: View {
                     DashboardHomeView(viewModel: viewModel, favorites: favorites) {
                         viewModel.showAllCampaigns()
                         path.append(.list(lockCategoryFilter: false))
+                    } openFavorites: {
+                        viewModel.showFavoriteCampaigns()
+                        path.append(.list(lockCategoryFilter: false))
                     } openCategory: { category in
                         viewModel.showCampaigns(category: category)
                         path.append(.list(lockCategoryFilter: true))
@@ -97,6 +100,7 @@ private struct DashboardHomeView: View {
     @Bindable var viewModel: CampaignListViewModel
     let favorites: FavoritesStore
     let openAllCampaigns: () -> Void
+    let openFavorites: () -> Void
     let openCategory: (String) -> Void
 
     var body: some View {
@@ -108,6 +112,7 @@ private struct DashboardHomeView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     header
                     insightCard
+                    favoriteShortcut
                     categoryGrid
                     calculatorPreview
                 }
@@ -170,6 +175,44 @@ private struct DashboardHomeView: View {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .stroke(.white.opacity(0.16), lineWidth: 1)
         }
+    }
+
+    private var favoriteShortcut: some View {
+        Button(action: openFavorites) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(AppTheme.dashboardGreen.opacity(0.18))
+                        .frame(width: 54, height: 54)
+                    Image(systemName: "bookmark.fill")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(AppTheme.dashboardGreen)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Favorilerim")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text(favorites.ids.isEmpty ? "Kaydettiğin kampanyalar burada görünecek" : "\(favorites.ids.count) kayıtlı kampanya")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.68))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+            }
+            .padding(18)
+            .background(.white.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(AppTheme.dashboardGreen.opacity(0.34), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
     }
 
     private var categoryGrid: some View {
@@ -257,6 +300,7 @@ private struct CampaignListScreen: View {
                                 )
 
                             listHeader(count: filteredCampaigns.count)
+                            favoriteQuickToggle
                             bankFilter
 
                             VStack(spacing: 16) {
@@ -370,7 +414,7 @@ private struct CampaignListScreen: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Tüm Kampanyalar")
+                Text(viewModel.showFavoritesOnly ? "Favorilerim" : "Tüm Kampanyalar")
                     .font(.largeTitle.weight(.bold))
                     .foregroundStyle(.white)
                 Text("\(count) sonuç listeleniyor")
@@ -382,6 +426,37 @@ private struct CampaignListScreen: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 18)
+    }
+
+    private var favoriteQuickToggle: some View {
+        Button {
+            viewModel.showFavoritesOnly.toggle()
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: viewModel.showFavoritesOnly ? "bookmark.fill" : "bookmark")
+                    .font(.headline.weight(.bold))
+                Text(viewModel.showFavoritesOnly ? "Favoriler gösteriliyor" : "Favorilerim")
+                    .font(.headline.weight(.bold))
+                Spacer()
+                Text("\(favorites.ids.count)")
+                    .font(.subheadline.weight(.bold))
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 6)
+                    .background(.white.opacity(viewModel.showFavoritesOnly ? 0.24 : 0.12))
+                    .clipShape(Capsule())
+            }
+            .foregroundStyle(viewModel.showFavoritesOnly ? AppTheme.nearBlack : .white)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+            .background(viewModel.showFavoritesOnly ? AppTheme.dashboardGreen : .white.opacity(0.10))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(AppTheme.dashboardGreen.opacity(viewModel.showFavoritesOnly ? 0 : 0.32), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 22)
     }
 
     private var searchField: some View {
