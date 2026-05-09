@@ -94,6 +94,10 @@ final class CampaignListViewModel {
         !selectedBanks.isEmpty || !selectedCategories.isEmpty || selectedRewardType != nil || showFavoritesOnly || sortOption != .expiringSoon
     }
 
+    var hasContentFilters: Bool {
+        !selectedCategories.isEmpty || selectedRewardType != nil || showFavoritesOnly
+    }
+
     func filteredCampaigns(favoriteIDs: Set<String>) -> [Campaign] {
         let filtered = campaigns.filter { campaign in
             let bankMatches = selectedBanks.isEmpty || selectedBanks.contains(campaign.bank)
@@ -124,7 +128,6 @@ final class CampaignListViewModel {
         selectedCategories = []
         selectedRewardType = nil
         showFavoritesOnly = false
-        sortOption = .expiringSoon
     }
 
     func showAllCampaigns() {

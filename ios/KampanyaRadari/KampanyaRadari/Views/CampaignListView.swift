@@ -221,6 +221,7 @@ private struct CampaignListScreen: View {
     let lockCategoryFilter: Bool
     @State private var isShowingFilters = false
     @State private var isShowingBankFilters = false
+    @State private var isShowingSortOptions = false
     @State private var showScrollToTop = false
     @State private var scrollOffset: CGFloat = 0
     @Environment(\.dismiss) private var dismiss
@@ -349,6 +350,11 @@ private struct CampaignListScreen: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $isShowingSortOptions) {
+            SortSheet(viewModel: viewModel)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
     }
 
     private func listHeader(count: Int) -> some View {
@@ -358,7 +364,7 @@ private struct CampaignListScreen: View {
                     dismiss()
                 }
                 Spacer()
-                CircleIconButton(systemName: viewModel.hasAdvancedFilters ? "slider.horizontal.3" : "line.3.horizontal.decrease") {
+                CircleIconButton(systemName: viewModel.hasContentFilters ? "slider.horizontal.3" : "line.3.horizontal.decrease") {
                     isShowingFilters = true
                 }
             }
@@ -405,6 +411,18 @@ private struct CampaignListScreen: View {
                         .foregroundStyle(.white)
                         .frame(width: 38, height: 38)
                         .background(viewModel.selectedBanks.isEmpty ? .white.opacity(0.18) : AppTheme.dashboardGreen.opacity(0.88))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    isShowingSortOptions = true
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(viewModel.sortOption == .expiringSoon ? .white : AppTheme.nearBlack)
+                        .frame(width: 38, height: 38)
+                        .background(viewModel.sortOption == .expiringSoon ? .white.opacity(0.18) : AppTheme.dashboardGreen.opacity(0.88))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -622,16 +640,6 @@ private struct FilterSheet: View {
                     VStack(alignment: .leading, spacing: 22) {
                         sheetHeader
 
-                        FilterPanel(title: "Sıralama", systemImage: "arrow.up.arrow.down") {
-                            VStack(spacing: 10) {
-                                ForEach(CampaignSortOption.allCases) { option in
-                                    FilterOptionPill(title: option.rawValue, isSelected: viewModel.sortOption == option) {
-                                        viewModel.sortOption = option
-                                    }
-                                }
-                            }
-                        }
-
                         if showsCategoryFilter {
                             FilterPanel(title: "Kategori", systemImage: "square.grid.2x2") {
                                 VStack(spacing: 10) {
@@ -686,7 +694,6 @@ private struct FilterSheet: View {
                             } else {
                                 viewModel.selectedRewardType = nil
                                 viewModel.showFavoritesOnly = false
-                                viewModel.sortOption = .expiringSoon
                             }
                         } label: {
                             Text("Filtreleri Temizle")
@@ -791,6 +798,70 @@ private struct BankFilterSheet: View {
                     }
                     .padding(22)
                 }
+            }
+            .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+}
+
+private struct SortSheet: View {
+    @Bindable var viewModel: CampaignListViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                AppTheme.dashboardBackground
+                    .ignoresSafeArea()
+
+                VStack(alignment: .leading, spacing: 22) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Sıralama")
+                                .font(.largeTitle.weight(.bold))
+                                .foregroundStyle(.white)
+                            Text("Liste akışını düzenle")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white.opacity(0.68))
+                        }
+                        Spacer()
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(AppTheme.nearBlack)
+                                .frame(width: 44, height: 44)
+                                .background(.white)
+                                .clipShape(Circle())
+                        }
+                    }
+
+                    FilterPanel(title: "Sıralama türü", systemImage: "arrow.up.arrow.down") {
+                        VStack(spacing: 10) {
+                            ForEach(CampaignSortOption.allCases) { option in
+                                FilterOptionPill(title: option.rawValue, isSelected: viewModel.sortOption == option) {
+                                    viewModel.sortOption = option
+                                }
+                            }
+                        }
+                    }
+
+                    Button {
+                        viewModel.sortOption = .expiringSoon
+                    } label: {
+                        Text("Varsayılana Dön")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(AppTheme.nearBlack)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(AppTheme.dashboardGreen)
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+
+                    Spacer()
+                }
+                .padding(22)
             }
             .toolbar(.hidden, for: .navigationBar)
         }

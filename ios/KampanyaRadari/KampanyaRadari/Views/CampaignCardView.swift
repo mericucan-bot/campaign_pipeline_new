@@ -101,21 +101,11 @@ struct CampaignCardView: View {
         VStack(spacing: 10) {
             Spacer()
 
-            if let logoAssetName {
-                Image(logoAssetName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 58, height: 44)
-                    .padding(6)
-                    .background(.white.opacity(0.10))
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            } else {
-                Text(bankInitials)
-                    .font(.system(size: 30, weight: .black, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.92))
-                    .minimumScaleFactor(0.55)
-                    .lineLimit(1)
-            }
+            Text(bankInitials)
+                .font(bankMarkFont)
+                .foregroundStyle(.white.opacity(0.92))
+                .minimumScaleFactor(0.45)
+                .lineLimit(1)
 
             Text(campaign.displayBank)
                 .font(.caption.weight(.bold))
@@ -146,17 +136,6 @@ struct CampaignCardView: View {
             .uppercased()
     }
 
-    private var logoAssetName: String? {
-        let bank = normalizedBankName
-        if bank.contains("paraf premium") { return "LogoParafPremium" }
-        if bank.contains("paraf") { return "LogoParaf" }
-        if bank.contains("yapi kredi") || bank.contains("world") || bank.contains("ykb") { return "LogoYKB" }
-        if bank.contains("on kart") || bank == "on" || bank.contains("on digital") { return "LogoOnDigital" }
-        if bank.contains("n kolay") || bank.contains("nkolay") { return "LogoNKolay" }
-        if bank.contains("qnb") || bank.contains("cardfinans") { return "LogoQNB" }
-        return nil
-    }
-
     private var accent: Color {
         let bank = normalizedBankName
         if bank.contains("axess") || bank.contains("akbank") { return Color(red: 0.95, green: 0.73, blue: 0.12) }
@@ -179,6 +158,17 @@ struct CampaignCardView: View {
         campaign.displayBank
             .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
             .lowercased()
+    }
+
+    private var bankMarkFont: Font {
+        let bank = normalizedBankName
+        if bank.contains("qnb") || bank.contains("paraf") || bank.contains("world") {
+            return .system(size: 22, weight: .black, design: .rounded)
+        }
+        if bank.contains("axess") || bank.contains("maximum") {
+            return .system(size: 30, weight: .black, design: .rounded)
+        }
+        return .system(size: 28, weight: .black, design: .rounded)
     }
 
     private var leadingBadgeText: String {
