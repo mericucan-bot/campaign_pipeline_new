@@ -6,6 +6,12 @@ Turkiye'deki banka kampanyalarini tarayan ve dashboard'da gosteren yerel uygulam
 
 Windows'ta `run_dashboard.bat` dosyasina cift tiklayin.
 
+Mac'te Terminal'i proje klasorunde acip su komutu calistirin:
+
+```bash
+./run_dashboard.sh
+```
+
 Bu dosya:
 
 - `.env` yoksa `.env.example` dosyasindan olusturur
@@ -22,6 +28,12 @@ Supabase kullanmak isterseniz `supabase_schema.sql` dosyasindaki tabloyu Supabas
 ## Sadece veri cekmek
 
 `run_pipeline.bat` dosyasina cift tiklayin.
+
+Mac'te:
+
+```bash
+./run_pipeline.sh
+```
 
 ## Internete yayinlama: GitHub Actions + GitHub Pages
 
@@ -83,6 +95,17 @@ GitHub repo icinde:
 Secret isimleri tam bu sekilde olmalidir. Token ve chat id dosyalara yazilmaz, sadece GitHub Secrets icinde saklanir.
 
 ## Elle calistirma
+
+Mac:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m app.dashboard
+```
+
+Windows:
 
 ```powershell
 py -3 -m venv .venv
