@@ -7,7 +7,7 @@ from .generic import HEADERS, clean_text
 
 
 def fetch_axess(max_pages=30):
-    base_url = "https://www.axess.com.tr/axess/kampanya/8/393/kampanyalar"
+    base_url = "https://www.axess.com.tr/axess/kampanya/8/395/kampanyalar"
     ajax_url = "https://www.axess.com.tr/ajax/kampanya-ajax.aspx"
     session = requests.Session()
     session.headers.update(
@@ -38,7 +38,7 @@ def fetch_axess(max_pages=30):
             break
 
         for card in cards:
-            link = card.select_one('a[href*="/kampanyadetay/"]')
+            link = card.select_one('a[href*="/kampanyalar/"], a[href*="/kampanyadetay/"]')
             if not link:
                 continue
             detail_url = urljoin(base_url, link.get("href"))
@@ -82,7 +82,7 @@ def fetch_axess_detail(session, url):
     title_el = soup.select_one(".pageTitle") or soup.select_one("h2") or soup.select_one("title")
     title = clean_text(title_el.get_text(" ", strip=True) if title_el else "")
     title = title.replace("| Axess", "").strip()
-    description_el = soup.select_one(".campaignDetail, .detailText, .contentText")
+    description_el = soup.select_one(".cmsContent, .campaignDetail, .detailText, .contentText")
     description = clean_text(description_el.get_text(" ", strip=True) if description_el else "")
 
     image = None
@@ -175,6 +175,41 @@ def fetch_nkolay():
                 "url": full_url,
             }
         )
+    return items
+
+
+def fetch_qnb_cardfinans():
+    url = "https://www.qnbcard.com.tr/kampanyalar"
+    response = requests.get(url, headers=HEADERS, timeout=(10, 60))
+    response.raise_for_status()
+    response.encoding = "utf-8"
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    items = []
+    seen = set()
+    for card in soup.select("#campaignBody .box-item"):
+        link = card.select_one('a[href^="/kampanyalar/"]')
+        title_el = card.select_one("figcaption")
+        title = clean_text(title_el.get_text(" ", strip=True) if title_el else "")
+        if not link or not title or title.lower() == "biten kampanyalar":
+            continue
+
+        detail_url = urljoin(url, link.get("href"))
+        if "/biten-kampanyalar" in detail_url or detail_url in seen:
+            continue
+
+        seen.add(detail_url)
+        items.append(
+            {
+                "bank": "QNB CardFinans",
+                "external_id": detail_url,
+                "title": title,
+                "description": None,
+                "image_url": first_image(url, card),
+                "url": detail_url,
+            }
+        )
+
     return items
 
 
