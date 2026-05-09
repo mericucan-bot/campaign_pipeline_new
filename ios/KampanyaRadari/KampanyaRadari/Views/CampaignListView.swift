@@ -2,11 +2,13 @@ import SwiftUI
 
 private enum AppRoute: Hashable {
     case list(lockCategoryFilter: Bool)
+    case profile
 }
 
 struct CampaignListView: View {
     @State private var viewModel = CampaignListViewModel()
     @State private var favorites = FavoritesStore()
+    @State private var myCards = MyCardsStore()
     @State private var hasEnteredApp = false
     @State private var path: [AppRoute] = []
 
@@ -14,11 +16,16 @@ struct CampaignListView: View {
         Group {
             if hasEnteredApp {
                 NavigationStack(path: $path) {
-                    DashboardHomeView(viewModel: viewModel, favorites: favorites) {
+                    DashboardHomeView(viewModel: viewModel, favorites: favorites, myCards: myCards) {
                         viewModel.showAllCampaigns()
                         path.append(.list(lockCategoryFilter: false))
                     } openFavorites: {
                         viewModel.showFavoriteCampaigns()
+                        path.append(.list(lockCategoryFilter: false))
+                    } openMyCards: {
+                        path.append(.profile)
+                    } openMyCardCampaigns: {
+                        viewModel.showMyCardCampaigns()
                         path.append(.list(lockCategoryFilter: false))
                     } openCategory: { category in
                         viewModel.showCampaigns(category: category)
@@ -30,8 +37,11 @@ struct CampaignListView: View {
                             CampaignListScreen(
                                 viewModel: viewModel,
                                 favorites: favorites,
+                                myCards: myCards,
                                 lockCategoryFilter: lockCategoryFilter
                             )
+                        case .profile:
+                            ProfileCardsView(viewModel: viewModel, myCards: myCards)
                         }
                     }
                 }
@@ -99,8 +109,11 @@ private struct IntroView: View {
 private struct DashboardHomeView: View {
     @Bindable var viewModel: CampaignListViewModel
     let favorites: FavoritesStore
+    let myCards: MyCardsStore
     let openAllCampaigns: () -> Void
     let openFavorites: () -> Void
+    let openMyCards: () -> Void
+    let openMyCardCampaigns: () -> Void
     let openCategory: (String) -> Void
 
     var body: some View {
@@ -113,6 +126,7 @@ private struct DashboardHomeView: View {
                     header
                     insightCard
                     favoriteShortcut
+                    myCardsShortcut
                     categoryGrid
                     calculatorPreview
                 }
@@ -131,6 +145,9 @@ private struct DashboardHomeView: View {
                     .font(.largeTitle.weight(.bold))
                     .foregroundStyle(.white)
                 Spacer()
+                CircleIconButton(systemName: "person.crop.circle") {
+                    openMyCards()
+                }
                 CircleIconButton(systemName: "arrow.clockwise") {
                     Task { await viewModel.load() }
                 }
@@ -164,6 +181,7 @@ private struct DashboardHomeView: View {
                     .foregroundStyle(.white)
                 StatLine(title: "Toplam kampanya", value: "\(viewModel.campaigns.count)")
                 StatLine(title: "Banka/kart", value: "\(viewModel.bankCount)")
+                StatLine(title: "Kartlarım", value: "\(myCards.banks.count)")
                 StatLine(title: "Favori", value: "\(favorites.ids.count)")
             }
             Spacer()
@@ -215,6 +233,48 @@ private struct DashboardHomeView: View {
         .buttonStyle(.plain)
     }
 
+    private var myCardsShortcut: some View {
+        HStack(spacing: 12) {
+            Button(action: openMyCards) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Kartlarım", systemImage: "creditcard.fill")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text(myCards.banks.isEmpty ? "Kartlarını seç" : "\(myCards.banks.count) banka seçili")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.66))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .background(.white.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(.white.opacity(0.14), lineWidth: 1)
+                }
+            }
+            .buttonStyle(.plain)
+
+            Button(action: openMyCardCampaigns) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Bana uygun", systemImage: "line.3.horizontal.decrease.circle.fill")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(AppTheme.nearBlack)
+                    Text("Kartlarıma göre filtrele")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(AppTheme.nearBlack.opacity(0.66))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .background(AppTheme.dashboardGreen)
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .disabled(myCards.banks.isEmpty)
+            .opacity(myCards.banks.isEmpty ? 0.58 : 1)
+        }
+    }
+
     private var categoryGrid: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Kategoriler")
@@ -261,6 +321,7 @@ private struct DashboardHomeView: View {
 private struct CampaignListScreen: View {
     @Bindable var viewModel: CampaignListViewModel
     let favorites: FavoritesStore
+    let myCards: MyCardsStore
     let lockCategoryFilter: Bool
     @State private var isShowingFilters = false
     @State private var isShowingBankFilters = false
@@ -270,7 +331,7 @@ private struct CampaignListScreen: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        let filteredCampaigns = viewModel.filteredCampaigns(favoriteIDs: favorites.ids)
+        let filteredCampaigns = viewModel.filteredCampaigns(favoriteIDs: favorites.ids, myCardBanks: myCards.banks)
 
         ZStack(alignment: .bottomTrailing) {
             AppTheme.blueBackground
@@ -384,6 +445,7 @@ private struct CampaignListScreen: View {
             FilterSheet(
                 viewModel: viewModel,
                 favoriteCount: favorites.ids.count,
+                myCardCount: myCards.banks.count,
                 showsCategoryFilter: !lockCategoryFilter
             )
                 .presentationDetents([.medium, .large])
@@ -414,7 +476,7 @@ private struct CampaignListScreen: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text(viewModel.showFavoritesOnly ? "Favorilerim" : "Tüm Kampanyalar")
+                Text(listTitle)
                     .font(.largeTitle.weight(.bold))
                     .foregroundStyle(.white)
                 Text("\(count) sonuç listeleniyor")
@@ -426,6 +488,12 @@ private struct CampaignListScreen: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 18)
+    }
+
+    private var listTitle: String {
+        if viewModel.showFavoritesOnly { return "Favorilerim" }
+        if viewModel.showMyCardsOnly { return "Kartlarıma Uygun" }
+        return "Tüm Kampanyalar"
     }
 
     private var favoriteQuickToggle: some View {
@@ -445,7 +513,7 @@ private struct CampaignListScreen: View {
                     .background(.white.opacity(viewModel.showFavoritesOnly ? 0.24 : 0.12))
                     .clipShape(Capsule())
             }
-            .foregroundStyle(viewModel.showFavoritesOnly ? AppTheme.nearBlack : .white)
+                            .foregroundStyle(viewModel.showFavoritesOnly ? AppTheme.nearBlack : .white)
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
             .background(viewModel.showFavoritesOnly ? AppTheme.dashboardGreen : .white.opacity(0.10))
@@ -699,9 +767,144 @@ private struct LightStatTile: View {
     }
 }
 
+private struct ProfileCardsView: View {
+    @Bindable var viewModel: CampaignListViewModel
+    let myCards: MyCardsStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            AppTheme.blueBackground
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    HStack {
+                        CircleIconButton(systemName: "chevron.left") {
+                            dismiss()
+                        }
+                        Spacer()
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Profil")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(AppTheme.dashboardGreen)
+                        Text("Kartlarım")
+                            .font(.largeTitle.weight(.bold))
+                            .foregroundStyle(.white)
+                        Text("Sahip olduğun banka/kartları seç. Sonra genel kampanyalarda sadece sana uygun fırsatları görebileceksin.")
+                            .font(.headline)
+                            .foregroundStyle(.white.opacity(0.76))
+                    }
+
+                    HStack(spacing: 12) {
+                        ProfileStatCard(title: "Seçili", value: "\(myCards.banks.count)")
+                        ProfileStatCard(title: "Banka/kart", value: "\(viewModel.banks.count)")
+                    }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Kart bankaları")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(.white)
+                            Spacer()
+                            if !myCards.banks.isEmpty {
+                                Button("Temizle") {
+                                    myCards.clear()
+                                }
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(AppTheme.dashboardGreen)
+                            }
+                        }
+
+                        VStack(spacing: 10) {
+                            ForEach(viewModel.banks, id: \.self) { bank in
+                                ProfileBankRow(
+                                    title: viewModel.label(for: bank),
+                                    isSelected: myCards.contains(bank)
+                                ) {
+                                    myCards.toggle(bank)
+                                }
+                            }
+                        }
+                    }
+                    .padding(18)
+                    .background(.white.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .stroke(.white.opacity(0.14), lineWidth: 1)
+                    }
+                }
+                .padding(.horizontal, 22)
+                .padding(.top, 18)
+                .padding(.bottom, 30)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+    }
+}
+
+private struct ProfileStatCard: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.66))
+            Text(value)
+                .font(.title.weight(.bold))
+                .foregroundStyle(.white)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(AppTheme.dashboardGreen.opacity(0.14))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+        }
+    }
+}
+
+private struct ProfileBankRow: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? AppTheme.dashboardGreen : .white.opacity(0.12))
+                        .frame(width: 38, height: 38)
+                    Image(systemName: isSelected ? "checkmark" : "creditcard")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(isSelected ? AppTheme.nearBlack : .white.opacity(0.74))
+                }
+
+                Text(title)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
+
+                Spacer()
+            }
+            .padding(14)
+            .background(isSelected ? AppTheme.dashboardGreen.opacity(0.16) : .white.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 private struct FilterSheet: View {
     @Bindable var viewModel: CampaignListViewModel
     let favoriteCount: Int
+    let myCardCount: Int
     let showsCategoryFilter: Bool
     @Environment(\.dismiss) private var dismiss
 
@@ -752,11 +955,29 @@ private struct FilterSheet: View {
                                 }
                                 .tint(AppTheme.dashboardGreen)
 
+                                Toggle(isOn: $viewModel.showMyCardsOnly) {
+                                    Label("Benim kartlarım", systemImage: "creditcard.fill")
+                                        .font(.headline.weight(.semibold))
+                                        .foregroundStyle(.white)
+                                }
+                                .tint(AppTheme.dashboardGreen)
+                                .disabled(myCardCount == 0)
+                                .opacity(myCardCount == 0 ? 0.48 : 1)
+
                                 HStack {
                                     Text("Favori sayısı")
                                         .foregroundStyle(.white.opacity(0.70))
                                     Spacer()
                                     Text("\(favoriteCount)")
+                                        .font(.headline.weight(.bold))
+                                        .foregroundStyle(AppTheme.dashboardGreen)
+                                }
+
+                                HStack {
+                                    Text("Kartlarım")
+                                        .foregroundStyle(.white.opacity(0.70))
+                                    Spacer()
+                                    Text("\(myCardCount)")
                                         .font(.headline.weight(.bold))
                                         .foregroundStyle(AppTheme.dashboardGreen)
                                 }
@@ -769,6 +990,7 @@ private struct FilterSheet: View {
                             } else {
                                 viewModel.selectedRewardType = nil
                                 viewModel.showFavoritesOnly = false
+                                viewModel.showMyCardsOnly = false
                             }
                         } label: {
                             Text("Filtreleri Temizle")

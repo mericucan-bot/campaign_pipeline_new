@@ -50,6 +50,7 @@ final class CampaignListViewModel {
     var selectedCategories: Set<String> = []
     var selectedRewardType: String?
     var showFavoritesOnly = false
+    var showMyCardsOnly = false
     var sortOption: CampaignSortOption = .expiringSoon
     var isLoading = false
     var errorMessage: String?
@@ -91,26 +92,27 @@ final class CampaignListViewModel {
     }
 
     var hasAdvancedFilters: Bool {
-        !selectedBanks.isEmpty || !selectedCategories.isEmpty || selectedRewardType != nil || showFavoritesOnly || sortOption != .expiringSoon
+        !selectedBanks.isEmpty || !selectedCategories.isEmpty || selectedRewardType != nil || showFavoritesOnly || showMyCardsOnly || sortOption != .expiringSoon
     }
 
     var hasContentFilters: Bool {
-        !selectedCategories.isEmpty || selectedRewardType != nil || showFavoritesOnly
+        !selectedCategories.isEmpty || selectedRewardType != nil || showFavoritesOnly || showMyCardsOnly
     }
 
-    func filteredCampaigns(favoriteIDs: Set<String>) -> [Campaign] {
+    func filteredCampaigns(favoriteIDs: Set<String>, myCardBanks: Set<String>) -> [Campaign] {
         let filtered = campaigns.filter { campaign in
             let bankMatches = selectedBanks.isEmpty || selectedBanks.contains(campaign.bank)
             let categoryMatches = selectedCategories.isEmpty || selectedCategories.contains(canonicalCategory(for: campaign))
             let rewardMatches = selectedRewardType == nil || campaign.rewardType == selectedRewardType
             let favoriteMatches = !showFavoritesOnly || favoriteIDs.contains(campaign.id)
+            let myCardsMatch = !showMyCardsOnly || myCardBanks.contains(campaign.bank)
             let search = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
             let searchMatches = search.isEmpty
                 || campaign.title.localizedCaseInsensitiveContains(search)
                 || campaign.displaySummary.localizedCaseInsensitiveContains(search)
                 || campaign.bank.localizedCaseInsensitiveContains(search)
 
-            return bankMatches && categoryMatches && rewardMatches && favoriteMatches && searchMatches
+            return bankMatches && categoryMatches && rewardMatches && favoriteMatches && myCardsMatch && searchMatches
         }
 
         return sort(filtered)
@@ -121,6 +123,7 @@ final class CampaignListViewModel {
         selectedCategories = []
         selectedRewardType = nil
         showFavoritesOnly = false
+        showMyCardsOnly = false
         sortOption = .expiringSoon
     }
 
@@ -128,6 +131,7 @@ final class CampaignListViewModel {
         selectedCategories = []
         selectedRewardType = nil
         showFavoritesOnly = false
+        showMyCardsOnly = false
     }
 
     func showAllCampaigns() {
@@ -141,6 +145,7 @@ final class CampaignListViewModel {
         selectedCategories = [category]
         selectedRewardType = nil
         showFavoritesOnly = false
+        showMyCardsOnly = false
         sortOption = .expiringSoon
     }
 
@@ -150,6 +155,17 @@ final class CampaignListViewModel {
         selectedCategories = []
         selectedRewardType = nil
         showFavoritesOnly = true
+        showMyCardsOnly = false
+        sortOption = .expiringSoon
+    }
+
+    func showMyCardCampaigns() {
+        searchText = ""
+        selectedBanks = []
+        selectedCategories = []
+        selectedRewardType = nil
+        showFavoritesOnly = false
+        showMyCardsOnly = true
         sortOption = .expiringSoon
     }
 
