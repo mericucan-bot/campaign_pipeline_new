@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum AppRoute: Hashable {
-    case list
+    case list(lockCategoryFilter: Bool)
 }
 
 struct CampaignListView: View {
@@ -16,15 +16,19 @@ struct CampaignListView: View {
                 NavigationStack(path: $path) {
                     DashboardHomeView(viewModel: viewModel, favorites: favorites) {
                         viewModel.showAllCampaigns()
-                        path.append(.list)
+                        path.append(.list(lockCategoryFilter: false))
                     } openCategory: { category in
                         viewModel.showCampaigns(category: category)
-                        path.append(.list)
+                        path.append(.list(lockCategoryFilter: true))
                     }
                     .navigationDestination(for: AppRoute.self) { route in
                         switch route {
-                        case .list:
-                            CampaignListScreen(viewModel: viewModel, favorites: favorites)
+                        case .list(let lockCategoryFilter):
+                            CampaignListScreen(
+                                viewModel: viewModel,
+                                favorites: favorites,
+                                lockCategoryFilter: lockCategoryFilter
+                            )
                         }
                     }
                 }
@@ -66,10 +70,10 @@ private struct IntroView: View {
                 Button(action: enter) {
                     Text("Kampanyaları Gör")
                         .font(.headline.weight(.bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(AppTheme.nearBlack)
                         .frame(maxWidth: 260)
                         .padding(.vertical, 18)
-                        .background(AppTheme.coral)
+                        .background(AppTheme.dashboardGreen)
                         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
                         .shadow(color: .black.opacity(0.2), radius: 18, x: 0, y: 10)
                 }
@@ -77,26 +81,17 @@ private struct IntroView: View {
 
                 Spacer()
 
-                ZStack {
-                    Circle()
-                        .fill(.white.opacity(0.12))
-                        .frame(width: 300, height: 300)
-                    Circle()
-                        .fill(AppTheme.mint.opacity(0.72))
-                        .frame(width: 238, height: 238)
-                    Image(systemName: "creditcard.and.123")
-                        .font(.system(size: 82, weight: .bold))
-                        .foregroundStyle(.white)
-                    Image(systemName: "sparkles")
-                        .font(.largeTitle.weight(.bold))
-                        .foregroundStyle(.white)
-                        .offset(x: 112, y: -112)
-                    Image(systemName: "star.fill")
-                        .font(.headline)
-                        .foregroundStyle(.white.opacity(0.9))
-                        .offset(x: -126, y: -80)
-                }
-                .padding(.bottom, 22)
+                Image("Radar")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 300, height: 300)
+                    .clipShape(Circle())
+                    .overlay {
+                        Circle()
+                            .stroke(AppTheme.dashboardGreen.opacity(0.75), lineWidth: 3)
+                    }
+                    .shadow(color: AppTheme.dashboardGreen.opacity(0.26), radius: 28, x: 0, y: 12)
+                    .padding(.bottom, 22)
             }
             .padding(24)
         }
@@ -151,7 +146,7 @@ private struct DashboardHomeView: View {
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(AppTheme.coral)
+                    .background(AppTheme.dashboardGreen)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             }
             .padding(.top, 6)
@@ -174,7 +169,7 @@ private struct DashboardHomeView: View {
             Spacer()
         }
         .padding(18)
-        .background(.white.opacity(0.14))
+        .background(AppTheme.dashboardGreen.opacity(0.14))
         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
@@ -206,7 +201,7 @@ private struct DashboardHomeView: View {
                     .foregroundStyle(AppTheme.ink)
                 Spacer()
                 Image(systemName: "chart.line.uptrend.xyaxis")
-                    .foregroundStyle(AppTheme.electricBlue)
+                    .foregroundStyle(AppTheme.dashboardGreen)
             }
 
             HStack(spacing: 12) {
@@ -228,8 +223,10 @@ private struct DashboardHomeView: View {
 private struct CampaignListScreen: View {
     @Bindable var viewModel: CampaignListViewModel
     let favorites: FavoritesStore
+    let lockCategoryFilter: Bool
     @State private var isShowingFilters = false
     @State private var showScrollToTop = false
+    @State private var scrollOffset: CGFloat = 0
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -294,30 +291,39 @@ private struct CampaignListScreen: View {
                     }
                     .coordinateSpace(name: "campaignListScroll")
                     .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                        withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
-                            showScrollToTop = offset < -520
+                        scrollOffset = offset
+                        let shouldShow = offset < -320
+                        if showScrollToTop != shouldShow {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                showScrollToTop = shouldShow
+                            }
                         }
                     }
                     .refreshable {
                         await viewModel.load()
                     }
-                    .overlay(alignment: .bottomTrailing) {
-                        if showScrollToTop {
-                            Button {
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                                    proxy.scrollTo("top", anchor: .top)
+                    .safeAreaInset(edge: .bottom) {
+                        HStack {
+                            Spacer()
+                            if showScrollToTop {
+                                Button {
+                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                        proxy.scrollTo("top", anchor: .top)
+                                    }
+                                } label: {
+                                    Label("Yukarı", systemImage: "arrow.up")
+                                        .font(.subheadline.weight(.bold))
+                                        .foregroundStyle(AppTheme.nearBlack)
+                                        .padding(.horizontal, 18)
+                                        .padding(.vertical, 14)
+                                        .background(AppTheme.dashboardGreen)
+                                        .clipShape(Capsule())
+                                        .shadow(color: .black.opacity(0.24), radius: 16, x: 0, y: 10)
                                 }
-                            } label: {
-                                Image(systemName: "arrow.up")
-                                    .font(.headline.weight(.bold))
-                                    .foregroundStyle(.white)
-                                    .frame(width: 52, height: 52)
-                                    .background(AppTheme.coral)
-                                    .clipShape(Circle())
-                                    .shadow(color: .black.opacity(0.24), radius: 16, x: 0, y: 10)
+                                .padding(.trailing, 18)
+                                .padding(.bottom, 10)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
                             }
-                            .padding(.trailing, 20)
-                            .padding(.bottom, 24)
                         }
                     }
                 }
@@ -325,7 +331,11 @@ private struct CampaignListScreen: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isShowingFilters) {
-            FilterSheet(viewModel: viewModel, favoriteCount: favorites.ids.count)
+            FilterSheet(
+                viewModel: viewModel,
+                favoriteCount: favorites.ids.count,
+                showsCategoryFilter: !lockCategoryFilter
+            )
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -377,6 +387,12 @@ private struct CampaignListScreen: View {
     private var bankFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                Image(systemName: "line.3.horizontal.decrease")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 38, height: 38)
+                    .background(.white.opacity(0.18))
+                    .clipShape(Circle())
                 BankChip(title: "Tumu", isSelected: viewModel.selectedBank == nil) {
                     viewModel.selectedBank = nil
                 }
@@ -418,8 +434,8 @@ private struct BankChip: View {
                 .font(.subheadline.weight(.semibold))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 11)
-                .background(isSelected ? AppTheme.coral : .white.opacity(0.18))
-                .foregroundStyle(.white)
+                .background(isSelected ? AppTheme.dashboardGreen : .white.opacity(0.18))
+                .foregroundStyle(isSelected ? AppTheme.nearBlack : .white)
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -446,7 +462,7 @@ private struct CircleIconButton: View {
 private struct CategoryDonutChart: View {
     let summaries: [CategorySummary]
     let total: Int
-    private let colors: [Color] = [AppTheme.mint, AppTheme.coral, .yellow, AppTheme.aqua]
+    private let colors: [Color] = [AppTheme.dashboardGreen, .yellow, AppTheme.aqua, .orange]
 
     var body: some View {
         ZStack {
@@ -493,10 +509,10 @@ private struct CategoryTile: View {
             VStack(alignment: .leading, spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(AppTheme.coral.opacity(0.14))
+                        .fill(AppTheme.dashboardGreen.opacity(0.16))
                         .frame(width: 46, height: 46)
                     Image(systemName: iconName)
-                        .foregroundStyle(AppTheme.coral)
+                        .foregroundStyle(AppTheme.dashboardGreen)
                         .font(.title3.weight(.bold))
                 }
 
@@ -529,7 +545,7 @@ private struct CategoryTile: View {
         case let name where name.contains("online"):
             return Color(red: 0.92, green: 0.94, blue: 1.0)
         default:
-            return .white.opacity(0.92)
+            return AppTheme.softGreen.opacity(0.88)
         }
     }
 
@@ -589,68 +605,150 @@ private struct LightStatTile: View {
 private struct FilterSheet: View {
     @Bindable var viewModel: CampaignListViewModel
     let favoriteCount: Int
+    let showsCategoryFilter: Bool
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Siralama") {
-                    Picker("Siralama", selection: $viewModel.sortOption) {
-                        ForEach(CampaignSortOption.allCases) { option in
-                            Text(option.rawValue).tag(option)
+            ZStack {
+                AppTheme.dashboardBackground
+                    .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        sheetHeader
+
+                        FilterPanel(title: "Sıralama", systemImage: "arrow.up.arrow.down") {
+                            VStack(spacing: 10) {
+                                ForEach(CampaignSortOption.allCases) { option in
+                                    FilterOptionPill(title: option.rawValue, isSelected: viewModel.sortOption == option) {
+                                        viewModel.sortOption = option
+                                    }
+                                }
+                            }
+                        }
+
+                        if showsCategoryFilter {
+                            FilterPanel(title: "Kategori", systemImage: "square.grid.2x2") {
+                                VStack(spacing: 10) {
+                                    FilterOptionPill(title: "Tümü", isSelected: viewModel.selectedCategory == nil) {
+                                        viewModel.selectedCategory = nil
+                                    }
+                                    ForEach(viewModel.categories, id: \.self) { category in
+                                        FilterOptionPill(title: category, isSelected: viewModel.selectedCategory == category) {
+                                            viewModel.selectedCategory = category
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        FilterPanel(title: "Kazanım", systemImage: "gift") {
+                            VStack(spacing: 10) {
+                                FilterOptionPill(title: "Tümü", isSelected: viewModel.selectedRewardType == nil) {
+                                    viewModel.selectedRewardType = nil
+                                }
+                                ForEach(viewModel.rewardTypes, id: \.self) { rewardType in
+                                    FilterOptionPill(title: rewardType, isSelected: viewModel.selectedRewardType == rewardType) {
+                                        viewModel.selectedRewardType = rewardType
+                                    }
+                                }
+                            }
+                        }
+
+                        FilterPanel(title: "Görünüm", systemImage: "star") {
+                            VStack(spacing: 12) {
+                                Toggle(isOn: $viewModel.showFavoritesOnly) {
+                                    Label("Sadece favoriler", systemImage: "star.fill")
+                                        .font(.headline.weight(.semibold))
+                                        .foregroundStyle(.white)
+                                }
+                                .tint(AppTheme.dashboardGreen)
+
+                                HStack {
+                                    Text("Favori sayısı")
+                                        .foregroundStyle(.white.opacity(0.70))
+                                    Spacer()
+                                    Text("\(favoriteCount)")
+                                        .font(.headline.weight(.bold))
+                                        .foregroundStyle(AppTheme.dashboardGreen)
+                                }
+                            }
+                        }
+
+                        Button {
+                            if showsCategoryFilter {
+                                viewModel.resetFilters()
+                            } else {
+                                viewModel.selectedRewardType = nil
+                                viewModel.showFavoritesOnly = false
+                                viewModel.sortOption = .expiringSoon
+                            }
+                        } label: {
+                            Text("Filtreleri Temizle")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(AppTheme.nearBlack)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(AppTheme.dashboardGreen)
+                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         }
                     }
-                    .pickerStyle(.inline)
-                }
-
-                Section("Kategori") {
-                    FilterOptionRow(title: "Tumu", isSelected: viewModel.selectedCategory == nil) {
-                        viewModel.selectedCategory = nil
-                    }
-                    ForEach(viewModel.categories, id: \.self) { category in
-                        FilterOptionRow(title: category, isSelected: viewModel.selectedCategory == category) {
-                            viewModel.selectedCategory = category
-                        }
-                    }
-                }
-
-                Section("Kazanim") {
-                    FilterOptionRow(title: "Tumu", isSelected: viewModel.selectedRewardType == nil) {
-                        viewModel.selectedRewardType = nil
-                    }
-                    ForEach(viewModel.rewardTypes, id: \.self) { rewardType in
-                        FilterOptionRow(title: rewardType, isSelected: viewModel.selectedRewardType == rewardType) {
-                            viewModel.selectedRewardType = rewardType
-                        }
-                    }
-                }
-
-                Section("Gorunum") {
-                    Toggle("Sadece favoriler", isOn: $viewModel.showFavoritesOnly)
-                    LabeledContent("Favori sayisi", value: "\(favoriteCount)")
-                }
-
-                Section {
-                    Button("Tum filtreleri temizle", role: .destructive) {
-                        viewModel.resetFilters()
-                    }
+                    .padding(22)
                 }
             }
-            .navigationTitle("Filtreler")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Bitti") {
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
+            .toolbar(.hidden, for: .navigationBar)
+        }
+    }
+
+    private var sheetHeader: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Filtreler")
+                    .font(.largeTitle.weight(.bold))
+                    .foregroundStyle(.white)
+                Text("Sonuçları hızlıca daralt")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.68))
+            }
+            Spacer()
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(AppTheme.nearBlack)
+                    .frame(width: 44, height: 44)
+                    .background(.white)
+                    .clipShape(Circle())
             }
         }
     }
 }
 
-private struct FilterOptionRow: View {
+private struct FilterPanel<Content: View>: View {
+    let title: String
+    let systemImage: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Label(title, systemImage: systemImage)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white)
+            content
+        }
+        .padding(18)
+        .background(AppTheme.panelBlack.opacity(0.92))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(AppTheme.dashboardGreen.opacity(0.20), lineWidth: 1)
+        }
+    }
+}
+
+private struct FilterOptionPill: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
@@ -659,15 +757,22 @@ private struct FilterOptionRow: View {
         Button(action: action) {
             HStack {
                 Text(title)
-                    .foregroundStyle(.primary)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(isSelected ? AppTheme.nearBlack : .white)
+                    .lineLimit(1)
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.green)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(AppTheme.nearBlack)
                 }
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(isSelected ? AppTheme.dashboardGreen : .white.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
+        .buttonStyle(.plain)
     }
 }
 

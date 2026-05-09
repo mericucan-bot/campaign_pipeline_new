@@ -35,7 +35,7 @@ struct CampaignDetailView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(campaign.displayBank)
                                 .font(.subheadline.weight(.bold))
-                                .foregroundStyle(AppTheme.electricBlue)
+                                .foregroundStyle(AppTheme.dashboardGreen)
                             Text(campaign.title)
                                 .font(.title2.weight(.bold))
                                 .foregroundStyle(AppTheme.ink)
@@ -59,7 +59,7 @@ struct CampaignDetailView: View {
                                 .font(.subheadline.weight(.bold))
                             }
                             .buttonStyle(.borderedProminent)
-                            .tint(AppTheme.coral)
+                            .tint(AppTheme.dashboardGreen)
 
                             if let sourceURL = campaign.sourceURL {
                                 Link(destination: sourceURL) {
@@ -67,7 +67,7 @@ struct CampaignDetailView: View {
                                         .font(.subheadline.weight(.bold))
                                 }
                                 .buttonStyle(.bordered)
-                                .tint(AppTheme.electricBlue)
+                                .tint(AppTheme.dashboardGreen)
                             }
                         }
                     }
@@ -86,11 +86,11 @@ struct CampaignDetailView: View {
 
     private var placeholder: some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(AppTheme.softBlue)
+            .fill(AppTheme.softGreen)
             .overlay {
                 Image(systemName: "creditcard")
                     .font(.largeTitle)
-                    .foregroundStyle(AppTheme.electricBlue)
+                    .foregroundStyle(AppTheme.dashboardGreen)
             }
     }
 }

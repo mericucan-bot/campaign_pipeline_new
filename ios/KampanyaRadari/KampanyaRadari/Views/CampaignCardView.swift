@@ -13,7 +13,7 @@ struct CampaignCardView: View {
                 Spacer()
                 Image(systemName: isFavorite ? "star.fill" : "star")
                     .font(.title3.weight(.semibold))
-                    .foregroundStyle(isFavorite ? .yellow : AppTheme.muted.opacity(0.75))
+                    .foregroundStyle(isFavorite ? AppTheme.dashboardGreen : AppTheme.muted.opacity(0.75))
             }
 
             Text(campaign.title)
@@ -26,8 +26,8 @@ struct CampaignCardView: View {
                 .lineLimit(3)
 
             HStack(spacing: 8) {
-                Badge(text: campaign.category ?? "Genel", foreground: .teal, background: AppTheme.aqua.opacity(0.28))
-                Badge(text: campaign.rewardType ?? "Firsat", foreground: .blue, background: AppTheme.softBlue)
+                Badge(text: campaign.category ?? "Genel", foreground: AppTheme.nearBlack, background: AppTheme.softGreen)
+                Badge(text: campaign.rewardType ?? "Firsat", foreground: AppTheme.nearBlack, background: AppTheme.dashboardGreen.opacity(0.22))
                 Badge(text: campaign.deadlineText, foreground: .orange, background: AppTheme.softOrange)
             }
 
@@ -37,7 +37,7 @@ struct CampaignCardView: View {
                         .font(.caption)
                         .foregroundStyle(AppTheme.muted)
                 }
-                .tint(AppTheme.electricBlue)
+                .tint(AppTheme.dashboardGreen)
             }
         }
         .padding(18)
