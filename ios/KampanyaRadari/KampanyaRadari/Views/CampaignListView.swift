@@ -220,6 +220,7 @@ private struct CampaignListScreen: View {
     let favorites: FavoritesStore
     let lockCategoryFilter: Bool
     @State private var isShowingFilters = false
+    @State private var isShowingBankFilters = false
     @State private var showScrollToTop = false
     @State private var scrollOffset: CGFloat = 0
     @Environment(\.dismiss) private var dismiss
@@ -343,6 +344,11 @@ private struct CampaignListScreen: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $isShowingBankFilters) {
+            BankFilterSheet(viewModel: viewModel)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
     }
 
     private func listHeader(count: Int) -> some View {
@@ -392,7 +398,7 @@ private struct CampaignListScreen: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 Button {
-                    isShowingFilters = true
+                    isShowingBankFilters = true
                 } label: {
                     Image(systemName: "line.3.horizontal.decrease")
                         .font(.subheadline.weight(.bold))
@@ -626,19 +632,6 @@ private struct FilterSheet: View {
                             }
                         }
 
-                        FilterPanel(title: "Banka/Kart", systemImage: "creditcard") {
-                            VStack(spacing: 10) {
-                                FilterOptionPill(title: "Tümü", isSelected: viewModel.selectedBanks.isEmpty) {
-                                    viewModel.clearBanks()
-                                }
-                                ForEach(viewModel.banks, id: \.self) { bank in
-                                    FilterOptionPill(title: viewModel.label(for: bank), isSelected: viewModel.selectedBanks.contains(bank)) {
-                                        viewModel.toggleBank(bank)
-                                    }
-                                }
-                            }
-                        }
-
                         if showsCategoryFilter {
                             FilterPanel(title: "Kategori", systemImage: "square.grid.2x2") {
                                 VStack(spacing: 10) {
@@ -689,9 +682,8 @@ private struct FilterSheet: View {
 
                         Button {
                             if showsCategoryFilter {
-                                viewModel.resetFilters()
+                                viewModel.clearAdvancedFilters()
                             } else {
-                                viewModel.clearBanks()
                                 viewModel.selectedRewardType = nil
                                 viewModel.showFavoritesOnly = false
                                 viewModel.sortOption = .expiringSoon
@@ -734,6 +726,73 @@ private struct FilterSheet: View {
                     .background(.white)
                     .clipShape(Circle())
             }
+        }
+    }
+}
+
+private struct BankFilterSheet: View {
+    @Bindable var viewModel: CampaignListViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                AppTheme.dashboardBackground
+                    .ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Banka Filtresi")
+                                    .font(.largeTitle.weight(.bold))
+                                    .foregroundStyle(.white)
+                                Text("Bir veya birden fazla banka seç")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.white.opacity(0.68))
+                            }
+                            Spacer()
+                            Button {
+                                dismiss()
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.headline.weight(.bold))
+                                    .foregroundStyle(AppTheme.nearBlack)
+                                    .frame(width: 44, height: 44)
+                                    .background(.white)
+                                    .clipShape(Circle())
+                            }
+                        }
+
+                        FilterPanel(title: "Bankalar", systemImage: "creditcard") {
+                            VStack(spacing: 10) {
+                                FilterOptionPill(title: "Tümü", isSelected: viewModel.selectedBanks.isEmpty) {
+                                    viewModel.clearBanks()
+                                }
+                                ForEach(viewModel.banks, id: \.self) { bank in
+                                    FilterOptionPill(title: viewModel.label(for: bank), isSelected: viewModel.selectedBanks.contains(bank)) {
+                                        viewModel.toggleBank(bank)
+                                    }
+                                }
+                            }
+                        }
+
+                        Button {
+                            viewModel.clearBanks()
+                        } label: {
+                            Text("Banka Filtrelerini Temizle")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(AppTheme.nearBlack)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(AppTheme.dashboardGreen)
+                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        }
+                    }
+                    .padding(22)
+                }
+            }
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 }

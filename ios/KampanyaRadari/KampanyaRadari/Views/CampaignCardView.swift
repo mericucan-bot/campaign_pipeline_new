@@ -100,11 +100,22 @@ struct CampaignCardView: View {
     private var bankRail: some View {
         VStack(spacing: 10) {
             Spacer()
-            Text(bankInitials)
-                .font(.system(size: 30, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.92))
-                .minimumScaleFactor(0.55)
-                .lineLimit(1)
+
+            if let logoAssetName {
+                Image(logoAssetName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 58, height: 44)
+                    .padding(6)
+                    .background(.white.opacity(0.10))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            } else {
+                Text(bankInitials)
+                    .font(.system(size: 30, weight: .black, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.92))
+                    .minimumScaleFactor(0.55)
+                    .lineLimit(1)
+            }
 
             Text(campaign.displayBank)
                 .font(.caption.weight(.bold))
@@ -135,15 +146,39 @@ struct CampaignCardView: View {
             .uppercased()
     }
 
+    private var logoAssetName: String? {
+        let bank = normalizedBankName
+        if bank.contains("paraf premium") { return "LogoParafPremium" }
+        if bank.contains("paraf") { return "LogoParaf" }
+        if bank.contains("yapi kredi") || bank.contains("world") || bank.contains("ykb") { return "LogoYKB" }
+        if bank.contains("on kart") || bank == "on" || bank.contains("on digital") { return "LogoOnDigital" }
+        if bank.contains("n kolay") || bank.contains("nkolay") { return "LogoNKolay" }
+        if bank.contains("qnb") || bank.contains("cardfinans") { return "LogoQNB" }
+        return nil
+    }
+
     private var accent: Color {
-        let bank = campaign.displayBank.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: .current).lowercased()
+        let bank = normalizedBankName
         if bank.contains("axess") || bank.contains("akbank") { return Color(red: 0.95, green: 0.73, blue: 0.12) }
         if bank.contains("maximum") || bank.contains("is bankasi") { return Color(red: 0.86, green: 0.23, blue: 0.55) }
         if bank.contains("garanti") { return Color(red: 0.27, green: 0.76, blue: 0.43) }
         if bank.contains("qnb") { return Color(red: 0.52, green: 0.23, blue: 0.68) }
         if bank.contains("deniz") { return Color(red: 0.14, green: 0.47, blue: 0.88) }
         if bank.contains("yapi") || bank.contains("world") { return Color(red: 0.38, green: 0.26, blue: 0.72) }
+        if bank.contains("paraf") { return Color(red: 0.07, green: 0.55, blue: 0.42) }
+        if bank.contains("on") { return Color(red: 0.98, green: 0.42, blue: 0.16) }
+        if bank.contains("n kolay") || bank.contains("nkolay") { return Color(red: 0.96, green: 0.43, blue: 0.12) }
+        if bank.contains("vakif") { return Color(red: 0.35, green: 0.78, blue: 0.67) }
+        if bank.contains("kuveyt") { return Color(red: 0.08, green: 0.58, blue: 0.36) }
+        if bank.contains("ziraat") { return Color(red: 0.80, green: 0.06, blue: 0.11) }
+        if bank.contains("teb") { return Color(red: 0.03, green: 0.55, blue: 0.35) }
         return AppTheme.dashboardGreen
+    }
+
+    private var normalizedBankName: String {
+        campaign.displayBank
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+            .lowercased()
     }
 
     private var leadingBadgeText: String {

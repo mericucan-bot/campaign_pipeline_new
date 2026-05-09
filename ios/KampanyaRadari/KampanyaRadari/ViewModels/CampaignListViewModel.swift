@@ -121,7 +121,6 @@ final class CampaignListViewModel {
     }
 
     func clearAdvancedFilters() {
-        selectedBanks = []
         selectedCategories = []
         selectedRewardType = nil
         showFavoritesOnly = false
