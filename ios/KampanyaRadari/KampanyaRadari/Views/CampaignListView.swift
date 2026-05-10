@@ -1315,6 +1315,8 @@ private struct AccountView: View {
 
                     premiumPreview
 
+                    AccountLegalLinks()
+
                     VStack(spacing: 12) {
                         Button {
                             if authState.isAuthenticated {
@@ -1445,6 +1447,73 @@ private struct AccountView: View {
         } catch {
             syncMessage = "Senkron beklemede: \((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)"
         }
+    }
+}
+
+private struct AccountLegalLinks: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Yardım ve yasal bilgiler")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white)
+
+            VStack(spacing: 10) {
+                AccountLinkButton(title: "Gizlilik Politikası", subtitle: "Hangi verileri neden kullandığımız", systemImage: "lock.shield.fill") {
+                    openURL(AppLinks.privacy)
+                }
+                AccountLinkButton(title: "Destek", subtitle: "Sık sorulan sorular ve yardım", systemImage: "questionmark.circle.fill") {
+                    openURL(AppLinks.support)
+                }
+            }
+        }
+        .padding(18)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+        }
+    }
+}
+
+private struct AccountLinkButton: View {
+    let title: String
+    let subtitle: String
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+                    .frame(width: 38, height: 38)
+                    .background(AppTheme.dashboardGreen.opacity(0.14))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.58))
+                }
+
+                Spacer()
+
+                Image(systemName: "arrow.up.right")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.62))
+            }
+            .padding(14)
+            .background(.white.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 }
 

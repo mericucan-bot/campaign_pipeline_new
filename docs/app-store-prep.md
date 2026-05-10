@@ -19,6 +19,7 @@
 - Uygulama gizliliği cevapları
 - TestFlight iç test grubu
 - Abonelik ürünleri
+- Listeleme metinleri için kaynak: `docs/app-store-listing-draft.md`
 
 ## Planlanan Abonelik Ürünleri
 
