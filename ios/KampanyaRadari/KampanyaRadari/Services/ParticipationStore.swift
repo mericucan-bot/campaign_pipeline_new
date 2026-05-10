@@ -5,6 +5,11 @@ struct CampaignParticipation: Codable, Equatable {
     var didJoin: Bool = false
     var spentAmount: Double = 0
     var earnedAmount: Double = 0
+    var rewardExpiresAt: Date?
+
+    var hasReminder: Bool {
+        didJoin && rewardExpiresAt != nil
+    }
 }
 
 @Observable

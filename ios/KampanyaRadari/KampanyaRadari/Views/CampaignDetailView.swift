@@ -7,6 +7,8 @@ struct CampaignDetailView: View {
     @State private var record = CampaignParticipation()
     @State private var spentText = ""
     @State private var earnedText = ""
+    @State private var rewardExpiresAt = Date()
+    @State private var hasRewardReminder = false
 
     var body: some View {
         ZStack {
@@ -119,9 +121,11 @@ struct CampaignDetailView: View {
                 }
             }
 
+            rewardReminderPanel
+
             HStack(spacing: 12) {
                 DetailStatPill(title: "Durum", value: record.didJoin ? "Katıldım" : "Takipte")
-                DetailStatPill(title: "Net", value: (record.earnedAmount - record.spentAmount).currencyText)
+                DetailStatPill(title: "Hatırlatma", value: record.hasReminder ? "Açık" : "Kapalı")
             }
         }
         .padding(16)
@@ -134,7 +138,14 @@ struct CampaignDetailView: View {
             record.didJoin
         } set: { newValue in
             record.didJoin = newValue
+            if !newValue {
+                hasRewardReminder = false
+                record.rewardExpiresAt = nil
+            } else if hasRewardReminder {
+                record.rewardExpiresAt = rewardExpiresAt
+            }
             participation.update(record, for: campaign)
+            CampaignReminderService.syncReminder(for: campaign, record: record)
         }
     }
 
@@ -142,12 +153,79 @@ struct CampaignDetailView: View {
         record = participation.record(for: campaign)
         spentText = record.spentAmount.moneyInputText
         earnedText = record.earnedAmount.moneyInputText
+        hasRewardReminder = record.rewardExpiresAt != nil
+        rewardExpiresAt = record.rewardExpiresAt ?? defaultRewardExpiryDate
     }
 
     private func saveMoneyFields() {
         record.spentAmount = Double(spentText.replacingOccurrences(of: ",", with: ".")) ?? 0
         record.earnedAmount = Double(earnedText.replacingOccurrences(of: ",", with: ".")) ?? 0
         participation.update(record, for: campaign)
+        CampaignReminderService.syncReminder(for: campaign, record: record)
+    }
+
+    private var rewardReminderPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Toggle(isOn: reminderBinding) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Puan harcama hatırlatıcısı")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(AppTheme.ink)
+                    Text("Katıldım seçiliyken son kullanımdan 7 gün, 3 gün ve son gün önce bildirim gönderirim.")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(AppTheme.muted)
+                }
+            }
+            .tint(AppTheme.dashboardGreen)
+
+            if hasRewardReminder {
+                DatePicker(
+                    "Son kullanım",
+                    selection: rewardDateBinding,
+                    in: Date()...,
+                    displayedComponents: .date
+                )
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(AppTheme.ink)
+                .padding(12)
+                .background(.white.opacity(0.72))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
+        }
+        .padding(12)
+        .background(.white.opacity(0.42))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private var reminderBinding: Binding<Bool> {
+        Binding {
+            hasRewardReminder
+        } set: { newValue in
+            hasRewardReminder = newValue
+            if newValue {
+                record.didJoin = true
+                record.rewardExpiresAt = rewardExpiresAt
+            } else {
+                record.rewardExpiresAt = nil
+            }
+            participation.update(record, for: campaign)
+            CampaignReminderService.syncReminder(for: campaign, record: record)
+        }
+    }
+
+    private var rewardDateBinding: Binding<Date> {
+        Binding {
+            rewardExpiresAt
+        } set: { newValue in
+            rewardExpiresAt = newValue
+            record.rewardExpiresAt = newValue
+            participation.update(record, for: campaign)
+            CampaignReminderService.syncReminder(for: campaign, record: record)
+        }
+    }
+
+    private var defaultRewardExpiryDate: Date {
+        Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date()
     }
 
     private var placeholder: some View {

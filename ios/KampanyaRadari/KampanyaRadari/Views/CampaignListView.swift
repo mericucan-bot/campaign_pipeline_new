@@ -1450,6 +1450,11 @@ private struct EarningsCampaignRow: View {
                     Text(campaign.deadlineText)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.62))
+                    if let rewardExpiresAt = record.rewardExpiresAt {
+                        Label("Puan son kullanım: \(rewardExpiresAt.shortDateText)", systemImage: "bell.fill")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(AppTheme.dashboardGreen)
+                    }
                 }
             }
 

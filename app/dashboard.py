@@ -159,7 +159,7 @@ def api_campaigns():
     return jsonify(campaigns)
 
 
-@app.post("/favorite/<int:campaign_id>")
+@app.post("/favorite/<campaign_id>")
 def favorite(campaign_id):
     is_favorite = toggle_favorite(campaign_id)
     if request.headers.get("accept") == "application/json":

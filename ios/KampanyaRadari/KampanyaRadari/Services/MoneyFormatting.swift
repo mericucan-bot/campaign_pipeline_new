@@ -18,3 +18,13 @@ extension Double {
         return String(self)
     }
 }
+
+extension Date {
+    var shortDateText: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "tr_TR")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: self)
+    }
+}
