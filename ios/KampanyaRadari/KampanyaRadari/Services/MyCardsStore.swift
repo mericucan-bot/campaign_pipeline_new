@@ -28,6 +28,11 @@ final class MyCardsStore {
         save()
     }
 
+    func replace(with newBanks: Set<String>) {
+        banks = newBanks
+        save()
+    }
+
     private func save() {
         UserDefaults.standard.set(Array(banks), forKey: key)
     }

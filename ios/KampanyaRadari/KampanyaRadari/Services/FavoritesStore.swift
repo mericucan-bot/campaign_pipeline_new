@@ -20,7 +20,15 @@ final class FavoritesStore {
         } else {
             ids.insert(campaign.id)
         }
+        save()
+    }
+
+    func replace(with newIDs: Set<String>) {
+        ids = newIDs
+        save()
+    }
+
+    private func save() {
         UserDefaults.standard.set(Array(ids), forKey: key)
     }
 }
-

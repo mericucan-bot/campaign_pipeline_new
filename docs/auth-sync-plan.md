@@ -32,6 +32,7 @@ Kampanya iliskileri `campaigns.id` alanina UUID olarak baglanir. Bu, mevcut Supa
    - Yerel `Kartlarim`, favoriler ve katilim verileri kullanici tablolarina yazilir.
    - `campaign_participations.reward_expires_at` ve `reminder_enabled` alanlari puan son kullanim hatirlaticilari icin saklanir.
    - Sonraki acilislarda bulut verisi okunur.
+   - Ilk iOS senkron servisi eklendi: giris sonrasi ve Hesap ekranindaki manuel senkron butonuyla yerel veriler buluta yazilir, buluttaki veriler cihazla birlestirilir.
 4. Kullanici cikis yaparsa:
    - Bulut verisi korunur.
    - Cihazdaki misafir verisi ayrica tutulabilir veya temizlenebilir.

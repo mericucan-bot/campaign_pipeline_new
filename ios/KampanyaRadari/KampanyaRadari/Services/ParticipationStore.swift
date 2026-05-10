@@ -42,11 +42,20 @@ final class ParticipationStore {
     }
 
     func update(_ record: CampaignParticipation, for campaign: Campaign) {
+        update(record, forCampaignID: campaign.id)
+    }
+
+    func update(_ record: CampaignParticipation, forCampaignID campaignID: String) {
         if record == CampaignParticipation() {
-            records.removeValue(forKey: campaign.id)
+            records.removeValue(forKey: campaignID)
         } else {
-            records[campaign.id] = record
+            records[campaignID] = record
         }
+        save()
+    }
+
+    func replace(with newRecords: [String: CampaignParticipation]) {
+        records = newRecords
         save()
     }
 

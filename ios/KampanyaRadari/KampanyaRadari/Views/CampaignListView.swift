@@ -54,12 +54,12 @@ struct CampaignListView: View {
                         case .earnings:
                             EarningsView(viewModel: viewModel, participation: participation)
                         case .account:
-                            AccountView(authState: authState)
+                            AccountView(authState: authState, favorites: favorites, myCards: myCards, participation: participation)
                         }
                     }
                 }
             } else {
-                IntroView(authState: authState) {
+                IntroView(authState: authState, favorites: favorites, myCards: myCards, participation: participation) {
                     hasEnteredApp = true
                 }
             }
@@ -74,6 +74,9 @@ struct CampaignListView: View {
 
 private struct IntroView: View {
     @Bindable var authState: AuthStateStore
+    let favorites: FavoritesStore
+    let myCards: MyCardsStore
+    let participation: ParticipationStore
     let enter: () -> Void
     @State private var isShowingAuthOptions = false
 
@@ -140,7 +143,7 @@ private struct IntroView: View {
             .padding(24)
         }
         .sheet(isPresented: $isShowingAuthOptions) {
-            AuthOptionsSheet(authState: authState, enter: enter)
+            AuthOptionsSheet(authState: authState, favorites: favorites, myCards: myCards, participation: participation, enter: enter)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -829,11 +832,15 @@ private struct LightStatTile: View {
 
 private struct AuthOptionsSheet: View {
     @Bindable var authState: AuthStateStore
+    let favorites: FavoritesStore
+    let myCards: MyCardsStore
+    let participation: ParticipationStore
     let enter: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var email = ""
     @State private var password = ""
     @State private var isSignUp = false
+    private let syncService = UserDataSyncService()
 
     var body: some View {
         ZStack {
@@ -889,6 +896,7 @@ private struct AuthOptionsSheet: View {
                                 await authState.signIn(email: email, password: password)
                             }
                             if authState.isAuthenticated {
+                                await syncAfterLogin()
                                 dismiss()
                                 enter()
                             }
@@ -946,6 +954,20 @@ private struct AuthOptionsSheet: View {
                 }
                 .padding(22)
             }
+        }
+    }
+
+    private func syncAfterLogin() async {
+        do {
+            try await syncService.sync(
+                session: authState.session,
+                favorites: favorites,
+                myCards: myCards,
+                participation: participation
+            )
+            authState.authMessage = "Giriş başarılı. Yerel kayıtların bulut hesabınla senkronlandı."
+        } catch {
+            authState.authMessage = "Giriş başarılı. Senkron beklemede: \((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)"
         }
     }
 }
@@ -1052,7 +1074,13 @@ private struct AuthPreviewButton: View {
 
 private struct AccountView: View {
     @Bindable var authState: AuthStateStore
+    let favorites: FavoritesStore
+    let myCards: MyCardsStore
+    let participation: ParticipationStore
     @Environment(\.dismiss) private var dismiss
+    @State private var syncMessage: String?
+    @State private var isSyncing = false
+    private let syncService = UserDataSyncService()
 
     var body: some View {
         ZStack {
@@ -1083,7 +1111,7 @@ private struct AccountView: View {
                     VStack(alignment: .leading, spacing: 14) {
                         AccountStatusRow(title: "Oturum", value: authState.isAuthenticated ? "Supabase hesabı" : "Misafir", systemImage: "person.fill")
                         AccountStatusRow(title: "E-posta", value: authState.email ?? "Bağlı değil", systemImage: "envelope.fill")
-                        AccountStatusRow(title: "Senkron", value: authState.isAuthenticated ? "Sıradaki adımda açılacak" : "Cihazda saklanıyor", systemImage: "arrow.triangle.2.circlepath")
+                        AccountStatusRow(title: "Senkron", value: authState.isAuthenticated ? "Bulut senkron hazır" : "Cihazda saklanıyor", systemImage: "arrow.triangle.2.circlepath")
                         AccountStatusRow(title: "Plan", value: "Free", systemImage: "creditcard.fill")
                     }
                     .padding(18)
@@ -1096,15 +1124,34 @@ private struct AccountView: View {
 
                     VStack(spacing: 12) {
                         Button {
-                            authState.authMessage = "Yeni giriş için çıkış yapıp giriş ekranındaki e-posta formunu kullanabilirsin."
+                            Task {
+                                await syncNow()
+                            }
                         } label: {
-                            Label(authState.isAuthenticated ? "Hesap bağlı" : "Giriş ekranından hesap bağla", systemImage: authState.isAuthenticated ? "checkmark.seal.fill" : "person.crop.circle.badge.plus")
+                            HStack {
+                                if isSyncing {
+                                    ProgressView()
+                                        .tint(AppTheme.nearBlack)
+                                }
+                                Label(authState.isAuthenticated ? "Verilerimi Senkronla" : "Giriş ekranından hesap bağla", systemImage: authState.isAuthenticated ? "arrow.triangle.2.circlepath" : "person.crop.circle.badge.plus")
+                            }
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(AppTheme.nearBlack)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 16)
                                 .background(AppTheme.dashboardGreen)
                                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        }
+                        .disabled(isSyncing)
+
+                        if let syncMessage {
+                            Text(syncMessage)
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(.white.opacity(0.72))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(14)
+                                .background(.white.opacity(0.08))
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         }
 
                         Button {
@@ -1126,6 +1173,23 @@ private struct AccountView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private func syncNow() async {
+        guard authState.isAuthenticated else {
+            syncMessage = "Senkron için önce giriş yapman gerekiyor."
+            return
+        }
+
+        isSyncing = true
+        defer { isSyncing = false }
+
+        do {
+            try await syncService.sync(session: authState.session, favorites: favorites, myCards: myCards, participation: participation)
+            syncMessage = "Favoriler, kartlarım ve katılım kayıtların bulut hesabınla senkronlandı."
+        } catch {
+            syncMessage = "Senkron beklemede: \((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)"
+        }
     }
 }
 
