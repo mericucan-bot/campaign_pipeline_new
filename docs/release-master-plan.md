@@ -11,6 +11,7 @@
 - Favorilere hızlı erişim ana sayfada ve liste içinde görünür olmalı; favoriler sadece filtre menüsünde saklı kalmamalı.
 - Hesaplayıcı / kazanç takibi favori kampanyalar üzerinden `katıldım`, `harcadım`, `kazandım` akışıyla çalışmalı.
 - Dashboard'daki hesaplayıcı mantığı mobilde `Kazançlarım` ekranına taşınmalı.
+- Katıldım akışına puan/ödül son kullanım takibi eklenmeli; kullanıcı tutar ve son kullanım tarihi girince 7 gün, 3 gün ve son gün yerel bildirimleri planlanmalı.
 - Kampanya detay ekranında katılım şartları, son tarih, kazanım türü, banka, kaynak linki ve ana aksiyonlar okunabilir olmalı.
 - Veri kalitesi tarafında süresi geçmiş kampanya, yanlış kategori, eksik tarih ve çok uzun açıklama sorunları takip edilmeli.
 - VakıfBank ve Yapı Kredi gibi yavaş veya kırılgan scraper kaynakları ayrıca iyileştirilmeli.

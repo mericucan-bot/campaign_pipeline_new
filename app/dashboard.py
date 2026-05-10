@@ -1,4 +1,5 @@
 import re
+import traceback
 import unicodedata
 from datetime import date
 
@@ -72,6 +73,38 @@ MY_CARD_BANKS = {
     "VakifBank",
     "Yapi Kredi World",
 }
+
+
+@app.errorhandler(Exception)
+def dashboard_error(exc):
+    traceback.print_exc()
+    return (
+        """
+        <!doctype html>
+        <html lang="tr">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Kampanya Radar - Hata</title>
+          <style>
+            body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #07100f; color: #f7fbfa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+            main { width: min(680px, calc(100vw - 32px)); padding: 28px; border: 1px solid rgba(99, 204, 170, .28); border-radius: 24px; background: rgba(255,255,255,.06); }
+            h1 { margin: 0 0 12px; font-size: 30px; }
+            p { color: rgba(247,251,250,.78); line-height: 1.55; }
+            code { color: #63ccaa; }
+          </style>
+        </head>
+        <body>
+          <main>
+            <h1>Dashboard açılırken hata oluştu</h1>
+            <p>Sayfa beyaz 500 ekranına düşmesin diye bu güvenli hata ekranını gösteriyorum. Asıl sebep terminalde traceback olarak yazıldı.</p>
+            <p>Genelde çözüm: terminalde dashboard'u <code>Ctrl+C</code> ile kapatıp güncel kodu çektikten sonra yeniden başlatmak.</p>
+          </main>
+        </body>
+        </html>
+        """,
+        500,
+    )
 
 
 @app.get("/")
