@@ -49,13 +49,6 @@ struct UserDataSyncService {
         cardBanks: Set<String>,
         participationRecords: [String: CampaignParticipation]
     ) async throws {
-        try await upsert(
-            [ProfileRow(id: session.user.id, displayName: session.user.email, avatarURL: nil, plan: "free", planStatus: "active")],
-            table: "profiles",
-            conflict: "id",
-            session: session
-        )
-
         if !cardBanks.isEmpty {
             let rows = cardBanks.sorted().map {
                 UserCardRow(userID: session.user.id, bank: $0, bankLabel: nil)
@@ -182,22 +175,6 @@ private struct UserCardRow: Codable {
         case userID = "user_id"
         case bank
         case bankLabel = "bank_label"
-    }
-}
-
-private struct ProfileRow: Codable {
-    let id: String
-    let displayName: String?
-    let avatarURL: String?
-    let plan: String
-    let planStatus: String
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case displayName = "display_name"
-        case avatarURL = "avatar_url"
-        case plan
-        case planStatus = "plan_status"
     }
 }
 

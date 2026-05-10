@@ -8,6 +8,7 @@ final class AuthStateStore {
     private let isGuestKey = "authIsGuest"
     private let sessionKey = "authSession"
     private let authService = SupabaseAuthService()
+    private let profileService = UserProfileService()
 
     var displayName: String
     var isGuest: Bool
@@ -26,6 +27,12 @@ final class AuthStateStore {
         isGuest = UserDefaults.standard.object(forKey: isGuestKey) as? Bool ?? (savedSession == nil)
         email = savedSession?.user.email
         userID = savedSession?.user.id
+
+        if savedSession != nil {
+            Task {
+                await refreshProfile()
+            }
+        }
     }
 
     var statusText: String {
@@ -51,6 +58,7 @@ final class AuthStateStore {
         userID = nil
         session = nil
         authMessage = nil
+        plan = .free
         save()
     }
 
@@ -143,12 +151,33 @@ final class AuthStateStore {
                 ? try await authService.signUp(email: cleanedEmail, password: password)
                 : try await authService.signIn(email: cleanedEmail, password: password)
             apply(session: newSession)
+            await refreshProfile()
             authMessage = isSignUp ? "Hesap oluşturuldu ve giriş yapıldı." : "Giriş başarılı."
         } catch {
             authMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
 
         isLoading = false
+    }
+
+    func refreshProfile() async {
+        guard let session else {
+            plan = .free
+            return
+        }
+
+        do {
+            try await profileService.ensureProfile(session: session)
+            if let profile = try await profileService.fetchProfile(session: session) {
+                plan = profile.effectivePlan
+                if let displayName = profile.displayName, !displayName.isEmpty {
+                    self.displayName = displayName
+                    save()
+                }
+            }
+        } catch {
+            plan = .free
+        }
     }
 
     private func apply(session newSession: AuthSession) {

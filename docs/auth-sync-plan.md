@@ -49,5 +49,6 @@ Kampanya iliskileri `campaigns.id` alanina UUID olarak baglanir. Bu, mevcut Supa
 - `profiles.plan`, `plan_status`, `trial_ends_at` ve `premium_until` alanlari ucretsiz, deneme ve premium durumlarini temsil eder.
 - Ucretsiz planda sinirli takip; premium planda sinirsiz hatirlatici, gelismis kazanc raporu ve kisisel oneriler acilir.
 - iOS uygulamasinda merkezi entitlement katmani eklendi: Free planda 1 aktif puan hatirlaticisi, Trial/Premium planda sinirsiz hatirlatici kuralı uygulanir.
+- iOS uygulamasi oturum acilinca `profiles.plan`, `plan_status`, `trial_ends_at` ve `premium_until` alanlarini okuyarak etkili plani hesaplar; mobil senkron artik mevcut profili `free` olarak ezmez.
 - App Store ve Google Play abonelik durumlari backend tarafinda dogrulanip profile yazilmalidir.
 - Odeme olaylari `subscription_events` tablosuna yazilir; mobil uygulama bu tabloya dogrudan yazmaz, sadece kendi kayitlarini okuyabilir.
