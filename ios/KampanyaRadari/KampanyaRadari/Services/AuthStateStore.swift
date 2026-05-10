@@ -108,7 +108,10 @@ final class AuthStateStore {
     }
 
     func handlePasswordResetURL(_ url: URL) {
-        guard let token = Self.recoveryAccessToken(from: url) else { return }
+        guard let token = Self.recoveryAccessToken(from: url) else {
+            authMessage = "Şifre sıfırlama bağlantısı açıldı ama güvenli token okunamadı. Maildeki en son bağlantıyı Safari yerine simülatörde tekrar açmayı dene."
+            return
+        }
         passwordResetAccessToken = token
         authMessage = nil
     }
@@ -209,7 +212,8 @@ final class AuthStateStore {
         let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         let allItems = fragmentItems + queryItems
         let type = allItems.first(where: { $0.name == "type" })?.value
-        guard type == nil || type == "recovery" else { return nil }
+        guard type == nil || type == "recovery" || type == "signup" else { return nil }
         return allItems.first(where: { $0.name == "access_token" })?.value
+            ?? allItems.first(where: { $0.name == "token" })?.value
     }
 }

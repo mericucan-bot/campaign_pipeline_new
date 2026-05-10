@@ -71,10 +71,11 @@ struct CampaignListView: View {
             }
         }
         .onOpenURL { url in
+            hasEnteredApp = true
             authState.handlePasswordResetURL(url)
         }
         .sheet(isPresented: Binding(
-            get: { hasEnteredApp && authState.passwordResetAccessToken != nil },
+            get: { authState.passwordResetAccessToken != nil },
             set: { if !$0 { authState.clearPasswordResetToken() } }
         )) {
             if let token = authState.passwordResetAccessToken {
@@ -1189,6 +1190,7 @@ private struct AccountView: View {
     @State private var syncMessage: String?
     @State private var isSyncing = false
     @State private var isShowingPaywall = false
+    @State private var isShowingAuthOptions = false
     private let syncService = UserDataSyncService()
 
     var body: some View {
@@ -1240,8 +1242,13 @@ private struct AccountView: View {
 
                     VStack(spacing: 12) {
                         Button {
-                            Task {
-                                await syncNow()
+                            if authState.isAuthenticated {
+                                Task {
+                                    await syncNow()
+                                }
+                            } else {
+                                syncMessage = nil
+                                isShowingAuthOptions = true
                             }
                         } label: {
                             HStack {
@@ -1293,6 +1300,20 @@ private struct AccountView: View {
             PaywallPreviewSheet(plan: authState.plan)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: Binding(
+            get: { isShowingAuthOptions || authState.passwordResetAccessToken != nil },
+            set: { newValue in
+                if !newValue {
+                    isShowingAuthOptions = false
+                    authState.clearPasswordResetToken()
+                }
+            }
+        )) {
+            AuthOptionsSheet(authState: authState, favorites: favorites, myCards: myCards, participation: participation) {
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
     }
 
