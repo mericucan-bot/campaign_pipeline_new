@@ -3,6 +3,7 @@ import SwiftUI
 private enum AppRoute: Hashable {
     case list(lockCategoryFilter: Bool)
     case profile
+    case earnings
 }
 
 struct CampaignListView: View {
@@ -28,6 +29,8 @@ struct CampaignListView: View {
                     } openMyCardCampaigns: {
                         viewModel.showMyCardCampaigns()
                         path.append(.list(lockCategoryFilter: false))
+                    } openEarnings: {
+                        path.append(.earnings)
                     } openCategory: { category in
                         viewModel.showCampaigns(category: category)
                         path.append(.list(lockCategoryFilter: true))
@@ -44,6 +47,8 @@ struct CampaignListView: View {
                             )
                         case .profile:
                             ProfileCardsView(viewModel: viewModel, myCards: myCards)
+                        case .earnings:
+                            EarningsView(viewModel: viewModel, participation: participation)
                         }
                     }
                 }
@@ -117,6 +122,7 @@ private struct DashboardHomeView: View {
     let openFavorites: () -> Void
     let openMyCards: () -> Void
     let openMyCardCampaigns: () -> Void
+    let openEarnings: () -> Void
     let openCategory: (String) -> Void
 
     var body: some View {
@@ -295,29 +301,35 @@ private struct DashboardHomeView: View {
     }
 
     private var calculatorPreview: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Favori ve hesaplayıcı")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(AppTheme.ink)
-                Spacer()
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .foregroundStyle(AppTheme.dashboardGreen)
-            }
+        Button(action: openEarnings) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Text("Kazançlarım")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(AppTheme.ink)
+                    Spacer()
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .foregroundStyle(AppTheme.dashboardGreen)
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(AppTheme.muted)
+                }
 
-            HStack(spacing: 12) {
-                LightStatTile(title: "Katılım", value: "\(participation.joinedCount)")
-                LightStatTile(title: "Harcama", value: participation.totalSpent.currencyText)
-                LightStatTile(title: "Kazanç", value: participation.totalEarned.currencyText)
-            }
+                HStack(spacing: 12) {
+                    LightStatTile(title: "Katılım", value: "\(participation.joinedCount)")
+                    LightStatTile(title: "Harcama", value: participation.totalSpent.currencyText)
+                    LightStatTile(title: "Kazanç", value: participation.totalEarned.currencyText)
+                }
 
-            Text("Favori kampanya detaylarında katılım ve kazanç bilgilerini işaretleyebilirsin.")
-                .font(.footnote)
-                .foregroundStyle(AppTheme.muted)
+                Text("Kampanya detaylarında katılım ve kazanç bilgilerini işaretleyebilirsin.")
+                    .font(.footnote)
+                    .foregroundStyle(AppTheme.muted)
+            }
+            .padding(18)
+            .background(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
-        .padding(18)
-        .background(.white)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .buttonStyle(.plain)
     }
 }
 
@@ -902,6 +914,208 @@ private struct ProfileBankRow: View {
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct EarningsView: View {
+    @Bindable var viewModel: CampaignListViewModel
+    let participation: ParticipationStore
+    @Environment(\.dismiss) private var dismiss
+
+    private var trackedCampaigns: [(campaign: Campaign, record: CampaignParticipation)] {
+        viewModel.campaigns.compactMap { campaign in
+            guard let record = participation.records[campaign.id] else { return nil }
+            return (campaign, record)
+        }
+        .sorted {
+            if $0.record.didJoin != $1.record.didJoin {
+                return $0.record.didJoin && !$1.record.didJoin
+            }
+            return $0.campaign.title.localizedCaseInsensitiveCompare($1.campaign.title) == .orderedAscending
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            AppTheme.blueBackground
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    HStack {
+                        CircleIconButton(systemName: "chevron.left") {
+                            dismiss()
+                        }
+                        Spacer()
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Hesaplayıcı")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(AppTheme.dashboardGreen)
+                        Text("Kazançlarım")
+                            .font(.largeTitle.weight(.bold))
+                            .foregroundStyle(.white)
+                        Text("Katıldığın kampanyaları, harcamalarını ve kazançlarını tek ekranda takip et.")
+                            .font(.headline)
+                            .foregroundStyle(.white.opacity(0.76))
+                    }
+
+                    earningsSummary
+
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Takip edilen kampanyalar")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.white)
+
+                        if trackedCampaigns.isEmpty {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Image(systemName: "chart.line.uptrend.xyaxis")
+                                    .font(.title.weight(.bold))
+                                    .foregroundStyle(AppTheme.dashboardGreen)
+                                Text("Henüz takip yok")
+                                    .font(.headline.weight(.bold))
+                                    .foregroundStyle(.white)
+                                Text("Bir kampanya detayına girip katılım, harcama veya kazanç bilgisi eklediğinde burada görünecek.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.white.opacity(0.68))
+                            }
+                            .padding(18)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.white.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        } else {
+                            VStack(spacing: 12) {
+                                ForEach(trackedCampaigns, id: \.campaign.id) { item in
+                                    EarningsCampaignRow(campaign: item.campaign, record: item.record)
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 22)
+                .padding(.top, 18)
+                .padding(.bottom, 30)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var earningsSummary: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Özet")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+                Spacer()
+                Text((participation.totalEarned - participation.totalSpent).currencyText)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+            }
+
+            HStack(spacing: 12) {
+                DarkStatTile(title: "Katılım", value: "\(participation.joinedCount)")
+                DarkStatTile(title: "Harcama", value: participation.totalSpent.currencyText)
+                DarkStatTile(title: "Kazanç", value: participation.totalEarned.currencyText)
+            }
+        }
+        .padding(18)
+        .background(AppTheme.dashboardGreen.opacity(0.14))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(.white.opacity(0.14), lineWidth: 1)
+        }
+    }
+}
+
+private struct DarkStatTile: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.62))
+            Text(value)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white)
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+private struct EarningsCampaignRow: View {
+    let campaign: Campaign
+    let record: CampaignParticipation
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(record.didJoin ? AppTheme.dashboardGreen : .white.opacity(0.12))
+                        .frame(width: 42, height: 42)
+                    Image(systemName: record.didJoin ? "checkmark" : "bookmark")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(record.didJoin ? AppTheme.nearBlack : .white.opacity(0.74))
+                }
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(campaign.displayBank)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(AppTheme.dashboardGreen)
+                    Text(campaign.title)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                    Text(campaign.deadlineText)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.62))
+                }
+            }
+
+            HStack(spacing: 10) {
+                MiniMoneyPill(title: "Harcama", value: record.spentAmount.currencyText)
+                MiniMoneyPill(title: "Kazanç", value: record.earnedAmount.currencyText)
+                MiniMoneyPill(title: "Net", value: (record.earnedAmount - record.spentAmount).currencyText)
+            }
+        }
+        .padding(16)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+        }
+    }
+}
+
+private struct MiniMoneyPill: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.56))
+            Text(value)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.white)
+                .minimumScaleFactor(0.68)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }
 
