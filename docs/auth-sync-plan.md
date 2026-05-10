@@ -12,6 +12,9 @@ Uygulama ilk asamada misafir kullanimi destekler. Kullanici giris yaptiginda yer
 - `user_cards`: kullanicinin sahip oldugu banka/kart secimleri.
 - `user_favorites`: kullanicinin favori kampanyalari.
 - `campaign_participations`: katildim, harcadim, kazandim takip verileri.
+- `subscription_events`: App Store, Google Play veya ileride web odeme olaylarinin denetim kaydi.
+
+Kampanya iliskileri `campaigns.id` alanina UUID olarak baglanir. Bu, mevcut Supabase kampanya tablosuyla ve ileride Android/web istemcileriyle ortak veri modeli saglar.
 
 ## Guvenlik modeli
 
@@ -27,6 +30,7 @@ Uygulama ilk asamada misafir kullanimi destekler. Kullanici giris yaptiginda yer
 3. Kullanici giris yaparsa:
    - Supabase oturumu acilir.
    - Yerel `Kartlarim`, favoriler ve katilim verileri kullanici tablolarina yazilir.
+   - `campaign_participations.reward_expires_at` ve `reminder_enabled` alanlari puan son kullanim hatirlaticilari icin saklanir.
    - Sonraki acilislarda bulut verisi okunur.
 4. Kullanici cikis yaparsa:
    - Bulut verisi korunur.
@@ -41,5 +45,7 @@ Uygulama ilk asamada misafir kullanimi destekler. Kullanici giris yaptiginda yer
 ## Ucretli uyelik hazirligi
 
 - `profiles.plan` ilk asamada `free` olarak tutulur.
-- Ileride `free`, `premium`, `trial` gibi degerler kullanilabilir.
+- `profiles.plan`, `plan_status`, `trial_ends_at` ve `premium_until` alanlari ucretsiz, deneme ve premium durumlarini temsil eder.
+- Ucretsiz planda sinirli takip; premium planda sinirsiz hatirlatici, gelismis kazanc raporu ve kisisel oneriler acilir.
 - App Store ve Google Play abonelik durumlari backend tarafinda dogrulanip profile yazilmalidir.
+- Odeme olaylari `subscription_events` tablosuna yazilir; mobil uygulama bu tabloya dogrudan yazmaz, sadece kendi kayitlarini okuyabilir.
