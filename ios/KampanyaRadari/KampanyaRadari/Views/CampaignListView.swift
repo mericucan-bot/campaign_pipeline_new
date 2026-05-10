@@ -15,7 +15,6 @@ struct CampaignListView: View {
     @State private var authState = AuthStateStore()
     @State private var hasEnteredApp = false
     @State private var path: [AppRoute] = []
-    @State private var passwordResetAccessToken: String?
 
     var body: some View {
         Group {
@@ -71,27 +70,18 @@ struct CampaignListView: View {
             }
         }
         .onOpenURL { url in
-            if let token = Self.recoveryAccessToken(from: url) {
-                passwordResetAccessToken = token
-            }
+            authState.handlePasswordResetURL(url)
         }
         .sheet(isPresented: Binding(
-            get: { passwordResetAccessToken != nil },
-            set: { if !$0 { passwordResetAccessToken = nil } }
+            get: { hasEnteredApp && authState.passwordResetAccessToken != nil },
+            set: { if !$0 { authState.clearPasswordResetToken() } }
         )) {
-            if let token = passwordResetAccessToken {
-                PasswordResetSheet(authState: authState, accessToken: token)
+            if let token = authState.passwordResetAccessToken {
+                PasswordResetSheet(authState: authState, accessToken: token) {
+                    authState.clearPasswordResetToken()
+                }
             }
         }
-    }
-
-    private static func recoveryAccessToken(from url: URL) -> String? {
-        let fragmentItems = URLComponents(string: "?\(url.fragment ?? "")")?.queryItems ?? []
-        let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
-        let allItems = fragmentItems + queryItems
-        let type = allItems.first(where: { $0.name == "type" })?.value
-        guard type == nil || type == "recovery" else { return nil }
-        return allItems.first(where: { $0.name == "access_token" })?.value
     }
 }
 
@@ -165,7 +155,15 @@ private struct IntroView: View {
             }
             .padding(24)
         }
-        .sheet(isPresented: $isShowingAuthOptions) {
+        .sheet(isPresented: Binding(
+            get: { isShowingAuthOptions || authState.passwordResetAccessToken != nil },
+            set: {
+                if !$0 {
+                    isShowingAuthOptions = false
+                    authState.clearPasswordResetToken()
+                }
+            }
+        )) {
             AuthOptionsSheet(authState: authState, favorites: favorites, myCards: myCards, participation: participation, enter: enter)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
@@ -856,6 +854,7 @@ private struct LightStatTile: View {
 private struct PasswordResetSheet: View {
     @Bindable var authState: AuthStateStore
     let accessToken: String
+    let onDone: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var password = ""
     @State private var passwordAgain = ""
@@ -903,6 +902,7 @@ private struct PasswordResetSheet: View {
                         }
                         await authState.updatePassword(accessToken: accessToken, password: password)
                         if authState.isAuthMessagePositive {
+                            onDone()
                             dismiss()
                         }
                     }
@@ -948,7 +948,12 @@ private struct AuthOptionsSheet: View {
                 .ignoresSafeArea()
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                if let resetToken = authState.passwordResetAccessToken {
+                    PasswordResetSheet(authState: authState, accessToken: resetToken) {
+                        authState.clearPasswordResetToken()
+                    }
+                } else {
+                    VStack(alignment: .leading, spacing: 20) {
                 HStack {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Hesap")
@@ -1053,6 +1058,7 @@ private struct AuthOptionsSheet: View {
                     }
                 }
                 .padding(22)
+                }
             }
         }
     }

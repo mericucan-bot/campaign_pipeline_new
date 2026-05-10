@@ -15,6 +15,7 @@ final class AuthStateStore {
     var userID: String?
     var authMessage: String?
     var isLoading = false
+    var passwordResetAccessToken: String?
     private(set) var session: AuthSession?
 
     init() {
@@ -97,6 +98,16 @@ final class AuthStateStore {
         isLoading = false
     }
 
+    func handlePasswordResetURL(_ url: URL) {
+        guard let token = Self.recoveryAccessToken(from: url) else { return }
+        passwordResetAccessToken = token
+        authMessage = nil
+    }
+
+    func clearPasswordResetToken() {
+        passwordResetAccessToken = nil
+    }
+
     func updatePassword(accessToken: String, password: String) async {
         guard password.count >= 6 else {
             authMessage = "Yeni şifre en az 6 karakter olmalı."
@@ -161,5 +172,14 @@ final class AuthStateStore {
     private static func loadSession(key: String) -> AuthSession? {
         guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(AuthSession.self, from: data)
+    }
+
+    private static func recoveryAccessToken(from url: URL) -> String? {
+        let fragmentItems = URLComponents(string: "?\(url.fragment ?? "")")?.queryItems ?? []
+        let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        let allItems = fragmentItems + queryItems
+        let type = allItems.first(where: { $0.name == "type" })?.value
+        guard type == nil || type == "recovery" else { return nil }
+        return allItems.first(where: { $0.name == "access_token" })?.value
     }
 }
