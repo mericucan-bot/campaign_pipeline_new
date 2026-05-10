@@ -36,7 +36,9 @@
 ## 4. Gelir modeli
 
 - Ucretsiz plan: reklamli deneyim, temel arama ve filtreler.
-- Ucretli plan: reklamsiz deneyim, gelismis takip, kazanc raporlari, bildirimler ve kisisel kart onerileri.
+- Ucretsiz plan: kullanici degeri gostermek icin sinirli takip sunar; ornegin 1 aktif kampanya hatirlaticisi, favoriler ve temel kartlarim filtresi acik kalir.
+- Ucretli plan: reklamsiz deneyim, sinirsiz kampanya hatirlaticisi, 7/3/son gun coklu bildirimleri, gelismis kazanc raporlari, gecmis takip arsivi ve kisisel kart onerileri sunar.
+- Odeme altyapisi gelmeden mevcut hatirlatici test amacli acik tutulur; abonelik eklendiginde ayni akis plan limitleriyle kontrol edilir.
 - Abonelikler App Store ve Google Play kurallarina gore platform icinden yonetilir.
 
 ## 5. Platform stratejisi
