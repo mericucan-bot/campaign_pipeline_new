@@ -10,9 +10,22 @@
 		49FC6EAB2FAFC2F900EA662F /* KampanyaRadari.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KampanyaRadari.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7C9A2E102FB10F7A00A1B2C3 /* Exceptions for "KampanyaRadari" folder in "KampanyaRadari" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 49FC6EAA2FAFC2F900EA662F /* KampanyaRadari */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		49FC6EAD2FAFC2F900EA662F /* KampanyaRadari */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7C9A2E102FB10F7A00A1B2C3 /* Exceptions for "KampanyaRadari" folder in "KampanyaRadari" target */,
+			);
 			path = KampanyaRadari;
 			sourceTree = "<group>";
 		};
@@ -252,7 +265,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KampanyaRadari/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Kampanya Radarı";
 				INFOPLIST_KEY_SupabaseAnonKey = "sb_publishable_8qo0lf-XuimNd1ZIIU5xLg_DXLFCsbd";
 				INFOPLIST_KEY_SupabaseURL = "https://elzosfogvbybieyvojek.supabase.co";
@@ -286,7 +300,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = KampanyaRadari/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Kampanya Radarı";
 				INFOPLIST_KEY_SupabaseAnonKey = "sb_publishable_8qo0lf-XuimNd1ZIIU5xLg_DXLFCsbd";
 				INFOPLIST_KEY_SupabaseURL = "https://elzosfogvbybieyvojek.supabase.co";

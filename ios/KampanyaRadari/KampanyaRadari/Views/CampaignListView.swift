@@ -15,6 +15,7 @@ struct CampaignListView: View {
     @State private var authState = AuthStateStore()
     @State private var hasEnteredApp = false
     @State private var path: [AppRoute] = []
+    @State private var passwordResetAccessToken: String?
 
     var body: some View {
         Group {
@@ -69,6 +70,28 @@ struct CampaignListView: View {
                 await viewModel.load()
             }
         }
+        .onOpenURL { url in
+            if let token = Self.recoveryAccessToken(from: url) {
+                passwordResetAccessToken = token
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { passwordResetAccessToken != nil },
+            set: { if !$0 { passwordResetAccessToken = nil } }
+        )) {
+            if let token = passwordResetAccessToken {
+                PasswordResetSheet(authState: authState, accessToken: token)
+            }
+        }
+    }
+
+    private static func recoveryAccessToken(from url: URL) -> String? {
+        let fragmentItems = URLComponents(string: "?\(url.fragment ?? "")")?.queryItems ?? []
+        let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        let allItems = fragmentItems + queryItems
+        let type = allItems.first(where: { $0.name == "type" })?.value
+        guard type == nil || type == "recovery" else { return nil }
+        return allItems.first(where: { $0.name == "access_token" })?.value
     }
 }
 
@@ -827,6 +850,83 @@ private struct LightStatTile: View {
         .padding(12)
         .background(AppTheme.softBlue.opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+private struct PasswordResetSheet: View {
+    @Bindable var authState: AuthStateStore
+    let accessToken: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var password = ""
+    @State private var passwordAgain = ""
+
+    var body: some View {
+        ZStack {
+            AppTheme.dashboardBackground
+                .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 18) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Yeni Şifre")
+                            .font(.largeTitle.weight(.bold))
+                            .foregroundStyle(.white)
+                        Text("Maildeki güvenli bağlantı açıldı. Yeni şifreni belirleyip giriş ekranına dönebilirsin.")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.68))
+                    }
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(AppTheme.nearBlack)
+                            .frame(width: 44, height: 44)
+                            .background(.white)
+                            .clipShape(Circle())
+                    }
+                }
+
+                AuthSecureField(title: "Yeni şifre", text: $password)
+                AuthSecureField(title: "Yeni şifre tekrar", text: $passwordAgain)
+
+                if let message = authState.authMessage {
+                    AuthMessageBanner(message: message, isPositive: authState.isAuthMessagePositive)
+                }
+
+                Button {
+                    Task {
+                        guard password == passwordAgain else {
+                            authState.authMessage = "İki şifre aynı olmalı."
+                            return
+                        }
+                        await authState.updatePassword(accessToken: accessToken, password: password)
+                        if authState.isAuthMessagePositive {
+                            dismiss()
+                        }
+                    }
+                } label: {
+                    HStack {
+                        if authState.isLoading {
+                            ProgressView()
+                                .tint(AppTheme.nearBlack)
+                        }
+                        Text("Şifreyi Güncelle")
+                            .font(.headline.weight(.bold))
+                    }
+                    .foregroundStyle(AppTheme.nearBlack)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(AppTheme.dashboardGreen)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                }
+                .disabled(authState.isLoading)
+
+                Spacer(minLength: 0)
+            }
+            .padding(22)
+        }
     }
 }
 

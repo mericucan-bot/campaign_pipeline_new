@@ -97,6 +97,25 @@ final class AuthStateStore {
         isLoading = false
     }
 
+    func updatePassword(accessToken: String, password: String) async {
+        guard password.count >= 6 else {
+            authMessage = "Yeni şifre en az 6 karakter olmalı."
+            return
+        }
+
+        isLoading = true
+        authMessage = nil
+
+        do {
+            try await authService.updatePassword(accessToken: accessToken, password: password)
+            authMessage = "Şifre güncellendi. Yeni şifrenle giriş yapabilirsin."
+        } catch {
+            authMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
     private func authenticate(email: String, password: String, isSignUp: Bool) async {
         let cleanedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard cleanedEmail.contains("@"), password.count >= 6 else {

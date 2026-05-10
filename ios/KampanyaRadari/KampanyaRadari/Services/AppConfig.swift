@@ -17,4 +17,8 @@ enum AppConfig {
         guard !key.isEmpty else { fatalError("SupabaseAnonKey gecersiz.") }
         return key
     }
+
+    static var authRedirectURL: String {
+        Bundle.main.object(forInfoDictionaryKey: "AuthRedirectURL") as? String ?? "kampanyaradari://auth-callback"
+    }
 }

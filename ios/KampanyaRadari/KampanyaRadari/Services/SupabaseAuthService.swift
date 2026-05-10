@@ -99,8 +99,35 @@ struct SupabaseAuthService {
     func sendPasswordReset(email: String) async throws {
         try await requestEmpty(
             path: "auth/v1/recover",
+            queryItems: [URLQueryItem(name: "redirect_to", value: AppConfig.authRedirectURL)],
             body: ["email": email]
         )
+    }
+
+    func updatePassword(accessToken: String, password: String) async throws {
+        guard password.count >= 6 else {
+            throw SupabaseAuthError.server("Yeni şifre en az 6 karakter olmalı.")
+        }
+
+        guard let url = URL(string: "auth/v1/user", relativeTo: AppConfig.supabaseURL) else {
+            throw URLError(.badURL)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(["password": password])
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw SupabaseAuthError.server(errorMessage(from: data) ?? "Şifre güncellenemedi.")
+        }
     }
 
     func signOut(accessToken: String) async {
@@ -143,10 +170,14 @@ struct SupabaseAuthService {
         throw SupabaseAuthError.emailConfirmationRequired
     }
 
-    private func requestEmpty(path: String, body: [String: String]) async throws {
-        guard let url = URL(string: path, relativeTo: AppConfig.supabaseURL) else {
+    private func requestEmpty(path: String, queryItems: [URLQueryItem] = [], body: [String: String]) async throws {
+        guard let baseURL = URL(string: path, relativeTo: AppConfig.supabaseURL),
+              var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: true) else {
             throw URLError(.badURL)
         }
+
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
+        guard let url = components.url else { throw URLError(.badURL) }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
