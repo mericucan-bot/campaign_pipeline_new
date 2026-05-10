@@ -392,7 +392,11 @@ def mark_inactive_supabase(bank, active_external_ids):
 
 def list_campaigns(bank=None, search=None, active_only=False):
     if USE_SUPABASE:
-        return list_campaigns_supabase(bank=bank, search=search, active_only=active_only)
+        try:
+            return list_campaigns_supabase(bank=bank, search=search, active_only=active_only)
+        except Exception as exc:
+            print(f"Supabase list failed, falling back to local SQLite: {exc}")
+            return list_campaigns_local(bank=bank, search=search, active_only=active_only)
     return list_campaigns_local(bank=bank, search=search, active_only=active_only)
 
 
