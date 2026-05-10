@@ -141,7 +141,7 @@ private struct IntroView: View {
         }
         .sheet(isPresented: $isShowingAuthOptions) {
             AuthOptionsSheet(authState: authState, enter: enter)
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
     }
@@ -831,19 +831,23 @@ private struct AuthOptionsSheet: View {
     @Bindable var authState: AuthStateStore
     let enter: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isSignUp = false
 
     var body: some View {
         ZStack {
             AppTheme.dashboardBackground
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 20) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
                 HStack {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Hesap")
                             .font(.largeTitle.weight(.bold))
                             .foregroundStyle(.white)
-                        Text("Şimdilik yer tutucu. Gerçek Google, Apple ve e-posta girişi Supabase Auth ile bağlanacak.")
+                        Text("E-posta ile gerçek Supabase hesabı oluştur veya giriş yap. Google ve Apple sonraki yayın adımında bağlanacak.")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.white.opacity(0.68))
                     }
@@ -860,39 +864,126 @@ private struct AuthOptionsSheet: View {
                     }
                 }
 
-                VStack(spacing: 10) {
-                    AuthPreviewButton(title: "Google ile giriş", systemImage: "g.circle.fill") {
-                        authState.previewSignIn(as: "Google Kullanıcısı")
-                        dismiss()
-                        enter()
+                    Picker("Hesap modu", selection: $isSignUp) {
+                        Text("Giriş").tag(false)
+                        Text("Kayıt").tag(true)
                     }
-                    AuthPreviewButton(title: "Apple ile giriş", systemImage: "apple.logo") {
-                        authState.previewSignIn(as: "Apple Kullanıcısı")
-                        dismiss()
-                        enter()
-                    }
-                    AuthPreviewButton(title: "E-posta ile giriş", systemImage: "envelope.fill") {
-                        authState.previewSignIn(as: "E-posta Kullanıcısı")
-                        dismiss()
-                        enter()
-                    }
-                }
+                    .pickerStyle(.segmented)
 
-                Button {
-                    authState.continueAsGuest()
-                    dismiss()
-                    enter()
-                } label: {
-                    Text("Misafir olarak devam et")
-                        .font(.headline.weight(.bold))
+                    VStack(spacing: 12) {
+                        AuthTextField(title: "E-posta", text: $email, systemImage: "envelope.fill")
+                            .textInputAutocapitalization(.never)
+                            .keyboardType(.emailAddress)
+                        AuthSecureField(title: "Şifre", text: $password)
+                    }
+
+                    if let message = authState.authMessage {
+                        Text(message)
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(authState.isAuthenticated ? AppTheme.dashboardGreen : .orange)
+                            .padding(12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.white.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+
+                    Button {
+                        Task {
+                            if isSignUp {
+                                await authState.signUp(email: email, password: password)
+                            } else {
+                                await authState.signIn(email: email, password: password)
+                            }
+                            if authState.isAuthenticated {
+                                dismiss()
+                                enter()
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            if authState.isLoading {
+                                ProgressView()
+                                    .tint(AppTheme.nearBlack)
+                            }
+                            Text(isSignUp ? "Hesap Oluştur" : "Giriş Yap")
+                                .font(.headline.weight(.bold))
+                        }
                         .foregroundStyle(AppTheme.nearBlack)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(AppTheme.dashboardGreen)
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .disabled(authState.isLoading)
+
+                    VStack(spacing: 10) {
+                        AuthPreviewButton(title: "Google ile giriş", systemImage: "g.circle.fill")
+                        AuthPreviewButton(title: "Apple ile giriş", systemImage: "apple.logo")
+                    }
+
+                    Button {
+                        authState.continueAsGuest()
+                        dismiss()
+                        enter()
+                    } label: {
+                        Text("Misafir olarak devam et")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(.white.opacity(0.10))
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
                 }
+                .padding(22)
             }
-            .padding(22)
+        }
+    }
+}
+
+private struct AuthTextField: View {
+    let title: String
+    @Binding var text: String
+    let systemImage: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .foregroundStyle(AppTheme.dashboardGreen)
+            TextField(title, text: $text)
+                .foregroundStyle(.white)
+                .submitLabel(.next)
+        }
+        .font(.headline.weight(.semibold))
+        .padding(16)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+        }
+    }
+}
+
+private struct AuthSecureField: View {
+    let title: String
+    @Binding var text: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "lock.fill")
+                .foregroundStyle(AppTheme.dashboardGreen)
+            SecureField(title, text: $text)
+                .foregroundStyle(.white)
+                .submitLabel(.done)
+        }
+        .font(.headline.weight(.semibold))
+        .padding(16)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
         }
     }
 }
@@ -900,30 +991,27 @@ private struct AuthOptionsSheet: View {
 private struct AuthPreviewButton: View {
     let title: String
     let systemImage: String
-    let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(AppTheme.dashboardGreen)
-                    .frame(width: 34, height: 34)
-                    .background(AppTheme.dashboardGreen.opacity(0.12))
-                    .clipShape(Circle())
-                Text(title)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
-                Spacer()
-                Text("Yakında")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.58))
-            }
-            .padding(14)
-            .background(.white.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(AppTheme.dashboardGreen)
+                .frame(width: 34, height: 34)
+                .background(AppTheme.dashboardGreen.opacity(0.12))
+                .clipShape(Circle())
+            Text(title)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white)
+            Spacer()
+            Text("Yakında")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.white.opacity(0.58))
         }
-        .buttonStyle(.plain)
+        .padding(14)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .opacity(0.72)
     }
 }
 
@@ -952,14 +1040,15 @@ private struct AccountView: View {
                         Text(authState.statusText)
                             .font(.largeTitle.weight(.bold))
                             .foregroundStyle(.white)
-                        Text("Misafir kullanım açık. Yayın aşamasında Google, Apple ve e-posta girişi buraya bağlanacak.")
+                        Text(authState.isAuthenticated ? "Hesabın Supabase Auth ile açık. Favori, kart ve kazanç senkronu sonraki adımda bağlanacak." : "Misafir kullanım açık. Yayın aşamasında Google ve Apple girişi de buraya bağlanacak.")
                             .font(.headline)
                             .foregroundStyle(.white.opacity(0.76))
                     }
 
                     VStack(alignment: .leading, spacing: 14) {
-                        AccountStatusRow(title: "Oturum", value: authState.isGuest ? "Misafir" : "Ön izleme hesabı", systemImage: "person.fill")
-                        AccountStatusRow(title: "Senkron", value: authState.isGuest ? "Cihazda saklanıyor" : "Supabase hazırlandı", systemImage: "arrow.triangle.2.circlepath")
+                        AccountStatusRow(title: "Oturum", value: authState.isAuthenticated ? "Supabase hesabı" : "Misafir", systemImage: "person.fill")
+                        AccountStatusRow(title: "E-posta", value: authState.email ?? "Bağlı değil", systemImage: "envelope.fill")
+                        AccountStatusRow(title: "Senkron", value: authState.isAuthenticated ? "Sıradaki adımda açılacak" : "Cihazda saklanıyor", systemImage: "arrow.triangle.2.circlepath")
                         AccountStatusRow(title: "Plan", value: "Free", systemImage: "creditcard.fill")
                     }
                     .padding(18)
@@ -972,9 +1061,9 @@ private struct AccountView: View {
 
                     VStack(spacing: 12) {
                         Button {
-                            authState.previewSignIn(as: "Google Kullanıcısı")
+                            authState.authMessage = "Yeni giriş için çıkış yapıp giriş ekranındaki e-posta formunu kullanabilirsin."
                         } label: {
-                            Label("Google giriş ön izlemesi", systemImage: "g.circle.fill")
+                            Label(authState.isAuthenticated ? "Hesap bağlı" : "Giriş ekranından hesap bağla", systemImage: authState.isAuthenticated ? "checkmark.seal.fill" : "person.crop.circle.badge.plus")
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(AppTheme.nearBlack)
                                 .frame(maxWidth: .infinity)
@@ -986,7 +1075,7 @@ private struct AccountView: View {
                         Button {
                             authState.signOut()
                         } label: {
-                            Text("Misafir moda dön")
+                            Text(authState.isAuthenticated ? "Çıkış yap ve misafir moda dön" : "Misafir moda dön")
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)

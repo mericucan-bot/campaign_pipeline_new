@@ -27,6 +27,7 @@
 ## 3. Hesap sistemi
 
 - Supabase Auth ile e-posta, Apple ve Google girisi eklenir.
+- Ilk uygulama adiminda e-posta/sifre girisi Supabase Auth REST uclariyla baglanir; Google ve Apple girisi yayin ayarlariyla birlikte eklenir.
 - Yerel kayitlar kullanici giris yaptiginda bulut profiline senkronlanir.
 - Misafir kullanim korunur; kullanici kayit olmadan kampanya gezebilir.
 - Kullanici verisi icin `supabase_user_schema.sql` ve `docs/auth-sync-plan.md` temel alinir.
