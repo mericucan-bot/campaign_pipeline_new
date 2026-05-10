@@ -1416,6 +1416,7 @@ private struct AccountStatusRow: View {
 private struct PaywallPreviewSheet: View {
     let plan: SubscriptionPlan
     @Environment(\.dismiss) private var dismiss
+    @State private var purchaseService = PremiumPurchaseService()
 
     var body: some View {
         ZStack {
@@ -1429,7 +1430,7 @@ private struct PaywallPreviewSheet: View {
                             Text("Kampanya Radarı Premium")
                                 .font(.largeTitle.weight(.bold))
                                 .foregroundStyle(.white)
-                            Text("Şimdilik ödeme öncesi taslak. RevenueCat veya StoreKit 2 bağlandığında bu ekran satın alma akışına dönüşecek.")
+                            Text("Sınırsız hatırlatıcı, reklamsız kullanım ve gelişmiş kazanç takibi için yayın aboneliği.")
                                 .font(.headline)
                                 .foregroundStyle(.white.opacity(0.72))
                         }
@@ -1453,6 +1454,12 @@ private struct PaywallPreviewSheet: View {
                         PaywallBenefitRow(icon: "creditcard.and.123", title: "Kişisel kart önerileri", text: "Kartlarına göre daha alakalı kampanyaları öne çıkarma altyapısı.")
                     }
 
+                    VStack(spacing: 12) {
+                        ForEach(purchaseService.offerings) { offering in
+                            PremiumOfferingCard(offering: offering)
+                        }
+                    }
+
                     VStack(alignment: .leading, spacing: 10) {
                         Text("Mevcut plan")
                             .font(.caption.weight(.bold))
@@ -1466,21 +1473,100 @@ private struct PaywallPreviewSheet: View {
                     .background(.white.opacity(0.08))
                     .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
 
-                    Button {
-                    } label: {
-                        Text("Satın alma yakında")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(AppTheme.nearBlack)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(AppTheme.dashboardGreen.opacity(0.72))
-                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    if let statusMessage = purchaseService.statusMessage {
+                        Label(statusMessage, systemImage: "info.circle.fill")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.76))
+                            .padding(14)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.white.opacity(0.08))
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     }
-                    .disabled(true)
+
+                    VStack(spacing: 12) {
+                        Button {
+                        } label: {
+                            Text(purchaseService.hasStoreProducts ? "Premium'a geç" : "App Store ürünü bekleniyor")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(AppTheme.nearBlack)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(AppTheme.dashboardGreen.opacity(purchaseService.hasStoreProducts ? 1 : 0.62))
+                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        }
+                        .disabled(!purchaseService.hasStoreProducts || purchaseService.isLoading)
+
+                        Button {
+                            Task {
+                                await purchaseService.restorePurchases()
+                            }
+                        } label: {
+                            Text("Satın alımları geri yükle")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(AppTheme.dashboardGreen)
+                        }
+                    }
                 }
                 .padding(22)
             }
         }
+        .task {
+            await purchaseService.loadOfferings()
+        }
+    }
+}
+
+private struct PremiumOfferingCard: View {
+    let offering: PremiumOffering
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: offering.id == .yearly ? "sparkles" : "calendar")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(AppTheme.dashboardGreen)
+                .frame(width: 42, height: 42)
+                .background(AppTheme.dashboardGreen.opacity(0.14))
+                .clipShape(Circle())
+
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 8) {
+                    Text(offering.title)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                    if offering.isBestValue {
+                        Text("Avantajlı")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(AppTheme.nearBlack)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(AppTheme.dashboardGreen)
+                            .clipShape(Capsule())
+                    }
+                }
+                Text(offering.subtitle)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.64))
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(offering.priceText)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.trailing)
+                Text(offering.isStoreProductReady ? "Hazır" : "Kurulum bekliyor")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(offering.isStoreProductReady ? AppTheme.dashboardGreen : .white.opacity(0.48))
+            }
+        }
+        .padding(16)
+        .background(.white.opacity(0.08))
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(offering.isBestValue ? AppTheme.dashboardGreen.opacity(0.42) : .white.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }
 

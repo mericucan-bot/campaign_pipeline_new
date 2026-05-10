@@ -41,6 +41,7 @@
 - Odeme altyapisi gelmeden hatirlatici akisi merkezi entitlement katmanina baglanir; Free planda 1 aktif hatirlatici, Premium/Trial planda sinirsiz hatirlatici kurali uygulanir.
 - Abonelikler App Store ve Google Play kurallarina gore platform icinden yonetilir.
 - iOS abonelik icin ilk tercih RevenueCat veya dogrudan StoreKit 2 olur. RevenueCat, makbuz dogrulama, yenileme ve platformlar arasi abonelik durumunu kolaylastirdigi icin Android hedefi de dusunuldugunde degerlendirilir.
+- iOS tarafinda aylik/yillik Premium urun ID'leri ve StoreKit odeme hazirlik servisi eklendi; App Store Connect urunleri tanimlanmadan gercek satin alma butonu aktif edilmeyecek.
 - Apple komisyonu ve kucuk isletme programi yayin oncesi kontrol edilir; fiyatlandirma App Store Connect uzerinden tanimlanir.
 
 ## 5. Platform stratejisi
@@ -66,7 +67,7 @@
 
 1. Supabase auth, RLS ve kullanici veri senkronunu tamamla.
 2. Ucretsiz/premium limit kurallarini uygulama icinde merkezi bir entitlement katmanina bagla.
-3. RevenueCat veya StoreKit 2 ile abonelik/paywall akisini ekle.
+3. RevenueCat veya StoreKit 2 ile abonelik/paywall akisini ekle. StoreKit hazirlik katmani eklendi; siradaki canli adim App Store Connect'te urunleri acmak veya RevenueCat projesi baglamak.
 4. Privacy policy, destek sayfasi, ikon, ekran goruntuleri ve onboarding metinlerini hazirla.
 5. TestFlight ile gercek cihazda bildirim, hesap, senkron, abonelik ve veri yenileme testlerini yap.
 6. App Store Connect uzerinden incelemeye gonder.
