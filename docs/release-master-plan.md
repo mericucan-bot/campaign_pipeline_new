@@ -40,6 +40,8 @@
 - Ucretli plan: reklamsiz deneyim, sinirsiz kampanya hatirlaticisi, 7/3/son gun coklu bildirimleri, gelismis kazanc raporlari, gecmis takip arsivi ve kisisel kart onerileri sunar.
 - Odeme altyapisi gelmeden mevcut hatirlatici test amacli acik tutulur; abonelik eklendiginde ayni akis plan limitleriyle kontrol edilir.
 - Abonelikler App Store ve Google Play kurallarina gore platform icinden yonetilir.
+- iOS abonelik icin ilk tercih RevenueCat veya dogrudan StoreKit 2 olur. RevenueCat, makbuz dogrulama, yenileme ve platformlar arasi abonelik durumunu kolaylastirdigi icin Android hedefi de dusunuldugunde degerlendirilir.
+- Apple komisyonu ve kucuk isletme programi yayin oncesi kontrol edilir; fiyatlandirma App Store Connect uzerinden tanimlanir.
 
 ## 5. Platform stratejisi
 
@@ -53,3 +55,18 @@
 - App Store ikon, ekran goruntuleri, gizlilik metni, destek adresi ve aciklama hazirlanir.
 - Crash/log takibi, veri yenileme izleme ve temel analitik eklenir.
 - Uygulama adi, ikon, splash/intro, bundle identifier ve Apple Developer hesabi yayin oncesi netlestirilir.
+- Privacy policy zorunludur. Politikada e-posta hesabi, favoriler/kartlarim/katilim verileri, bildirimler, Supabase kullanimi, ileride reklam/abonelik ve varsa analitik verileri aciklanir.
+- App Store icin 1024x1024 PNG ikon, farkli cihaz ekran goruntuleri, destek URL'si, pazarlama metni ve uygulama gizlilik cevaplari hazirlanir.
+- Onboarding ilk acilista 2-3 ekrani gecmeyecek sekilde tutulur: kampanya kesfi, kartlarim/kisisellestirme ve hatirlatici/kazanc takibi degeri anlatilir.
+- Apple Developer hesabi, bundle identifier, signing certificate/provisioning ve App Store Connect kaydi yayin oncesi tamamlanir.
+- Yerel test sonrasi TestFlight ic test, sonra sinirli dis test, en son App Store incelemesi hedeflenir.
+- Bu proje SwiftUI native iOS oldugu icin Expo/EAS yerine Xcode archive ve App Store Connect dagitim akisi kullanilir.
+
+### Yayin sirasi
+
+1. Supabase auth, RLS ve kullanici veri senkronunu tamamla.
+2. Ucretsiz/premium limit kurallarini uygulama icinde merkezi bir entitlement katmanina bagla.
+3. RevenueCat veya StoreKit 2 ile abonelik/paywall akisini ekle.
+4. Privacy policy, destek sayfasi, ikon, ekran goruntuleri ve onboarding metinlerini hazirla.
+5. TestFlight ile gercek cihazda bildirim, hesap, senkron, abonelik ve veri yenileme testlerini yap.
+6. App Store Connect uzerinden incelemeye gonder.
