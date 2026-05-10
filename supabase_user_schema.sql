@@ -93,25 +93,34 @@ BEFORE UPDATE ON campaign_participations
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
 
-CREATE OR REPLACE FUNCTION handle_new_user_profile()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.handle_new_user_profile()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
 BEGIN
-  INSERT INTO profiles (id, display_name, avatar_url)
+  INSERT INTO public.profiles (id, display_name, avatar_url, plan, plan_status)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'),
-    NEW.raw_user_meta_data->>'avatar_url'
+    NEW.raw_user_meta_data->>'avatar_url',
+    'free',
+    'active'
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'handle_new_user_profile failed for user %: %', NEW.id, SQLERRM;
+  RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS on_auth_user_created_create_profile ON auth.users;
 CREATE TRIGGER on_auth_user_created_create_profile
 AFTER INSERT ON auth.users
 FOR EACH ROW
-EXECUTE FUNCTION handle_new_user_profile();
+EXECUTE FUNCTION public.handle_new_user_profile();
 
 ALTER TABLE campaigns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
