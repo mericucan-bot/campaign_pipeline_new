@@ -9,6 +9,7 @@ struct CampaignListView: View {
     @State private var viewModel = CampaignListViewModel()
     @State private var favorites = FavoritesStore()
     @State private var myCards = MyCardsStore()
+    @State private var participation = ParticipationStore()
     @State private var hasEnteredApp = false
     @State private var path: [AppRoute] = []
 
@@ -16,7 +17,7 @@ struct CampaignListView: View {
         Group {
             if hasEnteredApp {
                 NavigationStack(path: $path) {
-                    DashboardHomeView(viewModel: viewModel, favorites: favorites, myCards: myCards) {
+                    DashboardHomeView(viewModel: viewModel, favorites: favorites, myCards: myCards, participation: participation) {
                         viewModel.showAllCampaigns()
                         path.append(.list(lockCategoryFilter: false))
                     } openFavorites: {
@@ -38,6 +39,7 @@ struct CampaignListView: View {
                                 viewModel: viewModel,
                                 favorites: favorites,
                                 myCards: myCards,
+                                participation: participation,
                                 lockCategoryFilter: lockCategoryFilter
                             )
                         case .profile:
@@ -110,6 +112,7 @@ private struct DashboardHomeView: View {
     @Bindable var viewModel: CampaignListViewModel
     let favorites: FavoritesStore
     let myCards: MyCardsStore
+    let participation: ParticipationStore
     let openAllCampaigns: () -> Void
     let openFavorites: () -> Void
     let openMyCards: () -> Void
@@ -303,12 +306,12 @@ private struct DashboardHomeView: View {
             }
 
             HStack(spacing: 12) {
-                LightStatTile(title: "Katılım", value: "0")
-                LightStatTile(title: "Harcama", value: "0 TL")
-                LightStatTile(title: "Kazanç", value: "0 TL")
+                LightStatTile(title: "Katılım", value: "\(participation.joinedCount)")
+                LightStatTile(title: "Harcama", value: participation.totalSpent.currencyText)
+                LightStatTile(title: "Kazanç", value: participation.totalEarned.currencyText)
             }
 
-            Text("Bir sonraki adımda dashboard’daki hesaplayıcıyı buraya taşıyacağız.")
+            Text("Favori kampanya detaylarında katılım ve kazanç bilgilerini işaretleyebilirsin.")
                 .font(.footnote)
                 .foregroundStyle(AppTheme.muted)
         }
@@ -322,6 +325,7 @@ private struct CampaignListScreen: View {
     @Bindable var viewModel: CampaignListViewModel
     let favorites: FavoritesStore
     let myCards: MyCardsStore
+    let participation: ParticipationStore
     let lockCategoryFilter: Bool
     @State private var isShowingFilters = false
     @State private var isShowingBankFilters = false
@@ -374,7 +378,7 @@ private struct CampaignListScreen: View {
 
                                 ForEach(filteredCampaigns) { campaign in
                                     NavigationLink {
-                                        CampaignDetailView(campaign: campaign, favorites: favorites)
+                                        CampaignDetailView(campaign: campaign, favorites: favorites, participation: participation)
                                     } label: {
                                         CampaignCardView(
                                             campaign: campaign,
@@ -513,7 +517,7 @@ private struct CampaignListScreen: View {
                     .background(.white.opacity(viewModel.showFavoritesOnly ? 0.24 : 0.12))
                     .clipShape(Capsule())
             }
-                            .foregroundStyle(viewModel.showFavoritesOnly ? AppTheme.nearBlack : .white)
+            .foregroundStyle(viewModel.showFavoritesOnly ? AppTheme.nearBlack : .white)
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
             .background(viewModel.showFavoritesOnly ? AppTheme.dashboardGreen : .white.opacity(0.10))

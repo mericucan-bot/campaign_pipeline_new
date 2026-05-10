@@ -3,6 +3,10 @@ import SwiftUI
 struct CampaignDetailView: View {
     let campaign: Campaign
     @Bindable var favorites: FavoritesStore
+    @Bindable var participation: ParticipationStore
+    @State private var record = CampaignParticipation()
+    @State private var spentText = ""
+    @State private var earnedText = ""
 
     var body: some View {
         ZStack {
@@ -48,6 +52,8 @@ struct CampaignDetailView: View {
                             .font(.body)
                             .foregroundStyle(AppTheme.muted)
 
+                        participationPanel
+
                         HStack {
                             Button {
                                 favorites.toggle(campaign)
@@ -78,10 +84,70 @@ struct CampaignDetailView: View {
                 .padding(18)
             }
         }
+        .onAppear {
+            loadParticipation()
+        }
         .navigationTitle("Detay")
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+    }
+
+    private var participationPanel: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Kampanya takibi")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(AppTheme.ink)
+                    Text("Katılım, harcama ve kazancını burada tut.")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(AppTheme.muted)
+                }
+                Spacer()
+                Toggle("", isOn: joinedBinding)
+                    .labelsHidden()
+                    .tint(AppTheme.dashboardGreen)
+            }
+
+            VStack(spacing: 10) {
+                MoneyInputRow(title: "Harcadım", text: $spentText) {
+                    saveMoneyFields()
+                }
+                MoneyInputRow(title: "Kazandım", text: $earnedText) {
+                    saveMoneyFields()
+                }
+            }
+
+            HStack(spacing: 12) {
+                DetailStatPill(title: "Durum", value: record.didJoin ? "Katıldım" : "Takipte")
+                DetailStatPill(title: "Net", value: (record.earnedAmount - record.spentAmount).currencyText)
+            }
+        }
+        .padding(16)
+        .background(AppTheme.softGreen.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
+    private var joinedBinding: Binding<Bool> {
+        Binding {
+            record.didJoin
+        } set: { newValue in
+            record.didJoin = newValue
+            participation.update(record, for: campaign)
+        }
+    }
+
+    private func loadParticipation() {
+        record = participation.record(for: campaign)
+        spentText = record.spentAmount.moneyInputText
+        earnedText = record.earnedAmount.moneyInputText
+    }
+
+    private func saveMoneyFields() {
+        record.spentAmount = Double(spentText.replacingOccurrences(of: ",", with: ".")) ?? 0
+        record.earnedAmount = Double(earnedText.replacingOccurrences(of: ",", with: ".")) ?? 0
+        participation.update(record, for: campaign)
     }
 
     private var placeholder: some View {
@@ -92,5 +158,55 @@ struct CampaignDetailView: View {
                     .font(.largeTitle)
                     .foregroundStyle(AppTheme.dashboardGreen)
             }
+    }
+}
+
+private struct MoneyInputRow: View {
+    let title: String
+    @Binding var text: String
+    let onChange: () -> Void
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(AppTheme.ink)
+            Spacer()
+            TextField("0", text: $text)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(AppTheme.ink)
+                .frame(maxWidth: 120)
+                .onChange(of: text) { _, _ in
+                    onChange()
+                }
+            Text("TL")
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(AppTheme.muted)
+        }
+        .padding(12)
+        .background(.white.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+private struct DetailStatPill: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(AppTheme.muted)
+            Text(value)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(AppTheme.ink)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(.white.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
