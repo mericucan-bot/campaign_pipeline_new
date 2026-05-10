@@ -25,6 +25,8 @@ Supabase bilgisi girilmezse veriler yerel SQLite veritabanina yazilir:
 
 Supabase kullanmak isterseniz `supabase_schema.sql` dosyasindaki tabloyu Supabase SQL editor'de calistirin ve `.env` icine proje URL/key bilgilerinizi yazin.
 
+Kullanici hesabi, kartlarim, favoriler ve kazanc takibi icin ikinci asamada `supabase_user_schema.sql` dosyasi calistirilir. Bu dosya mobil uygulama yayin hazirligi icin kullanici verilerini ayri ve RLS korumali tablolara ayirir.
+
 Pipeline veriyi yazmak icin `SUPABASE_SERVICE_KEY` kullanir. Bu key gizlidir; telefona, web istemcisine veya repo'ya konmaz. iOS uygulama sadece okuma icin `SUPABASE_ANON_KEY` / publishable key kullanir.
 
 ```env
