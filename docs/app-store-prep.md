@@ -1,0 +1,59 @@
+# App Store Hazırlık Notları
+
+## Uygulama Bilgileri
+
+- Uygulama adı: Kampanya Radarı
+- Bundle identifier: `com.mericucan.KampanyaRadari`
+- İlk platform: iOS
+- Dağıtım yolu: Xcode Archive -> App Store Connect -> TestFlight -> App Store Review
+
+## App Store Connect'te Açılacak Alanlar
+
+- Uygulama kaydı
+- Bundle ID eşleşmesi
+- Gizlilik politikası URL'si
+- Destek URL'si
+- Pazarlama URL'si, opsiyonel
+- Kategori
+- Yaş derecelendirmesi
+- Uygulama gizliliği cevapları
+- TestFlight iç test grubu
+- Abonelik ürünleri
+
+## Planlanan Abonelik Ürünleri
+
+- `com.mericucan.KampanyaRadari.premium.monthly`
+- `com.mericucan.KampanyaRadari.premium.yearly`
+
+Fiyatlar App Store Connect'te belirlenecek. Ürünler açılmadan iOS uygulamasındaki satın alma butonu aktif edilmeyecek.
+
+## App Store Gizlilik Cevapları İçin Veri Kategorileri
+
+- Contact Info: E-posta adresi, hesap için.
+- User Content: Favoriler, Kartlarım, katılım/kazanç kayıtları.
+- Purchases: Premium abonelik durumu.
+- Identifiers: Supabase kullanıcı ID'si.
+- Diagnostics/Usage Data: İleride analitik veya crash aracı eklenirse güncellenecek.
+
+## İlk TestFlight Testleri
+
+- Yeni kurulum ve onboarding.
+- Misafir olarak devam etme.
+- E-posta ile kayıt ve giriş.
+- Şifre sıfırlama deep link akışı.
+- Favori, Kartlarım ve katılım kayıtlarının senkronu.
+- Free planda 1 aktif hatırlatıcı limiti.
+- Bildirim izni, 7 gün / 3 gün / son gün planlama.
+- Premium ekranı ve App Store ürün bekleme durumu.
+- Kampanya arama, banka/kategori filtreleme ve sıralama.
+- Kaynak linklerinin açılması.
+
+## Yayın Öncesi Açık Kararlar
+
+- Destek e-posta adresi.
+- Gizlilik politikası ve destek sayfasının nerede yayınlanacağı.
+- 1024x1024 App Store ikonu.
+- Ekran görüntüsü setleri.
+- Abonelik fiyatları.
+- RevenueCat mi doğrudan StoreKit 2 mi kullanılacağı.
+- Google ve Apple ile girişin ilk sürüme girip girmeyeceği.

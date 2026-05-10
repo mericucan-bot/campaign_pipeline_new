@@ -13,12 +13,13 @@ struct CampaignListView: View {
     @State private var myCards = MyCardsStore()
     @State private var participation = ParticipationStore()
     @State private var authState = AuthStateStore()
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var hasEnteredApp = false
     @State private var path: [AppRoute] = []
 
     var body: some View {
         Group {
-            if hasEnteredApp {
+            if hasCompletedOnboarding || hasEnteredApp {
                 NavigationStack(path: $path) {
                     DashboardHomeView(viewModel: viewModel, favorites: favorites, myCards: myCards, participation: participation, authState: authState) {
                         viewModel.showAllCampaigns()
@@ -61,6 +62,7 @@ struct CampaignListView: View {
                 }
             } else {
                 IntroView(authState: authState, favorites: favorites, myCards: myCards, participation: participation) {
+                    hasCompletedOnboarding = true
                     hasEnteredApp = true
                 }
             }
@@ -71,6 +73,7 @@ struct CampaignListView: View {
             }
         }
         .onOpenURL { url in
+            hasCompletedOnboarding = true
             hasEnteredApp = true
             authState.handlePasswordResetURL(url)
         }
@@ -94,24 +97,45 @@ private struct IntroView: View {
     let participation: ParticipationStore
     let enter: () -> Void
     @State private var isShowingAuthOptions = false
+    @State private var onboardingPage = 0
+
+    private let steps = [
+        OnboardingStep(
+            icon: "magnifyingglass",
+            title: "Tüm kart fırsatlarını tek yerde keşfet",
+            text: "Bankalara tek tek bakmadan kampanyaları ara, filtrele ve karşılaştır."
+        ),
+        OnboardingStep(
+            icon: "creditcard.and.123",
+            title: "Kartlarına göre kişiselleştir",
+            text: "Kartlarım filtresiyle sadece sende olan banka ve kartlara uygun fırsatlara odaklan."
+        ),
+        OnboardingStep(
+            icon: "bell.badge.fill",
+            title: "Puanlarını kaçırma",
+            text: "Katıldığın kampanyalar için kazanç ve son kullanım hatırlatıcısı kur."
+        )
+    ]
 
     var body: some View {
         ZStack {
             AppTheme.blueBackground
                 .ignoresSafeArea()
 
-            VStack(spacing: 28) {
-                Spacer()
-
+            VStack(spacing: 22) {
                 Text("Kampanya Radarı")
                     .font(.title.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.9))
+                    .padding(.top, 20)
 
-                Text("Kart fırsatlarını tek ekranda keşfet")
-                    .font(.system(size: 42, weight: .bold, design: .rounded))
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
+                TabView(selection: $onboardingPage) {
+                    ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                        OnboardingStepView(step: step)
+                            .tag(index)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .always))
+                .frame(height: 315)
 
                 VStack(spacing: 12) {
                     Button {
@@ -144,16 +168,14 @@ private struct IntroView: View {
                             }
                     }
                 }
-                .padding(.top, 10)
-
-                Spacer()
+                .padding(.top, 2)
 
                 Image("NewRadar")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxWidth: 330)
+                    .frame(maxWidth: 260)
                     .shadow(color: AppTheme.dashboardGreen.opacity(0.26), radius: 28, x: 0, y: 12)
-                    .padding(.bottom, 22)
+                    .padding(.bottom, 8)
             }
             .padding(24)
         }
@@ -170,6 +192,45 @@ private struct IntroView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+    }
+}
+
+private struct OnboardingStep: Hashable {
+    let icon: String
+    let title: String
+    let text: String
+}
+
+private struct OnboardingStepView: View {
+    let step: OnboardingStep
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: step.icon)
+                .font(.system(size: 36, weight: .bold))
+                .foregroundStyle(AppTheme.dashboardGreen)
+                .frame(width: 78, height: 78)
+                .background(AppTheme.dashboardGreen.opacity(0.14))
+                .clipShape(Circle())
+                .overlay {
+                    Circle()
+                        .stroke(AppTheme.dashboardGreen.opacity(0.22), lineWidth: 1)
+                }
+
+            Text(step.title)
+                .font(.system(size: 36, weight: .bold, design: .rounded))
+                .minimumScaleFactor(0.78)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white)
+
+            Text(step.text)
+                .font(.headline.weight(.semibold))
+                .lineSpacing(3)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white.opacity(0.72))
+                .padding(.horizontal, 14)
+        }
+        .padding(.horizontal, 4)
     }
 }
 

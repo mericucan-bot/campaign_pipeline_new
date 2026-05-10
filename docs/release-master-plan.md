@@ -59,6 +59,8 @@
 - Privacy policy zorunludur. Politikada e-posta hesabi, favoriler/kartlarim/katilim verileri, bildirimler, Supabase kullanimi, ileride reklam/abonelik ve varsa analitik verileri aciklanir.
 - App Store icin 1024x1024 PNG ikon, farkli cihaz ekran goruntuleri, destek URL'si, pazarlama metni ve uygulama gizlilik cevaplari hazirlanir.
 - Onboarding ilk acilista 2-3 ekrani gecmeyecek sekilde tutulur: kampanya kesfi, kartlarim/kisisellestirme ve hatirlatici/kazanc takibi degeri anlatilir.
+- iOS ilk acilis onboarding'i 3 deger ekranina ayrildi ve tamamlaninca tekrar zorunlu gosterilmeyecek sekilde saklanir.
+- Gizlilik politikasi, destek sayfasi ve App Store hazirlik notlari icin taslak dokumanlar `docs/privacy-policy-draft.md`, `docs/support-page-draft.md` ve `docs/app-store-prep.md` olarak eklendi.
 - Apple Developer hesabi, bundle identifier, signing certificate/provisioning ve App Store Connect kaydi yayin oncesi tamamlanir.
 - Yerel test sonrasi TestFlight ic test, sonra sinirli dis test, en son App Store incelemesi hedeflenir.
 - Bu proje SwiftUI native iOS oldugu icin Expo/EAS yerine Xcode archive ve App Store Connect dagitim akisi kullanilir.
