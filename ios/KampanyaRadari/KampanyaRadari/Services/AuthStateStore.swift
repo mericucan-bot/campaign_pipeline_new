@@ -39,6 +39,7 @@ final class AuthStateStore {
         return authMessage.hasPrefix("Kayıt alındı")
             || authMessage.hasPrefix("Hesap oluşturuldu")
             || authMessage.hasPrefix("Giriş başarılı")
+            || authMessage.hasPrefix("Şifre sıfırlama")
     }
 
     func continueAsGuest() {
@@ -74,6 +75,26 @@ final class AuthStateStore {
 
     func signUp(email: String, password: String) async {
         await authenticate(email: email, password: password, isSignUp: true)
+    }
+
+    func sendPasswordReset(email: String) async {
+        let cleanedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard cleanedEmail.contains("@") else {
+            authMessage = "Şifre sıfırlama için geçerli e-posta girmen gerekiyor."
+            return
+        }
+
+        isLoading = true
+        authMessage = nil
+
+        do {
+            try await authService.sendPasswordReset(email: cleanedEmail)
+            authMessage = "Şifre sıfırlama maili gönderildi. Mail kutunu kontrol et."
+        } catch {
+            authMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+
+        isLoading = false
     }
 
     private func authenticate(email: String, password: String, isSignUp: Bool) async {

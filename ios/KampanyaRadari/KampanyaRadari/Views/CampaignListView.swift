@@ -910,6 +910,21 @@ private struct AuthOptionsSheet: View {
                     }
                     .disabled(authState.isLoading)
 
+                    if !isSignUp {
+                        Button {
+                            Task {
+                                await authState.sendPasswordReset(email: email)
+                            }
+                        } label: {
+                            Text("Şifremi sıfırlama maili gönder")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(AppTheme.dashboardGreen)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                        }
+                        .disabled(authState.isLoading)
+                    }
+
                     VStack(spacing: 10) {
                         AuthPreviewButton(title: "Google ile giriş", systemImage: "g.circle.fill")
                         AuthPreviewButton(title: "Apple ile giriş", systemImage: "apple.logo")

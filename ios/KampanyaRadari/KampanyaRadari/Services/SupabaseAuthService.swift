@@ -61,8 +61,22 @@ enum SupabaseAuthError: LocalizedError {
         case .emailConfirmationRequired:
             return "Kayıt alındı. E-postanı onayladıktan sonra Giriş sekmesinden devam edebilirsin."
         case .server(let message):
-            return message
+            return Self.friendly(message)
         }
+    }
+
+    private static func friendly(_ message: String) -> String {
+        let normalized = message.lowercased()
+        if normalized.contains("invalid login credentials") {
+            return "E-posta veya şifre eşleşmedi. Şifreyi hatırlamıyorsan sıfırlama maili gönderebilirsin."
+        }
+        if normalized.contains("email not confirmed") {
+            return "E-posta onayı bekleniyor. Mail kutundaki Supabase onay bağlantısını açıp tekrar dene."
+        }
+        if normalized.contains("user already registered") || normalized.contains("already registered") {
+            return "Bu e-posta zaten kayıtlı. Kayıt yerine Giriş sekmesini kullan."
+        }
+        return message
     }
 }
 
@@ -79,6 +93,13 @@ struct SupabaseAuthService {
         try await requestSession(
             path: "auth/v1/signup",
             body: ["email": email, "password": password]
+        )
+    }
+
+    func sendPasswordReset(email: String) async throws {
+        try await requestEmpty(
+            path: "auth/v1/recover",
+            body: ["email": email]
         )
     }
 
@@ -120,6 +141,27 @@ struct SupabaseAuthService {
         }
 
         throw SupabaseAuthError.emailConfirmationRequired
+    }
+
+    private func requestEmpty(path: String, body: [String: String]) async throws {
+        guard let url = URL(string: path, relativeTo: AppConfig.supabaseURL) else {
+            throw URLError(.badURL)
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(AppConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw SupabaseAuthError.server(errorMessage(from: data) ?? "İşlem tamamlanamadı.")
+        }
     }
 
     private func errorMessage(from data: Data) -> String? {
