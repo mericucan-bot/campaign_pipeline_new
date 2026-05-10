@@ -84,6 +84,14 @@ Sonrasinda GitHub size su formda bir internet adresi verir:
 
 `https://kullaniciadi.github.io/repo-adi/`
 
+Bu repo icin beklenen adresler:
+
+- Dashboard: `https://mericucan-bot.github.io/campaign_pipeline_new/`
+- Gizlilik Politikasi: `https://mericucan-bot.github.io/campaign_pipeline_new/privacy.html`
+- Destek: `https://mericucan-bot.github.io/campaign_pipeline_new/support.html`
+
+Detayli yayin adimlari: `docs/pages-publishing.md`
+
 Not: GitHub Pages statik calisir. Bu nedenle internetteki versiyonda `Simdi Tara` butonu yoktur; veriler GitHub Actions calistikca guncellenir. Favoriler tarayici hafizasinda saklanir.
 
 ## Dashboard ozellikleri
