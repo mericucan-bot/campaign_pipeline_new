@@ -16,6 +16,7 @@ final class AuthStateStore {
     var authMessage: String?
     var isLoading = false
     var passwordResetAccessToken: String?
+    var plan: SubscriptionPlan = .free
     private(set) var session: AuthSession?
 
     init() {

@@ -4,11 +4,13 @@ struct CampaignDetailView: View {
     let campaign: Campaign
     @Bindable var favorites: FavoritesStore
     @Bindable var participation: ParticipationStore
+    @Bindable var authState: AuthStateStore
     @State private var record = CampaignParticipation()
     @State private var spentText = ""
     @State private var earnedText = ""
     @State private var rewardExpiresAt = Date()
     @State private var hasRewardReminder = false
+    @State private var entitlementPrompt: EntitlementRule?
 
     var body: some View {
         ZStack {
@@ -90,6 +92,16 @@ struct CampaignDetailView: View {
             loadParticipation()
         }
         .navigationTitle("Detay")
+        .alert(entitlementPrompt?.title ?? "", isPresented: Binding(
+            get: { entitlementPrompt != nil },
+            set: { if !$0 { entitlementPrompt = nil } }
+        )) {
+            Button("Anladım", role: .cancel) {
+                entitlementPrompt = nil
+            }
+        } message: {
+            Text(entitlementPrompt?.message ?? "")
+        }
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -191,6 +203,10 @@ struct CampaignDetailView: View {
                 .background(.white.opacity(0.72))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
+
+            Text(EntitlementService.reminderAllowanceText(plan: authState.plan, participation: participation))
+                .font(.caption.weight(.bold))
+                .foregroundStyle(AppTheme.dashboardGreen)
         }
         .padding(12)
         .background(.white.opacity(0.42))
@@ -201,6 +217,18 @@ struct CampaignDetailView: View {
         Binding {
             hasRewardReminder
         } set: { newValue in
+            if newValue {
+                let rule = EntitlementService.canUseRewardReminder(
+                    plan: authState.plan,
+                    participation: participation,
+                    campaignID: campaign.id
+                )
+                guard rule.allowed else {
+                    hasRewardReminder = false
+                    entitlementPrompt = rule
+                    return
+                }
+            }
             hasRewardReminder = newValue
             if newValue {
                 record.didJoin = true

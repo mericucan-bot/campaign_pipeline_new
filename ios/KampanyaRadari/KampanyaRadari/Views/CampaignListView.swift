@@ -47,6 +47,7 @@ struct CampaignListView: View {
                                 favorites: favorites,
                                 myCards: myCards,
                                 participation: participation,
+                                authState: authState,
                                 lockCategoryFilter: lockCategoryFilter
                             )
                         case .profile:
@@ -406,6 +407,7 @@ private struct CampaignListScreen: View {
     let favorites: FavoritesStore
     let myCards: MyCardsStore
     let participation: ParticipationStore
+    @Bindable var authState: AuthStateStore
     let lockCategoryFilter: Bool
     @State private var isShowingFilters = false
     @State private var isShowingBankFilters = false
@@ -458,7 +460,7 @@ private struct CampaignListScreen: View {
 
                                 ForEach(filteredCampaigns) { campaign in
                                     NavigationLink {
-                                        CampaignDetailView(campaign: campaign, favorites: favorites, participation: participation)
+                                        CampaignDetailView(campaign: campaign, favorites: favorites, participation: participation, authState: authState)
                                     } label: {
                                         CampaignCardView(
                                             campaign: campaign,
@@ -1186,6 +1188,7 @@ private struct AccountView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var syncMessage: String?
     @State private var isSyncing = false
+    @State private var isShowingPaywall = false
     private let syncService = UserDataSyncService()
 
     var body: some View {
@@ -1218,7 +1221,12 @@ private struct AccountView: View {
                         AccountStatusRow(title: "Oturum", value: authState.isAuthenticated ? "Supabase hesabı" : "Misafir", systemImage: "person.fill")
                         AccountStatusRow(title: "E-posta", value: authState.email ?? "Bağlı değil", systemImage: "envelope.fill")
                         AccountStatusRow(title: "Senkron", value: authState.isAuthenticated ? "Bulut senkron hazır" : "Cihazda saklanıyor", systemImage: "arrow.triangle.2.circlepath")
-                        AccountStatusRow(title: "Plan", value: "Free", systemImage: "creditcard.fill")
+                        AccountStatusRow(title: "Plan", value: authState.plan.displayName, systemImage: "creditcard.fill")
+                        AccountStatusRow(
+                            title: "Hatırlatıcı",
+                            value: EntitlementService.reminderAllowanceText(plan: authState.plan, participation: participation),
+                            systemImage: "bell.badge.fill"
+                        )
                     }
                     .padding(18)
                     .background(.white.opacity(0.08))
@@ -1227,6 +1235,8 @@ private struct AccountView: View {
                         RoundedRectangle(cornerRadius: 28, style: .continuous)
                             .stroke(.white.opacity(0.14), lineWidth: 1)
                     }
+
+                    premiumPreview
 
                     VStack(spacing: 12) {
                         Button {
@@ -1279,6 +1289,49 @@ private struct AccountView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .sheet(isPresented: $isShowingPaywall) {
+            PaywallPreviewSheet(plan: authState.plan)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+    }
+
+    private var premiumPreview: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Premium")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text("Sınırsız hatırlatıcı, reklamsız kullanım ve gelişmiş kazanç raporları için hazır alan.")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.70))
+                }
+                Spacer()
+                Image(systemName: "sparkles")
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+            }
+
+            Button {
+                isShowingPaywall = true
+            } label: {
+                Label("Premium seçeneklerini gör", systemImage: "creditcard.fill")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(AppTheme.nearBlack)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(AppTheme.dashboardGreen)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            }
+        }
+        .padding(18)
+        .background(AppTheme.dashboardGreen.opacity(0.13))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(AppTheme.dashboardGreen.opacity(0.28), lineWidth: 1)
+        }
     }
 
     private func syncNow() async {
@@ -1322,6 +1375,105 @@ private struct AccountStatusRow: View {
             }
             Spacer()
         }
+    }
+}
+
+private struct PaywallPreviewSheet: View {
+    let plan: SubscriptionPlan
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            AppTheme.dashboardBackground
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Kampanya Radarı Premium")
+                                .font(.largeTitle.weight(.bold))
+                                .foregroundStyle(.white)
+                            Text("Şimdilik ödeme öncesi taslak. RevenueCat veya StoreKit 2 bağlandığında bu ekran satın alma akışına dönüşecek.")
+                                .font(.headline)
+                                .foregroundStyle(.white.opacity(0.72))
+                        }
+                        Spacer()
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(AppTheme.nearBlack)
+                                .frame(width: 44, height: 44)
+                                .background(.white)
+                                .clipShape(Circle())
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        PaywallBenefitRow(icon: "bell.badge.fill", title: "Sınırsız hatırlatıcı", text: "Birden fazla kampanya için puan son kullanım bildirimleri.")
+                        PaywallBenefitRow(icon: "chart.line.uptrend.xyaxis", title: "Gelişmiş kazanç raporu", text: "Harcama, kazanım ve net faydayı daha ayrıntılı takip.")
+                        PaywallBenefitRow(icon: "rectangle.on.rectangle.slash", title: "Reklamsız deneyim", text: "Ücretsiz sürümdeki reklam alanları Premium’da kapanır.")
+                        PaywallBenefitRow(icon: "creditcard.and.123", title: "Kişisel kart önerileri", text: "Kartlarına göre daha alakalı kampanyaları öne çıkarma altyapısı.")
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Mevcut plan")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white.opacity(0.62))
+                        Text(plan.displayName)
+                            .font(.title2.weight(.bold))
+                            .foregroundStyle(AppTheme.dashboardGreen)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(.white.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+
+                    Button {
+                    } label: {
+                        Text("Satın alma yakında")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(AppTheme.nearBlack)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(AppTheme.dashboardGreen.opacity(0.72))
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .disabled(true)
+                }
+                .padding(22)
+            }
+        }
+    }
+}
+
+private struct PaywallBenefitRow: View {
+    let icon: String
+    let title: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(AppTheme.dashboardGreen)
+                .frame(width: 38, height: 38)
+                .background(AppTheme.dashboardGreen.opacity(0.14))
+                .clipShape(Circle())
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+                Text(text)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.66))
+            }
+        }
+        .padding(14)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
 

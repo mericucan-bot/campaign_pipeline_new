@@ -37,6 +37,16 @@ final class ParticipationStore {
         records.values.reduce(0) { $0 + $1.earnedAmount }
     }
 
+    var activeReminderCount: Int {
+        records.values.filter(\.hasReminder).count
+    }
+
+    func activeReminderCount(excluding campaignID: String) -> Int {
+        records.filter { id, record in
+            id != campaignID && record.hasReminder
+        }.count
+    }
+
     func record(for campaign: Campaign) -> CampaignParticipation {
         records[campaign.id] ?? CampaignParticipation()
     }

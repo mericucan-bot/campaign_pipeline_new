@@ -36,9 +36,9 @@
 ## 4. Gelir modeli
 
 - Ucretsiz plan: reklamli deneyim, temel arama ve filtreler.
-- Ucretsiz plan: kullanici degeri gostermek icin sinirli takip sunar; ornegin 1 aktif kampanya hatirlaticisi, favoriler ve temel kartlarim filtresi acik kalir.
+- Ucretsiz plan: kullanici degeri gostermek icin sinirli takip sunar; 1 aktif kampanya hatirlaticisi, favoriler ve temel kartlarim filtresi acik kalir.
 - Ucretli plan: reklamsiz deneyim, sinirsiz kampanya hatirlaticisi, 7/3/son gun coklu bildirimleri, gelismis kazanc raporlari, gecmis takip arsivi ve kisisel kart onerileri sunar.
-- Odeme altyapisi gelmeden mevcut hatirlatici test amacli acik tutulur; abonelik eklendiginde ayni akis plan limitleriyle kontrol edilir.
+- Odeme altyapisi gelmeden hatirlatici akisi merkezi entitlement katmanina baglanir; Free planda 1 aktif hatirlatici, Premium/Trial planda sinirsiz hatirlatici kurali uygulanir.
 - Abonelikler App Store ve Google Play kurallarina gore platform icinden yonetilir.
 - iOS abonelik icin ilk tercih RevenueCat veya dogrudan StoreKit 2 olur. RevenueCat, makbuz dogrulama, yenileme ve platformlar arasi abonelik durumunu kolaylastirdigi icin Android hedefi de dusunuldugunde degerlendirilir.
 - Apple komisyonu ve kucuk isletme programi yayin oncesi kontrol edilir; fiyatlandirma App Store Connect uzerinden tanimlanir.
