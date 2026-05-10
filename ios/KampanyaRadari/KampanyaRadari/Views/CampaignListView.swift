@@ -424,7 +424,7 @@ private struct CampaignListScreen: View {
                             favoriteQuickToggle
                             bankFilter
 
-                            VStack(spacing: 16) {
+                            LazyVStack(spacing: 16) {
                                 resultSummary(count: filteredCampaigns.count)
 
                                 if filteredCampaigns.isEmpty {
@@ -878,13 +878,7 @@ private struct AuthOptionsSheet: View {
                     }
 
                     if let message = authState.authMessage {
-                        Text(message)
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(authState.isAuthenticated ? AppTheme.dashboardGreen : .orange)
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(.white.opacity(0.08))
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        AuthMessageBanner(message: message, isPositive: authState.isAuthMessagePositive)
                     }
 
                     Button {
@@ -937,6 +931,32 @@ private struct AuthOptionsSheet: View {
                 }
                 .padding(22)
             }
+        }
+    }
+}
+
+private struct AuthMessageBanner: View {
+    let message: String
+    let isPositive: Bool
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: isPositive ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(isPositive ? AppTheme.dashboardGreen : AppTheme.softOrange)
+            Text(message)
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(.white)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background((isPositive ? AppTheme.dashboardGreen : AppTheme.softOrange).opacity(0.16))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke((isPositive ? AppTheme.dashboardGreen : AppTheme.softOrange).opacity(0.42), lineWidth: 1)
         }
     }
 }

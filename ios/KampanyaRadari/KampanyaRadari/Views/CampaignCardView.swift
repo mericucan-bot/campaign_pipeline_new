@@ -93,8 +93,8 @@ struct CampaignCardView: View {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .stroke(accent.opacity(0.58), lineWidth: 1)
         }
-        .shadow(color: accent.opacity(0.22), radius: 18, x: 0, y: 8)
-        .shadow(color: .black.opacity(0.28), radius: 18, x: 0, y: 12)
+        .shadow(color: accent.opacity(0.16), radius: 10, x: 0, y: 5)
+        .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 8)
     }
 
     private var bankRail: some View {
@@ -264,7 +264,6 @@ private struct ScoreGauge: View {
                     .trim(from: 0.58, to: 0.58 + min(Double(score), 100) / 100 * 0.34)
                     .stroke(accent, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                     .rotationEffect(.degrees(180))
-                    .shadow(color: accent.opacity(0.55), radius: 8)
 
                 VStack(spacing: 0) {
                     Text("\(score)")

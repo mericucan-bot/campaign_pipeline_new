@@ -59,7 +59,7 @@ enum SupabaseAuthError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .emailConfirmationRequired:
-            return "Kayıt alındı. Supabase e-posta onayı istiyorsa gelen kutunu kontrol edip sonra giriş yap."
+            return "Kayıt alındı. E-postanı onayladıktan sonra Giriş sekmesinden devam edebilirsin."
         case .server(let message):
             return message
         }

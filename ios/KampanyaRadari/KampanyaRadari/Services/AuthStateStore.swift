@@ -34,6 +34,13 @@ final class AuthStateStore {
         session != nil && !isGuest
     }
 
+    var isAuthMessagePositive: Bool {
+        guard let authMessage else { return false }
+        return authMessage.hasPrefix("Kayıt alındı")
+            || authMessage.hasPrefix("Hesap oluşturuldu")
+            || authMessage.hasPrefix("Giriş başarılı")
+    }
+
     func continueAsGuest() {
         displayName = "Misafir"
         isGuest = true
