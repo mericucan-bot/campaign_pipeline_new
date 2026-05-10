@@ -1116,9 +1116,15 @@ private struct AuthTextField: View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
                 .foregroundStyle(AppTheme.dashboardGreen)
-            TextField(title, text: $text)
-                .foregroundStyle(.white)
-                .submitLabel(.next)
+            ZStack(alignment: .leading) {
+                if text.isEmpty {
+                    Text(title)
+                        .foregroundStyle(.white.opacity(0.44))
+                }
+                TextField("", text: $text)
+                    .foregroundStyle(.white)
+                    .submitLabel(.next)
+            }
         }
         .font(.headline.weight(.semibold))
         .padding(16)
@@ -1139,9 +1145,15 @@ private struct AuthSecureField: View {
         HStack(spacing: 12) {
             Image(systemName: "lock.fill")
                 .foregroundStyle(AppTheme.dashboardGreen)
-            SecureField(title, text: $text)
-                .foregroundStyle(.white)
-                .submitLabel(.done)
+            ZStack(alignment: .leading) {
+                if text.isEmpty {
+                    Text(title)
+                        .foregroundStyle(.white.opacity(0.44))
+                }
+                SecureField("", text: $text)
+                    .foregroundStyle(.white)
+                    .submitLabel(.done)
+            }
         }
         .font(.headline.weight(.semibold))
         .padding(16)
@@ -1212,9 +1224,11 @@ private struct AccountView: View {
                             .font(.title3.weight(.bold))
                             .foregroundStyle(AppTheme.dashboardGreen)
                         Text(authState.statusText)
-                            .font(.largeTitle.weight(.bold))
+                            .font(.system(size: authState.statusText.contains("@") ? 36 : 44, weight: .bold))
                             .foregroundStyle(.white)
-                        Text(authState.isAuthenticated ? "Hesabın Supabase Auth ile açık. Favori, kart ve kazanç senkronu sonraki adımda bağlanacak." : "Misafir kullanım açık. Yayın aşamasında Google ve Apple girişi de buraya bağlanacak.")
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.62)
+                        Text(authState.isAuthenticated ? "Hesabın Supabase Auth ile açık. Favori, kart ve kazanç kayıtlarını buluta senkronlayabilirsin." : "Misafir kullanım açık. Yayın aşamasında Google ve Apple girişi de buraya bağlanacak.")
                             .font(.headline)
                             .foregroundStyle(.white.opacity(0.76))
                     }

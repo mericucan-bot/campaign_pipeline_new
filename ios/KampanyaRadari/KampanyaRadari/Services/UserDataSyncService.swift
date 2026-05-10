@@ -176,6 +176,17 @@ private struct UserCardRow: Codable {
         case bank
         case bankLabel = "bank_label"
     }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userID, forKey: .userID)
+        try container.encode(bank, forKey: .bank)
+        if let bankLabel {
+            try container.encode(bankLabel, forKey: .bankLabel)
+        } else {
+            try container.encodeNil(forKey: .bankLabel)
+        }
+    }
 }
 
 private struct UserFavoriteRow: Codable {
@@ -205,6 +216,21 @@ private struct CampaignParticipationRow: Codable {
         case earnedAmount = "earned_amount"
         case rewardExpiresAt = "reward_expires_at"
         case reminderEnabled = "reminder_enabled"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userID, forKey: .userID)
+        try container.encode(campaignID, forKey: .campaignID)
+        try container.encode(didJoin, forKey: .didJoin)
+        try container.encode(spentAmount, forKey: .spentAmount)
+        try container.encode(earnedAmount, forKey: .earnedAmount)
+        if let rewardExpiresAt {
+            try container.encode(rewardExpiresAt, forKey: .rewardExpiresAt)
+        } else {
+            try container.encodeNil(forKey: .rewardExpiresAt)
+        }
+        try container.encode(reminderEnabled, forKey: .reminderEnabled)
     }
 }
 
