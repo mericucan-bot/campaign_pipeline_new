@@ -6,12 +6,23 @@
 - Favoriler, kartlarim ve kazanc takip ekranlari temel kullanici degerini olusturur.
 - Kampanya detayinda kaynak, son tarih, katilim ve kazanc bilgileri net gosterilir.
 
+### Urun yapılacaklar listesi
+
+- Favorilere hızlı erişim ana sayfada ve liste içinde görünür olmalı; favoriler sadece filtre menüsünde saklı kalmamalı.
+- Hesaplayıcı / kazanç takibi favori kampanyalar üzerinden `katıldım`, `harcadım`, `kazandım` akışıyla çalışmalı.
+- Dashboard'daki hesaplayıcı mantığı mobilde `Kazançlarım` ekranına taşınmalı.
+- Kampanya detay ekranında katılım şartları, son tarih, kazanım türü, banka, kaynak linki ve ana aksiyonlar okunabilir olmalı.
+- Veri kalitesi tarafında süresi geçmiş kampanya, yanlış kategori, eksik tarih ve çok uzun açıklama sorunları takip edilmeli.
+- VakıfBank ve Yapı Kredi gibi yavaş veya kırılgan scraper kaynakları ayrıca iyileştirilmeli.
+- Banka renkleri, yazı karakterleri ve ileride kullanılacak logolar ayrı bir brand kit olarak düzenlenmeli.
+
 ## 2. Veri ve guvenlik
 
 - Mobil uygulama sadece public read yetkisiyle kampanya okur.
 - Scraper ve yazma islemleri service role key ile sadece backend/automation tarafinda calisir.
 - RLS politikalari yayin oncesi tekrar denetlenir.
 - Kullanici verileri icin ayri profil, kartlarim, favoriler ve katilim tablolari planlanir.
+- `.env`, API key, RLS policy ve Supabase yetkileri App Store/TestFlight oncesi tekrar denetlenir.
 
 ## 3. Hesap sistemi
 
@@ -37,3 +48,4 @@
 - TestFlight ile kapali test yapilir.
 - App Store ikon, ekran goruntuleri, gizlilik metni, destek adresi ve aciklama hazirlanir.
 - Crash/log takibi, veri yenileme izleme ve temel analitik eklenir.
+- Uygulama adi, ikon, splash/intro, bundle identifier ve Apple Developer hesabi yayin oncesi netlestirilir.

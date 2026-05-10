@@ -4,6 +4,7 @@ private enum AppRoute: Hashable {
     case list(lockCategoryFilter: Bool)
     case profile
     case earnings
+    case account
 }
 
 struct CampaignListView: View {
@@ -11,6 +12,7 @@ struct CampaignListView: View {
     @State private var favorites = FavoritesStore()
     @State private var myCards = MyCardsStore()
     @State private var participation = ParticipationStore()
+    @State private var authState = AuthStateStore()
     @State private var hasEnteredApp = false
     @State private var path: [AppRoute] = []
 
@@ -18,7 +20,7 @@ struct CampaignListView: View {
         Group {
             if hasEnteredApp {
                 NavigationStack(path: $path) {
-                    DashboardHomeView(viewModel: viewModel, favorites: favorites, myCards: myCards, participation: participation) {
+                    DashboardHomeView(viewModel: viewModel, favorites: favorites, myCards: myCards, participation: participation, authState: authState) {
                         viewModel.showAllCampaigns()
                         path.append(.list(lockCategoryFilter: false))
                     } openFavorites: {
@@ -31,6 +33,8 @@ struct CampaignListView: View {
                         path.append(.list(lockCategoryFilter: false))
                     } openEarnings: {
                         path.append(.earnings)
+                    } openAccount: {
+                        path.append(.account)
                     } openCategory: { category in
                         viewModel.showCampaigns(category: category)
                         path.append(.list(lockCategoryFilter: true))
@@ -49,11 +53,13 @@ struct CampaignListView: View {
                             ProfileCardsView(viewModel: viewModel, myCards: myCards)
                         case .earnings:
                             EarningsView(viewModel: viewModel, participation: participation)
+                        case .account:
+                            AccountView(authState: authState)
                         }
                     }
                 }
             } else {
-                IntroView {
+                IntroView(authState: authState) {
                     hasEnteredApp = true
                 }
             }
@@ -67,7 +73,9 @@ struct CampaignListView: View {
 }
 
 private struct IntroView: View {
+    @Bindable var authState: AuthStateStore
     let enter: () -> Void
+    @State private var isShowingAuthOptions = false
 
     var body: some View {
         ZStack {
@@ -87,15 +95,36 @@ private struct IntroView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 20)
 
-                Button(action: enter) {
-                    Text("Kampanyaları Gör")
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(AppTheme.nearBlack)
-                        .frame(maxWidth: 260)
-                        .padding(.vertical, 18)
-                        .background(AppTheme.dashboardGreen)
-                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                        .shadow(color: .black.opacity(0.2), radius: 18, x: 0, y: 10)
+                VStack(spacing: 12) {
+                    Button {
+                        authState.continueAsGuest()
+                        enter()
+                    } label: {
+                        Text("Misafir Olarak Devam Et")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(AppTheme.nearBlack)
+                            .frame(maxWidth: 280)
+                            .padding(.vertical, 18)
+                            .background(AppTheme.dashboardGreen)
+                            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                            .shadow(color: .black.opacity(0.2), radius: 18, x: 0, y: 10)
+                    }
+
+                    Button {
+                        isShowingAuthOptions = true
+                    } label: {
+                        Text("Giriş Seçenekleri")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: 280)
+                            .padding(.vertical, 16)
+                            .background(.white.opacity(0.10))
+                            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                    .stroke(.white.opacity(0.16), lineWidth: 1)
+                            }
+                    }
                 }
                 .padding(.top, 10)
 
@@ -110,6 +139,11 @@ private struct IntroView: View {
             }
             .padding(24)
         }
+        .sheet(isPresented: $isShowingAuthOptions) {
+            AuthOptionsSheet(authState: authState, enter: enter)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
     }
 }
 
@@ -118,11 +152,13 @@ private struct DashboardHomeView: View {
     let favorites: FavoritesStore
     let myCards: MyCardsStore
     let participation: ParticipationStore
+    let authState: AuthStateStore
     let openAllCampaigns: () -> Void
     let openFavorites: () -> Void
     let openMyCards: () -> Void
     let openMyCardCampaigns: () -> Void
     let openEarnings: () -> Void
+    let openAccount: () -> Void
     let openCategory: (String) -> Void
 
     var body: some View {
@@ -150,11 +186,19 @@ private struct DashboardHomeView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Kampanya Radarı")
-                    .font(.largeTitle.weight(.bold))
-                    .foregroundStyle(.white)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Kampanya Radarı")
+                        .font(.largeTitle.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text(authState.statusText)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(AppTheme.dashboardGreen)
+                }
                 Spacer()
-                CircleIconButton(systemName: "person.crop.circle") {
+                CircleIconButton(systemName: authState.isGuest ? "person.crop.circle.badge.questionmark" : "person.crop.circle.fill") {
+                    openAccount()
+                }
+                CircleIconButton(systemName: "creditcard") {
                     openMyCards()
                 }
                 CircleIconButton(systemName: "arrow.clockwise") {
@@ -780,6 +824,210 @@ private struct LightStatTile: View {
         .padding(12)
         .background(AppTheme.softBlue.opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+private struct AuthOptionsSheet: View {
+    @Bindable var authState: AuthStateStore
+    let enter: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            AppTheme.dashboardBackground
+                .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 20) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Hesap")
+                            .font(.largeTitle.weight(.bold))
+                            .foregroundStyle(.white)
+                        Text("Şimdilik yer tutucu. Gerçek Google, Apple ve e-posta girişi Supabase Auth ile bağlanacak.")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.68))
+                    }
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(AppTheme.nearBlack)
+                            .frame(width: 44, height: 44)
+                            .background(.white)
+                            .clipShape(Circle())
+                    }
+                }
+
+                VStack(spacing: 10) {
+                    AuthPreviewButton(title: "Google ile giriş", systemImage: "g.circle.fill") {
+                        authState.previewSignIn(as: "Google Kullanıcısı")
+                        dismiss()
+                        enter()
+                    }
+                    AuthPreviewButton(title: "Apple ile giriş", systemImage: "apple.logo") {
+                        authState.previewSignIn(as: "Apple Kullanıcısı")
+                        dismiss()
+                        enter()
+                    }
+                    AuthPreviewButton(title: "E-posta ile giriş", systemImage: "envelope.fill") {
+                        authState.previewSignIn(as: "E-posta Kullanıcısı")
+                        dismiss()
+                        enter()
+                    }
+                }
+
+                Button {
+                    authState.continueAsGuest()
+                    dismiss()
+                    enter()
+                } label: {
+                    Text("Misafir olarak devam et")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(AppTheme.nearBlack)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(AppTheme.dashboardGreen)
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                }
+            }
+            .padding(22)
+        }
+    }
+}
+
+private struct AuthPreviewButton: View {
+    let title: String
+    let systemImage: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+                    .frame(width: 34, height: 34)
+                    .background(AppTheme.dashboardGreen.opacity(0.12))
+                    .clipShape(Circle())
+                Text(title)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+                Spacer()
+                Text("Yakında")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.58))
+            }
+            .padding(14)
+            .background(.white.opacity(0.08))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct AccountView: View {
+    @Bindable var authState: AuthStateStore
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            AppTheme.blueBackground
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    HStack {
+                        CircleIconButton(systemName: "chevron.left") {
+                            dismiss()
+                        }
+                        Spacer()
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Hesap")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(AppTheme.dashboardGreen)
+                        Text(authState.statusText)
+                            .font(.largeTitle.weight(.bold))
+                            .foregroundStyle(.white)
+                        Text("Misafir kullanım açık. Yayın aşamasında Google, Apple ve e-posta girişi buraya bağlanacak.")
+                            .font(.headline)
+                            .foregroundStyle(.white.opacity(0.76))
+                    }
+
+                    VStack(alignment: .leading, spacing: 14) {
+                        AccountStatusRow(title: "Oturum", value: authState.isGuest ? "Misafir" : "Ön izleme hesabı", systemImage: "person.fill")
+                        AccountStatusRow(title: "Senkron", value: authState.isGuest ? "Cihazda saklanıyor" : "Supabase hazırlandı", systemImage: "arrow.triangle.2.circlepath")
+                        AccountStatusRow(title: "Plan", value: "Free", systemImage: "creditcard.fill")
+                    }
+                    .padding(18)
+                    .background(.white.opacity(0.08))
+                    .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .stroke(.white.opacity(0.14), lineWidth: 1)
+                    }
+
+                    VStack(spacing: 12) {
+                        Button {
+                            authState.previewSignIn(as: "Google Kullanıcısı")
+                        } label: {
+                            Label("Google giriş ön izlemesi", systemImage: "g.circle.fill")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(AppTheme.nearBlack)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(AppTheme.dashboardGreen)
+                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        }
+
+                        Button {
+                            authState.signOut()
+                        } label: {
+                            Text("Misafir moda dön")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(.white.opacity(0.10))
+                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        }
+                    }
+                }
+                .padding(.horizontal, 22)
+                .padding(.top, 18)
+                .padding(.bottom, 30)
+            }
+        }
+        .toolbar(.hidden, for: .navigationBar)
+    }
+}
+
+private struct AccountStatusRow: View {
+    let title: String
+    let value: String
+    let systemImage: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(AppTheme.dashboardGreen)
+                .frame(width: 38, height: 38)
+                .background(AppTheme.dashboardGreen.opacity(0.14))
+                .clipShape(Circle())
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.58))
+                Text(value)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+            }
+            Spacer()
+        }
     }
 }
 
