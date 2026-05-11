@@ -39,6 +39,8 @@ Fiyatlar App Store Connect'te belirlenecek. Ürünler açılmadan iOS uygulamas�
 
 ## İlk TestFlight Testleri
 
+Detayli kontrol listesi: `docs/testflight-checklist.md`
+
 - Yeni kurulum ve onboarding.
 - Misafir olarak devam etme.
 - E-posta ile kayıt ve giriş.
