@@ -42,6 +42,7 @@
 - Abonelikler App Store ve Google Play kurallarina gore platform icinden yonetilir.
 - iOS abonelik icin ilk tercih RevenueCat veya dogrudan StoreKit 2 olur. RevenueCat, makbuz dogrulama, yenileme ve platformlar arasi abonelik durumunu kolaylastirdigi icin Android hedefi de dusunuldugunde degerlendirilir.
 - iOS tarafinda aylik/yillik Premium urun ID'leri ve StoreKit odeme hazirlik servisi eklendi; App Store Connect urunleri tanimlanmadan gercek satin alma butonu aktif edilmeyecek.
+- Abonelik ve odeme kurulum plani `docs/subscription-setup-plan.md` dosyasinda ayrica netlestirildi.
 - Apple komisyonu ve kucuk isletme programi yayin oncesi kontrol edilir; fiyatlandirma App Store Connect uzerinden tanimlanir.
 
 ## 5. Platform stratejisi

@@ -21,6 +21,7 @@
 - Abonelik ürünleri
 - Listeleme metinleri için kaynak: `docs/app-store-listing-draft.md`
 - App Store ikon ve ekran görüntüsü planı için kaynak: `docs/app-store-assets.md`
+- Abonelik ve ödeme kurulum planı için kaynak: `docs/subscription-setup-plan.md`
 
 ## Planlanan Abonelik Ürünleri
 
@@ -60,4 +61,5 @@ Detayli kontrol listesi: `docs/testflight-checklist.md`
 - Ekran görüntüsü setleri `docs/app-store-assets.md` planına göre çekilecek.
 - Abonelik fiyatları.
 - RevenueCat mi doğrudan StoreKit 2 mi kullanılacağı.
+- App Store Connect abonelik ürünleri açıldıktan sonra RevenueCat bağlantısının ilk sürüme girip girmeyeceği.
 - Google ve Apple ile girişin ilk sürüme girip girmeyeceği.

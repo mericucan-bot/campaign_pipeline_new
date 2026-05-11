@@ -52,3 +52,4 @@ Kampanya iliskileri `campaigns.id` alanina UUID olarak baglanir. Bu, mevcut Supa
 - iOS uygulamasi oturum acilinca `profiles.plan`, `plan_status`, `trial_ends_at` ve `premium_until` alanlarini okuyarak etkili plani hesaplar; mobil senkron artik mevcut profili `free` olarak ezmez.
 - App Store ve Google Play abonelik durumlari backend tarafinda dogrulanip profile yazilmalidir.
 - Odeme olaylari `subscription_events` tablosuna yazilir; mobil uygulama bu tabloya dogrudan yazmaz, sadece kendi kayitlarini okuyabilir.
+- Abonelik urunleri, App Store Connect adimlari ve RevenueCat/StoreKit karari `docs/subscription-setup-plan.md` dosyasinda takip edilir.
