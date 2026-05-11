@@ -22,6 +22,7 @@
 - Listeleme metinleri için kaynak: `docs/app-store-listing-draft.md`
 - App Store ikon ve ekran görüntüsü planı için kaynak: `docs/app-store-assets.md`
 - Abonelik ve ödeme kurulum planı için kaynak: `docs/subscription-setup-plan.md`
+- App Store Connect adım adım kurulum rehberi için kaynak: `docs/app-store-connect-guide.md`
 
 ## Planlanan Abonelik Ürünleri
 

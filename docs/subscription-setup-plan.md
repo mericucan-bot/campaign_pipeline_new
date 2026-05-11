@@ -89,6 +89,8 @@ Kalici abonelik yetkisi icin dogru akil:
 
 ## 6. App Store Connect Kontrol Listesi
 
+Detayli tiklama rehberi: `docs/app-store-connect-guide.md`
+
 - Bundle ID App Store Connect'te acildi.
 - Paid Apps Agreements / vergi / banka bilgileri tamamlandi.
 - Subscription Group olusturuldu.

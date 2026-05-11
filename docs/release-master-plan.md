@@ -67,6 +67,7 @@
 - GitHub Pages yayin adimlari `docs/pages-publishing.md` dosyasina yazildi; beklenen App Store URL'leri `https://mericucan-bot.github.io/campaign_pipeline_new/privacy.html` ve `https://mericucan-bot.github.io/campaign_pipeline_new/support.html`.
 - iOS hesap ekranina gizlilik politikasi ve destek linkleri eklendi; App Store listeleme metni icin `docs/app-store-listing-draft.md` taslagi hazirlandi.
 - TestFlight ve gercek cihaz kontrol listesi `docs/testflight-checklist.md` dosyasina ayrildi.
+- App Store Connect'te uygulama kaydi, abonelik urunleri, sandbox tester ve TestFlight upload adimlari `docs/app-store-connect-guide.md` dosyasina ayrildi.
 - Apple Developer hesabi, bundle identifier, signing certificate/provisioning ve App Store Connect kaydi yayin oncesi tamamlanir.
 - Yerel test sonrasi TestFlight ic test, sonra sinirli dis test, en son App Store incelemesi hedeflenir.
 - Bu proje SwiftUI native iOS oldugu icin Expo/EAS yerine Xcode archive ve App Store Connect dagitim akisi kullanilir.
