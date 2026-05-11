@@ -125,19 +125,20 @@ struct CampaignCardView: View {
 
     private var accent: Color {
         let bank = normalizedBankName
-        if bank.contains("axess") || bank.contains("akbank") { return Color(red: 0.95, green: 0.73, blue: 0.12) }
-        if bank.contains("maximum") || bank.contains("is bankasi") { return Color(red: 0.86, green: 0.23, blue: 0.55) }
-        if bank.contains("garanti") { return Color(red: 0.27, green: 0.76, blue: 0.43) }
+        if bank.contains("axess") || bank.contains("akbank") { return Color(red: 0.95, green: 0.65, blue: 0.08) }
+        if bank.contains("maximum") || bank.contains("is bankasi") { return Color(red: 0.91, green: 0.18, blue: 0.50) }
+        if bank.contains("garanti") { return Color(red: 0.18, green: 0.78, blue: 0.34) }
+        if bank.contains("paraf") { return Color(red: 0.02, green: 0.72, blue: 0.86) }
+        if bank.contains("saglam") || bank.contains("sağlam") { return Color(red: 0.00, green: 0.68, blue: 0.59) }
+        if bank.contains("n kolay") || bank.contains("nkolay") { return Color(red: 0.07, green: 0.50, blue: 0.94) }
+        if bank.contains(" on ") || bank == "on" || bank.contains("on kart") { return Color(red: 0.02, green: 0.74, blue: 0.35) }
+        if bank.contains("teb") { return Color(red: 0.03, green: 0.57, blue: 0.28) }
+        if bank.contains("vakif") { return Color(red: 0.94, green: 0.58, blue: 0.08) }
+        if bank.contains("yapi") { return Color(red: 0.02, green: 0.44, blue: 0.88) }
         if bank.contains("qnb") { return Color(red: 0.52, green: 0.23, blue: 0.68) }
         if bank.contains("deniz") { return Color(red: 0.14, green: 0.47, blue: 0.88) }
-        if bank.contains("yapi") || bank.contains("world") { return Color(red: 0.38, green: 0.26, blue: 0.72) }
-        if bank.contains("paraf") { return Color(red: 0.07, green: 0.55, blue: 0.42) }
-        if bank.contains("on") { return Color(red: 0.98, green: 0.42, blue: 0.16) }
-        if bank.contains("n kolay") || bank.contains("nkolay") { return Color(red: 0.96, green: 0.43, blue: 0.12) }
-        if bank.contains("vakif") { return Color(red: 0.35, green: 0.78, blue: 0.67) }
         if bank.contains("kuveyt") { return Color(red: 0.08, green: 0.58, blue: 0.36) }
         if bank.contains("ziraat") { return Color(red: 0.80, green: 0.06, blue: 0.11) }
-        if bank.contains("teb") { return Color(red: 0.03, green: 0.55, blue: 0.35) }
         return AppTheme.dashboardGreen
     }
 
@@ -276,10 +277,10 @@ private struct BankMarkView: View {
                 ZStack {
                     Circle()
                         .trim(from: 0.10, to: 0.92)
-                        .stroke(.white.opacity(0.92), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .stroke(markGradient, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                         .rotationEffect(.degrees(18))
                     Circle()
-                        .fill(.white.opacity(0.90))
+                        .fill(.white.opacity(0.92))
                         .frame(width: 8, height: 8)
                         .offset(x: 15, y: -15)
                 }
@@ -327,8 +328,51 @@ private struct BankMarkView: View {
                     .lineLimit(1)
             }
         }
-        .foregroundStyle(.white.opacity(0.94))
+        .foregroundStyle(markGradient)
         .shadow(color: .black.opacity(0.18), radius: 2, x: 0, y: 1)
+    }
+
+    private var markGradient: LinearGradient {
+        LinearGradient(
+            colors: markColors,
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var markColors: [Color] {
+        switch kind {
+        case .axess:
+            return [Color(red: 1.00, green: 0.84, blue: 0.28), Color(red: 0.89, green: 0.49, blue: 0.04)]
+        case .maximum:
+            return [Color(red: 1.00, green: 0.45, blue: 0.70), Color(red: 0.82, green: 0.10, blue: 0.42)]
+        case .garanti:
+            return [Color(red: 0.52, green: 0.96, blue: 0.58), Color(red: 0.03, green: 0.55, blue: 0.23)]
+        case .paraf:
+            return [Color(red: 0.25, green: 0.91, blue: 1.00), Color(red: 0.00, green: 0.53, blue: 0.68)]
+        case .saglam:
+            return [Color(red: 0.23, green: 0.93, blue: 0.83), Color(red: 0.00, green: 0.48, blue: 0.42)]
+        case .nKolay:
+            return [Color(red: 0.32, green: 0.72, blue: 1.00), Color(red: 0.00, green: 0.35, blue: 0.86)]
+        case .onDigital:
+            return [Color(red: 0.23, green: 0.93, blue: 0.50), Color(red: 0.00, green: 0.48, blue: 0.25)]
+        case .teb:
+            return [Color(red: 0.68, green: 0.97, blue: 0.72), Color(red: 0.02, green: 0.52, blue: 0.24)]
+        case .vakif:
+            return [Color(red: 1.00, green: 0.78, blue: 0.22), Color(red: 0.90, green: 0.44, blue: 0.03)]
+        case .yapiKredi:
+            return [Color(red: 0.82, green: 0.86, blue: 0.89), Color(red: 0.02, green: 0.45, blue: 0.92)]
+        case .qnb:
+            return [Color(red: 0.78, green: 0.46, blue: 0.88), Color(red: 0.36, green: 0.12, blue: 0.56)]
+        case .deniz:
+            return [Color(red: 0.45, green: 0.75, blue: 1.00), Color(red: 0.06, green: 0.36, blue: 0.78)]
+        case .kuveyt:
+            return [Color(red: 0.38, green: 0.90, blue: 0.54), Color(red: 0.02, green: 0.42, blue: 0.26)]
+        case .ziraat:
+            return [Color(red: 1.00, green: 0.38, blue: 0.42), Color(red: 0.70, green: 0.02, blue: 0.08)]
+        case .monogram:
+            return [.white.opacity(0.96), accent.opacity(0.75)]
+        }
     }
 
     private func initials(for name: String) -> String {
