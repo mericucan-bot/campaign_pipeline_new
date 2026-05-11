@@ -79,6 +79,11 @@ final class AuthStateStore {
         }
     }
 
+    func applyPremiumPurchasePreview() {
+        plan = .premium
+        authMessage = "Premium aktif edildi. Kalıcı abonelik doğrulaması yayın adımında Supabase/RevenueCat ile bağlanacak."
+    }
+
     func signIn(email: String, password: String) async {
         await authenticate(email: email, password: password, isSignUp: false)
     }

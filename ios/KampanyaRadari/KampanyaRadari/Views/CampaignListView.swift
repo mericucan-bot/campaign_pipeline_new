@@ -1374,7 +1374,7 @@ private struct AccountView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isShowingPaywall) {
-            PaywallPreviewSheet(plan: authState.plan)
+            PaywallPreviewSheet(authState: authState)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -1544,7 +1544,7 @@ private struct AccountStatusRow: View {
 }
 
 private struct PaywallPreviewSheet: View {
-    let plan: SubscriptionPlan
+    @Bindable var authState: AuthStateStore
     @Environment(\.dismiss) private var dismiss
     @State private var purchaseService = PremiumPurchaseService()
 
@@ -1586,7 +1586,15 @@ private struct PaywallPreviewSheet: View {
 
                     VStack(spacing: 12) {
                         ForEach(purchaseService.offerings) { offering in
-                            PremiumOfferingCard(offering: offering)
+                            Button {
+                                purchaseService.select(offering)
+                            } label: {
+                                PremiumOfferingCard(
+                                    offering: offering,
+                                    isSelected: purchaseService.selectedProductID == offering.id
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
 
@@ -1594,7 +1602,7 @@ private struct PaywallPreviewSheet: View {
                         Text("Mevcut plan")
                             .font(.caption.weight(.bold))
                             .foregroundStyle(.white.opacity(0.62))
-                        Text(plan.displayName)
+                        Text(authState.plan.displayName)
                             .font(.title2.weight(.bold))
                             .foregroundStyle(AppTheme.dashboardGreen)
                     }
@@ -1615,8 +1623,20 @@ private struct PaywallPreviewSheet: View {
 
                     VStack(spacing: 12) {
                         Button {
+                            Task {
+                                let didPurchase = await purchaseService.purchaseSelectedOffering()
+                                if didPurchase {
+                                    authState.applyPremiumPurchasePreview()
+                                }
+                            }
                         } label: {
-                            Text(purchaseService.hasStoreProducts ? "Premium'a geç" : "App Store ürünü bekleniyor")
+                            HStack(spacing: 10) {
+                                if purchaseService.isLoading {
+                                    ProgressView()
+                                        .tint(AppTheme.nearBlack)
+                                }
+                                Text(purchaseService.hasStoreProducts ? "Premium'a geç" : "App Store ürünü bekleniyor")
+                            }
                                 .font(.headline.weight(.bold))
                                 .foregroundStyle(AppTheme.nearBlack)
                                 .frame(maxWidth: .infinity)
@@ -1628,7 +1648,10 @@ private struct PaywallPreviewSheet: View {
 
                         Button {
                             Task {
-                                await purchaseService.restorePurchases()
+                                let didRestore = await purchaseService.restorePurchases()
+                                if didRestore {
+                                    authState.applyPremiumPurchasePreview()
+                                }
                             }
                         } label: {
                             Text("Satın alımları geri yükle")
@@ -1648,6 +1671,7 @@ private struct PaywallPreviewSheet: View {
 
 private struct PremiumOfferingCard: View {
     let offering: PremiumOffering
+    let isSelected: Bool
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
@@ -1688,13 +1712,18 @@ private struct PremiumOfferingCard: View {
                 Text(offering.isStoreProductReady ? "Hazır" : "Kurulum bekliyor")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(offering.isStoreProductReady ? AppTheme.dashboardGreen : .white.opacity(0.48))
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(AppTheme.dashboardGreen)
+                }
             }
         }
         .padding(16)
-        .background(.white.opacity(0.08))
+        .background(isSelected ? AppTheme.dashboardGreen.opacity(0.13) : .white.opacity(0.08))
         .overlay(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(offering.isBestValue ? AppTheme.dashboardGreen.opacity(0.42) : .white.opacity(0.08), lineWidth: 1)
+                .stroke(isSelected ? AppTheme.dashboardGreen.opacity(0.72) : (offering.isBestValue ? AppTheme.dashboardGreen.opacity(0.42) : .white.opacity(0.08)), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }

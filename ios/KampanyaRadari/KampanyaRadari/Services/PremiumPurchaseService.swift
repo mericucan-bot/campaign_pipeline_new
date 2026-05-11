@@ -45,6 +45,7 @@ final class PremiumPurchaseService {
     private(set) var offerings: [PremiumOffering] = PremiumPurchaseService.fallbackOfferings
     private(set) var isLoading = false
     private(set) var statusMessage: String?
+    var selectedProductID: PremiumProductID = .yearly
 
     private var storeProducts: [PremiumProductID: Product] = [:]
 
@@ -86,8 +87,68 @@ final class PremiumPurchaseService {
         }
     }
 
-    func restorePurchases() async {
-        statusMessage = "Geri yükleme App Store ürünleri tanımlandıktan sonra aktif olacak."
+    func select(_ offering: PremiumOffering) {
+        selectedProductID = offering.id
+    }
+
+    func purchaseSelectedOffering() async -> Bool {
+        guard let product = storeProducts[selectedProductID] ?? storeProducts.values.first else {
+            statusMessage = "App Store ürünü henüz hazır değil. Ürünler App Store Connect'te açılınca satın alma test edilecek."
+            return false
+        }
+
+        isLoading = true
+        statusMessage = nil
+        defer { isLoading = false }
+
+        do {
+            let result = try await product.purchase()
+
+            switch result {
+            case .success(let verification):
+                let transaction = try checkVerified(verification)
+                await transaction.finish()
+                statusMessage = "Satın alma başarılı. Premium hakların bu oturumda açıldı."
+                return true
+            case .userCancelled:
+                statusMessage = "Satın alma iptal edildi."
+                return false
+            case .pending:
+                statusMessage = "Satın alma beklemede. App Store onayı tamamlanınca tekrar kontrol edilecek."
+                return false
+            @unknown default:
+                statusMessage = "Satın alma sonucu beklenmeyen bir durum döndürdü."
+                return false
+            }
+        } catch {
+            statusMessage = "Satın alma tamamlanamadı: \(readableMessage(from: error))"
+            return false
+        }
+    }
+
+    func restorePurchases() async -> Bool {
+        guard hasStoreProducts else {
+            statusMessage = "Geri yükleme App Store ürünleri tanımlandıktan sonra aktif olacak."
+            return false
+        }
+
+        isLoading = true
+        statusMessage = nil
+        defer { isLoading = false }
+
+        do {
+            try await AppStore.sync()
+            let activeIDs = await activePremiumProductIDs()
+            if activeIDs.isEmpty {
+                statusMessage = "Geri yüklenecek aktif Premium abonelik bulunamadı."
+                return false
+            }
+            statusMessage = "Satın alma geri yüklendi. Premium hakların bu oturumda açıldı."
+            return true
+        } catch {
+            statusMessage = "Geri yükleme tamamlanamadı: \(readableMessage(from: error))"
+            return false
+        }
     }
 
     private static var fallbackOfferings: [PremiumOffering] {
@@ -100,6 +161,42 @@ final class PremiumPurchaseService {
                 isBestValue: id == .yearly,
                 isStoreProductReady: false
             )
+        }
+    }
+
+    private func activePremiumProductIDs() async -> Set<PremiumProductID> {
+        var ids = Set<PremiumProductID>()
+        for await result in Transaction.currentEntitlements {
+            guard let transaction = try? checkVerified(result),
+                  let productID = PremiumProductID(rawValue: transaction.productID) else {
+                continue
+            }
+            ids.insert(productID)
+        }
+        return ids
+    }
+
+    private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
+        switch result {
+        case .verified(let value):
+            return value
+        case .unverified:
+            throw PremiumPurchaseError.unverifiedTransaction
+        }
+    }
+
+    private func readableMessage(from error: Error) -> String {
+        (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+}
+
+private enum PremiumPurchaseError: LocalizedError {
+    case unverifiedTransaction
+
+    var errorDescription: String? {
+        switch self {
+        case .unverifiedTransaction:
+            return "App Store işlemi doğrulanamadı."
         }
     }
 }

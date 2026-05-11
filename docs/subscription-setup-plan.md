@@ -65,6 +65,8 @@ Mevcut iOS kodunda:
 - `PremiumProductID` aylik/yillik urun ID'lerini tutar.
 - `PremiumPurchaseService` StoreKit urunlerini yuklemeye hazirdir.
 - Urunler App Store Connect'te acilmadigi surece satin alma baslatilmaz.
+- Urunler App Store Connect'te acilinca paywall uzerinden plan secimi, StoreKit satin alma ve satin alma geri yukleme akisi test edilebilir.
+- Satin alma basarili olursa uygulama oturumunda Premium haklari acilir; kalici premium yetkisi yayin adiminda Supabase/RevenueCat dogrulamasina baglanacak.
 - `EntitlementService` Free planda 1 aktif hatirlatici, Premium/Trial planda sinirsiz hatirlatici kuralini uygular.
 - `UserProfileService` Supabase profilinden etkili plan durumunu okur.
 
@@ -124,7 +126,8 @@ Onerilen yol: Android hedefi net oldugu icin RevenueCat'e hazir mimariyi koru; A
 2. TestFlight build yukle.
 3. StoreKit urunlerinin uygulamada gorundugunu dogrula.
 4. Sandbox satin alma testi yap.
-5. Supabase profil guncelleme yolunu sec: manuel test, backend endpoint veya RevenueCat webhook.
-6. Premium haklarinin hesaba bagli kalici acildigini dogrula.
-7. Geri yukleme ve iptal senaryolarini test et.
-8. Canli surumde satin alma butonunu aktif et.
+5. Basarili sandbox satin almadan sonra uygulama icinde Premium haklarinin acildigini dogrula.
+6. Supabase profil guncelleme yolunu sec: manuel test, backend endpoint veya RevenueCat webhook.
+7. Premium haklarinin hesaba bagli kalici acildigini dogrula.
+8. Geri yukleme ve iptal senaryolarini test et.
+9. Canli surumde satin alma butonunu aktif et.
