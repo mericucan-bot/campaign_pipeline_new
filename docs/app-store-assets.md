@@ -31,7 +31,42 @@ Hazirlanacak dosyalar:
 
 Not: `AppIcon.appiconset/Contents.json` su an ikon yuvalarini iceriyor, fakat PNG dosyalari henuz bagli degil. Ikon final tasarimi uretildiginde bu dosya adlariyla asset catalog'a baglanacak.
 
-## 2. Ekran Goruntusu Seti
+## 2. Pictures Referanslari
+
+`pictures/` klasorundeki ornekler App Store gorsel dili icin referans olarak kullanilacak. Bu dosyalar birebir final varlik olmak zorunda degil; tasarim yonu, renk, kompozisyon ve pazarlama dili icin kaynak kabul edilecek.
+
+Referans kullanimi:
+
+- `pictures/ChatGPT Image May 11, 2026, 03_59_58 AM.png`
+  - Ana App Store tanitim paketi referansi.
+  - Ikon, kucuk ikon varyasyonlari ve dortlu screenshot sunum ritmi icin en guclu kaynak.
+  - Final screenshot setinde koyu yesil/siyah zemin, mint vurgu ve kisa fayda basliklari bu dosyadan ilham alacak.
+
+- `pictures/ChatGPT Image May 11, 2026, 03_59_23 AM.png`
+  - Kampanya liste ekrani referansi.
+  - Neon kenarlikli koyu kart, banka seridi, skor alani ve "Detaya Git" aksiyonu icin hedef tasarim dili.
+  - Gercek uygulamadaki liste kartlari daha okunabilir kalacak; App Store gorsellerinde bu referansin daha parlak/pazarlama odakli versiyonu kullanilabilir.
+
+- `pictures/ChatGPT Image May 11, 2026, 03_59_35 AM.png`
+  - Ikon konsepti referansi.
+  - Radar + firsat/para sembolu fikri iyi; ancak final App Store ikonunda uzun yazi kullanilmamali.
+  - Final ikon bu fikrin sade, yazisiz ve kucuk boyutta taninabilir versiyonu olmali.
+
+- `pictures/ChatGPT Image May 11, 2026, 03_55_23 AM.png`
+  - Banka renk ve marka tonu referansi.
+  - Gercek banka logolari birebir kullanilmadan, renk ailesi ve kart seridi karakteri icin yol gosterici olabilir.
+
+- `pictures/ChatGPT Image May 11, 2026, 03_57_06 AM.png`
+  - Banka seritleri ve kart varyasyonlari referansi.
+  - Uygulamadaki kampanya kartlarinda sol banka seridi, monogram ve banka adi hiyerarsisi icin kullanilabilir.
+
+Uyari:
+
+- App Store gorsellerinde ve uygulama icinde banka logolari/markalari birebir kullanilmadan once marka ve kullanim haklari ayrica degerlendirilmeli.
+- Guvenli ilk surum yaklasimi: banka rengi + banka adi + sade monogram kullanmak.
+- App Store screenshotlari gercek uygulama ekranlarindan uretilecek; referans gorseller sadece kompozisyon ve tasarim rehberi olarak kullanilacak.
+
+## 3. Ekran Goruntusu Seti
 
 App Store icin ilk set iPhone dikey ekran goruntuleriyle hazirlanacak. Gorseller gercek veriyi gosterebilir ama kisisel e-posta, hesap bilgisi veya gizli anahtar gostermemeli.
 
@@ -51,7 +86,7 @@ Onerilen ekranlar:
 5. `05-reminder.png` - Puan harcama hatirlaticisi.
 6. `06-profile-premium.png` - Hesap, plan ve premium alani.
 
-## 3. App Store Metin Bindirmesi
+## 4. App Store Metin Bindirmesi
 
 Ilk surumde sade ekran goruntusu tercih edilecek. Sonra gerekirse App Store icin gorsel uzerine kisa basliklar eklenebilir.
 
@@ -62,7 +97,7 @@ Olası basliklar:
 - "Puanlarini kacirmamak icin hatirlatici kur"
 - "Favorilerini ve kazancini takip et"
 
-## 4. Cekim Kontrol Listesi
+## 5. Cekim Kontrol Listesi
 
 - Uygulama son `dev-experiments` koduyla build edildi.
 - Test kullanicisi veya misafir mod acildi.
