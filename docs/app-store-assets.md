@@ -23,13 +23,11 @@ Tasarim yonu:
 - Mint yesili vurgu rengi kullanilsin.
 - Ikon 40x40 gibi kucuk boyutta da taninabilir kalmali.
 
-Hazirlanacak dosyalar:
+Mevcut bagli dosya:
 
-- `ios/KampanyaRadari/KampanyaRadari/Assets.xcassets/AppIcon.appiconset/AppIcon-Light.png`
-- `ios/KampanyaRadari/KampanyaRadari/Assets.xcassets/AppIcon.appiconset/AppIcon-Dark.png`
-- `ios/KampanyaRadari/KampanyaRadari/Assets.xcassets/AppIcon.appiconset/AppIcon-Tinted.png`
+- `ios/KampanyaRadari/KampanyaRadari/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png`
 
-Not: `AppIcon.appiconset/Contents.json` su an ikon yuvalarini iceriyor, fakat PNG dosyalari henuz bagli degil. Ikon final tasarimi uretildiginde bu dosya adlariyla asset catalog'a baglanacak.
+Not: Ikon `pictures/ChatGPT Image May 11, 2026, 03_59_35 AM.png` referansindan Xcode asset catalog'a baglandi. Dosya `1024x1024` ve alpha kanali olmadan dogrulandi. App Store'a gondermeden once bu ikon son kez kucuk boyutta okunabilirlik ve marka guvenligi acisindan kontrol edilecek.
 
 ## 2. Pictures Referanslari
 
