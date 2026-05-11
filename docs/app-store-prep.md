@@ -20,6 +20,7 @@
 - TestFlight iç test grubu
 - Abonelik ürünleri
 - Listeleme metinleri için kaynak: `docs/app-store-listing-draft.md`
+- App Store ikon ve ekran görüntüsü planı için kaynak: `docs/app-store-assets.md`
 
 ## Planlanan Abonelik Ürünleri
 
@@ -53,8 +54,8 @@ Fiyatlar App Store Connect'te belirlenecek. Ürünler açılmadan iOS uygulamas�
 
 - Destek e-posta adresi.
 - GitHub Pages yayını açıldıktan sonra URL'lerin canlıda kontrol edilmesi.
-- 1024x1024 App Store ikonu.
-- Ekran görüntüsü setleri.
+- 1024x1024 App Store ikonunun final PNG dosyaları üretilecek ve `AppIcon.appiconset` içine bağlanacak.
+- Ekran görüntüsü setleri `docs/app-store-assets.md` planına göre çekilecek.
 - Abonelik fiyatları.
 - RevenueCat mi doğrudan StoreKit 2 mi kullanılacağı.
 - Google ve Apple ile girişin ilk sürüme girip girmeyeceği.
