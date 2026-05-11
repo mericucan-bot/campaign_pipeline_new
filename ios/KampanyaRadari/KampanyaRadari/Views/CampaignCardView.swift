@@ -101,11 +101,8 @@ struct CampaignCardView: View {
         VStack(spacing: 10) {
             Spacer()
 
-            Text(bankInitials)
-                .font(bankMarkFont)
-                .foregroundStyle(.white.opacity(0.92))
-                .minimumScaleFactor(0.45)
-                .lineLimit(1)
+            BankMarkView(kind: bankMarkKind, accent: accent)
+                .frame(width: 54, height: 46)
 
             Text(campaign.displayBank)
                 .font(.caption.weight(.bold))
@@ -124,16 +121,6 @@ struct CampaignCardView: View {
                 endPoint: .bottomTrailing
             )
         }
-    }
-
-    private var bankInitials: String {
-        campaign.displayBank
-            .split(separator: " ")
-            .prefix(2)
-            .compactMap(\.first)
-            .map { String($0) }
-            .joined()
-            .uppercased()
     }
 
     private var accent: Color {
@@ -160,15 +147,23 @@ struct CampaignCardView: View {
             .lowercased()
     }
 
-    private var bankMarkFont: Font {
+    private var bankMarkKind: BankMarkKind {
         let bank = normalizedBankName
-        if bank.contains("qnb") || bank.contains("paraf") || bank.contains("world") {
-            return .system(size: 22, weight: .black, design: .rounded)
-        }
-        if bank.contains("axess") || bank.contains("maximum") {
-            return .system(size: 30, weight: .black, design: .rounded)
-        }
-        return .system(size: 28, weight: .black, design: .rounded)
+        if bank.contains("axess") || bank.contains("akbank") { return .axess }
+        if bank.contains("maximum") || bank.contains("is bankasi") { return .maximum }
+        if bank.contains("garanti") { return .garanti }
+        if bank.contains("paraf") { return .paraf }
+        if bank.contains("saglam") || bank.contains("sağlam") { return .saglam }
+        if bank.contains("n kolay") || bank.contains("nkolay") { return .nKolay }
+        if bank.contains(" on ") || bank == "on" || bank.contains("on kart") { return .onDigital }
+        if bank.contains("teb") { return .teb }
+        if bank.contains("vakif") { return .vakif }
+        if bank.contains("yapi") || bank.contains("world") { return .yapiKredi }
+        if bank.contains("qnb") { return .qnb }
+        if bank.contains("deniz") { return .deniz }
+        if bank.contains("kuveyt") { return .kuveyt }
+        if bank.contains("ziraat") { return .ziraat }
+        return .monogram(campaign.displayBank)
     }
 
     private var leadingBadgeText: String {
@@ -208,6 +203,183 @@ struct CampaignCardView: View {
     private var dateRangeText: String {
         guard let validTo = campaign.validTo else { return "Tarih kaynakta" }
         return "Son tarih \(validTo.formatted(.dateTime.day().month().year()))"
+    }
+}
+
+private enum BankMarkKind: Equatable {
+    case axess
+    case maximum
+    case garanti
+    case paraf
+    case saglam
+    case nKolay
+    case onDigital
+    case teb
+    case vakif
+    case yapiKredi
+    case qnb
+    case deniz
+    case kuveyt
+    case ziraat
+    case monogram(String)
+}
+
+private struct BankMarkView: View {
+    let kind: BankMarkKind
+    let accent: Color
+
+    var body: some View {
+        ZStack {
+            switch kind {
+            case .axess:
+                Text("axess")
+                    .font(.system(size: 17, weight: .black, design: .rounded))
+                    .italic()
+            case .maximum:
+                Text("M")
+                    .font(.system(size: 40, weight: .black, design: .rounded))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.white, accent.opacity(0.72)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            case .garanti:
+                CloverMark()
+                    .fill(
+                        LinearGradient(
+                            colors: [.white.opacity(0.95), accent.opacity(0.62)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 38, height: 38)
+            case .paraf:
+                Text("Paraf.")
+                    .font(.system(size: 20, weight: .semibold, design: .serif))
+                    .italic()
+            case .saglam:
+                Text("S")
+                    .font(.system(size: 36, weight: .black, design: .rounded))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(.white.opacity(0.45), lineWidth: 2)
+                            .rotationEffect(.degrees(30))
+                            .frame(width: 34, height: 34)
+                    }
+            case .nKolay:
+                Text("N")
+                    .font(.system(size: 40, weight: .black, design: .rounded))
+                    .italic()
+            case .onDigital:
+                ZStack {
+                    Circle()
+                        .trim(from: 0.10, to: 0.92)
+                        .stroke(.white.opacity(0.92), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .rotationEffect(.degrees(18))
+                    Circle()
+                        .fill(.white.opacity(0.90))
+                        .frame(width: 8, height: 8)
+                        .offset(x: 15, y: -15)
+                }
+                .frame(width: 34, height: 34)
+            case .teb:
+                ZStack {
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(.white.opacity(0.92))
+                        .frame(width: 34, height: 34)
+                    HStack(spacing: -2) {
+                        ForEach(0..<4, id: \.self) { index in
+                            Image(systemName: "sparkle")
+                                .font(.system(size: 9, weight: .black))
+                                .foregroundStyle(accent)
+                                .rotationEffect(.degrees(Double(index) * 18))
+                        }
+                    }
+                }
+            case .vakif:
+                Text("V")
+                    .font(.system(size: 39, weight: .black, design: .rounded))
+                    .italic()
+            case .yapiKredi:
+                HStack(spacing: -8) {
+                    LoopMark()
+                    LoopMark()
+                }
+                .frame(width: 42, height: 30)
+            case .qnb:
+                Text("Q")
+                    .font(.system(size: 38, weight: .black, design: .rounded))
+            case .deniz:
+                Text("DB")
+                    .font(.system(size: 25, weight: .black, design: .rounded))
+            case .kuveyt:
+                Text("KT")
+                    .font(.system(size: 24, weight: .black, design: .rounded))
+            case .ziraat:
+                Text("Z")
+                    .font(.system(size: 38, weight: .black, design: .rounded))
+            case .monogram(let name):
+                Text(initials(for: name))
+                    .font(.system(size: 31, weight: .black, design: .rounded))
+                    .minimumScaleFactor(0.55)
+                    .lineLimit(1)
+            }
+        }
+        .foregroundStyle(.white.opacity(0.94))
+        .shadow(color: .black.opacity(0.18), radius: 2, x: 0, y: 1)
+    }
+
+    private func initials(for name: String) -> String {
+        name
+            .split(separator: " ")
+            .prefix(2)
+            .compactMap(\.first)
+            .map { String($0) }
+            .joined()
+            .uppercased()
+    }
+}
+
+private struct CloverMark: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let petalWidth = rect.width * 0.34
+        let petalHeight = rect.height * 0.52
+
+        for index in 0..<5 {
+            let angle = Angle.degrees(Double(index) * 72 - 90).radians
+            let petalCenter = CGPoint(
+                x: center.x + cos(angle) * rect.width * 0.18,
+                y: center.y + sin(angle) * rect.height * 0.18
+            )
+            let petalRect = CGRect(
+                x: petalCenter.x - petalWidth / 2,
+                y: petalCenter.y - petalHeight / 2,
+                width: petalWidth,
+                height: petalHeight
+            )
+            var petal = Path(ellipseIn: petalRect)
+            petal = petal.applying(.init(translationX: -petalCenter.x, y: -petalCenter.y))
+            petal = petal.applying(.init(rotationAngle: angle + .pi / 2))
+            petal = petal.applying(.init(translationX: petalCenter.x, y: petalCenter.y))
+            path.addPath(petal)
+        }
+
+        path.addEllipse(in: CGRect(x: center.x - 3, y: center.y - 3, width: 6, height: 6))
+        return path
+    }
+}
+
+private struct LoopMark: View {
+    var body: some View {
+        Circle()
+            .trim(from: 0.08, to: 0.92)
+            .stroke(.white.opacity(0.92), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+            .rotationEffect(.degrees(35))
+            .frame(width: 27, height: 20)
     }
 }
 
