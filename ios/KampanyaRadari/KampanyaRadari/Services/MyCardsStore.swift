@@ -30,6 +30,7 @@ final class MyCardsStore {
     }
 
     func replace(with newBanks: Set<String>) {
+        guard banks != newBanks else { return }
         banks = newBanks
         save()
     }

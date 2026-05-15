@@ -1807,6 +1807,8 @@ private struct ProfileCardsView: View {
     @Bindable var viewModel: CampaignListViewModel
     let myCards: MyCardsStore
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedBanks: Set<String> = []
+    @State private var didLoadSelection = false
 
     var body: some View {
         ZStack {
@@ -1835,7 +1837,7 @@ private struct ProfileCardsView: View {
                     }
 
                     HStack(spacing: 12) {
-                        ProfileStatCard(title: "Seçili", value: "\(myCards.banks.count)")
+                        ProfileStatCard(title: "Seçili", value: "\(selectedBanks.count)")
                         ProfileStatCard(title: "Banka/kart", value: "\(viewModel.banks.count)")
                     }
 
@@ -1845,9 +1847,9 @@ private struct ProfileCardsView: View {
                                 .font(.title3.weight(.bold))
                                 .foregroundStyle(.white)
                             Spacer()
-                            if !myCards.banks.isEmpty {
+                            if !selectedBanks.isEmpty {
                                 Button("Temizle") {
-                                    myCards.clear()
+                                    selectedBanks.removeAll()
                                 }
                                 .font(.subheadline.weight(.bold))
                                 .foregroundStyle(AppTheme.dashboardGreen)
@@ -1858,9 +1860,9 @@ private struct ProfileCardsView: View {
                             ForEach(viewModel.banks, id: \.self) { bank in
                                 ProfileBankRow(
                                     title: viewModel.label(for: bank),
-                                    isSelected: myCards.contains(bank)
+                                    isSelected: selectedBanks.contains(bank)
                                 ) {
-                                    myCards.toggle(bank)
+                                    toggleLocalSelection(bank)
                                 }
                             }
                         }
@@ -1878,7 +1880,27 @@ private struct ProfileCardsView: View {
                 .padding(.bottom, 30)
             }
         }
+        .onAppear {
+            guard !didLoadSelection else { return }
+            selectedBanks = myCards.banks
+            didLoadSelection = true
+        }
+        .onDisappear {
+            let snapshot = selectedBanks
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 700_000_000)
+                myCards.replace(with: snapshot)
+            }
+        }
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private func toggleLocalSelection(_ bank: String) {
+        if selectedBanks.contains(bank) {
+            selectedBanks.remove(bank)
+        } else {
+            selectedBanks.insert(bank)
+        }
     }
 }
 
