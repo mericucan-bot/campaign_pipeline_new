@@ -16,9 +16,15 @@ final class FavoritesStore {
     }
 
     func toggle(_ campaign: Campaign) {
+        set(campaign, isFavorite: !ids.contains(campaign.id))
+    }
+
+    func set(_ campaign: Campaign, isFavorite: Bool) {
         if ids.contains(campaign.id) {
-            ids.remove(campaign.id)
-        } else {
+            if !isFavorite {
+                ids.remove(campaign.id)
+            }
+        } else if isFavorite {
             ids.insert(campaign.id)
         }
         save()

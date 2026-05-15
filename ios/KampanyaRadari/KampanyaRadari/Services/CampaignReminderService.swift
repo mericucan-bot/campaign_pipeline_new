@@ -5,37 +5,40 @@ enum CampaignReminderService {
     private static let reminderOffsets = [7, 3, 0]
 
     static func syncReminder(for campaign: Campaign, record: CampaignParticipation) {
-        cancelReminders(for: campaign)
+        Task.detached(priority: .utility) {
+            await syncReminderInBackground(for: campaign, record: record)
+        }
+    }
 
+    private static func syncReminderInBackground(for campaign: Campaign, record: CampaignParticipation) async {
+        cancelReminders(for: campaign)
         guard record.didJoin, let expiresAt = record.rewardExpiresAt else { return }
 
-        Task {
-            let granted = await requestPermissionIfNeeded()
-            guard granted else { return }
+        let granted = await requestPermissionIfNeeded()
+        guard granted else { return }
 
-            let center = UNUserNotificationCenter.current()
-            for offset in reminderOffsets {
-                guard let fireDate = Calendar.current.date(byAdding: .day, value: -offset, to: expiresAt),
-                      let notificationDate = Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: fireDate),
-                      notificationDate > Date() else {
-                    continue
-                }
-
-                let content = UNMutableNotificationContent()
-                content.title = "Puan kullanım zamanı"
-                content.body = bodyText(for: campaign, record: record, daysBefore: offset)
-                content.sound = .default
-
-                let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
-                let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-                let request = UNNotificationRequest(
-                    identifier: reminderID(for: campaign, daysBefore: offset),
-                    content: content,
-                    trigger: trigger
-                )
-
-                try? await center.add(request)
+        let center = UNUserNotificationCenter.current()
+        for offset in reminderOffsets {
+            guard let fireDate = Calendar.current.date(byAdding: .day, value: -offset, to: expiresAt),
+                  let notificationDate = Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: fireDate),
+                  notificationDate > Date() else {
+                continue
             }
+
+            let content = UNMutableNotificationContent()
+            content.title = "Puan kullanım zamanı"
+            content.body = bodyText(for: campaign, record: record, daysBefore: offset)
+            content.sound = .default
+
+            let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            let request = UNNotificationRequest(
+                identifier: reminderID(for: campaign, daysBefore: offset),
+                content: content,
+                trigger: trigger
+            )
+
+            try? await center.add(request)
         }
     }
 

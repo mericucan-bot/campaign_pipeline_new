@@ -6,12 +6,16 @@ struct CampaignDetailView: View {
     @Bindable var participation: ParticipationStore
     @Bindable var authState: AuthStateStore
     @State private var record = CampaignParticipation()
+    @State private var originalRecord = CampaignParticipation()
+    @State private var isFavorite = false
+    @State private var originalFavorite = false
     @State private var spentText = ""
     @State private var earnedText = ""
     @State private var rewardExpiresAt = Date()
     @State private var hasRewardReminder = false
     @State private var entitlementPrompt: EntitlementRule?
     @State private var pendingMoneySaveTask: Task<Void, Never>?
+    @State private var pendingCommitTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -61,11 +65,12 @@ struct CampaignDetailView: View {
 
                         HStack {
                             Button {
-                                favorites.toggle(campaign)
+                                isFavorite.toggle()
+                                scheduleCommit(delayNanoseconds: 1_200_000_000)
                             } label: {
                                 Label(
-                                    favorites.contains(campaign) ? "Favorilerden cikar" : "Favoriye ekle",
-                                    systemImage: favorites.contains(campaign) ? "star.fill" : "star"
+                                    isFavorite ? "Favorilerden cikar" : "Favoriye ekle",
+                                    systemImage: isFavorite ? "star.fill" : "star"
                                 )
                                 .font(.subheadline.weight(.bold))
                             }
@@ -94,7 +99,8 @@ struct CampaignDetailView: View {
         }
         .onDisappear {
             pendingMoneySaveTask?.cancel()
-            saveMoneyFields()
+            applyMoneyTextToRecord()
+            scheduleCommit(delayNanoseconds: 450_000_000)
         }
         .navigationTitle("Detay")
         .overlay {
@@ -160,26 +166,24 @@ struct CampaignDetailView: View {
             } else if hasRewardReminder {
                 record.rewardExpiresAt = rewardExpiresAt
             }
-            participation.update(record, for: campaign)
-            CampaignReminderService.syncReminder(for: campaign, record: record)
+            scheduleCommit(delayNanoseconds: 900_000_000)
         }
     }
 
     private func loadParticipation() {
         record = participation.record(for: campaign)
+        originalRecord = record
+        isFavorite = favorites.contains(campaign)
+        originalFavorite = isFavorite
         spentText = record.spentAmount.moneyInputText
         earnedText = record.earnedAmount.moneyInputText
         hasRewardReminder = record.rewardExpiresAt != nil
         rewardExpiresAt = record.rewardExpiresAt ?? defaultRewardExpiryDate
     }
 
-    private func saveMoneyFields() {
+    private func applyMoneyTextToRecord() {
         record.spentAmount = Double(spentText.replacingOccurrences(of: ",", with: ".")) ?? 0
         record.earnedAmount = Double(earnedText.replacingOccurrences(of: ",", with: ".")) ?? 0
-        participation.update(record, for: campaign)
-        if record.hasReminder {
-            CampaignReminderService.syncReminder(for: campaign, record: record)
-        }
     }
 
     private func scheduleMoneySave() {
@@ -187,7 +191,35 @@ struct CampaignDetailView: View {
         pendingMoneySaveTask = Task { @MainActor in
             try? await Task.sleep(nanoseconds: 650_000_000)
             guard !Task.isCancelled else { return }
-            saveMoneyFields()
+            applyMoneyTextToRecord()
+            scheduleCommit(delayNanoseconds: 1_000_000_000)
+        }
+    }
+
+    private func scheduleCommit(delayNanoseconds: UInt64) {
+        pendingCommitTask?.cancel()
+        let campaign = campaign
+        let favorites = favorites
+        let participation = participation
+        let favoriteSnapshot = isFavorite
+        let originalFavoriteSnapshot = originalFavorite
+        let recordSnapshot = record
+        let originalRecordSnapshot = originalRecord
+
+        pendingCommitTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: delayNanoseconds)
+            guard !Task.isCancelled else { return }
+
+            if favoriteSnapshot != originalFavoriteSnapshot {
+                favorites.set(campaign, isFavorite: favoriteSnapshot)
+                originalFavorite = favoriteSnapshot
+            }
+
+            if recordSnapshot != originalRecordSnapshot {
+                participation.update(recordSnapshot, for: campaign)
+                CampaignReminderService.syncReminder(for: campaign, record: recordSnapshot)
+                originalRecord = recordSnapshot
+            }
         }
     }
 
@@ -251,8 +283,7 @@ struct CampaignDetailView: View {
             } else {
                 record.rewardExpiresAt = nil
             }
-            participation.update(record, for: campaign)
-            CampaignReminderService.syncReminder(for: campaign, record: record)
+            scheduleCommit(delayNanoseconds: 900_000_000)
         }
     }
 
@@ -262,8 +293,7 @@ struct CampaignDetailView: View {
         } set: { newValue in
             rewardExpiresAt = newValue
             record.rewardExpiresAt = newValue
-            participation.update(record, for: campaign)
-            CampaignReminderService.syncReminder(for: campaign, record: record)
+            scheduleCommit(delayNanoseconds: 900_000_000)
         }
     }
 
