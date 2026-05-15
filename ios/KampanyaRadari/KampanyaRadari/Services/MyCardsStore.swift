@@ -4,6 +4,7 @@ import Observation
 @Observable
 final class MyCardsStore {
     private let key = "myCardBanks"
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
     private(set) var banks: Set<String> = []
 
     init() {
@@ -34,6 +35,12 @@ final class MyCardsStore {
     }
 
     private func save() {
-        UserDefaults.standard.set(Array(banks), forKey: key)
+        let key = key
+        let snapshot = Array(banks)
+        saveTask?.cancel()
+        saveTask = Task.detached(priority: .utility) {
+            guard !Task.isCancelled else { return }
+            UserDefaults.standard.set(snapshot, forKey: key)
+        }
     }
 }

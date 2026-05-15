@@ -4,6 +4,7 @@ import Observation
 @Observable
 final class FavoritesStore {
     private let key = "favoriteCampaignIDs"
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
     private(set) var ids: Set<String> = []
 
     init() {
@@ -29,6 +30,12 @@ final class FavoritesStore {
     }
 
     private func save() {
-        UserDefaults.standard.set(Array(ids), forKey: key)
+        let key = key
+        let snapshot = Array(ids)
+        saveTask?.cancel()
+        saveTask = Task.detached(priority: .utility) {
+            guard !Task.isCancelled else { return }
+            UserDefaults.standard.set(snapshot, forKey: key)
+        }
     }
 }

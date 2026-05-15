@@ -118,8 +118,10 @@ final class AuthStateStore {
         do {
             let newSession = try await authService.signInWithApple(idToken: idToken, nonce: nonce)
             apply(session: newSession)
-            await refreshProfile()
             authMessage = "Apple ile giriş başarılı."
+            Task {
+                await refreshProfile()
+            }
         } catch {
             authMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
@@ -194,8 +196,10 @@ final class AuthStateStore {
                 ? try await authService.signUp(email: cleanedEmail, password: password)
                 : try await authService.signIn(email: cleanedEmail, password: password)
             apply(session: newSession)
-            await refreshProfile()
             authMessage = isSignUp ? "Hesap oluşturuldu ve giriş yapıldı." : "Giriş başarılı."
+            Task {
+                await refreshProfile()
+            }
         } catch {
             authMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }

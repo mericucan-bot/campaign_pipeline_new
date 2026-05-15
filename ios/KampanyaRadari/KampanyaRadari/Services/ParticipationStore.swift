@@ -15,6 +15,7 @@ struct CampaignParticipation: Codable, Equatable {
 @Observable
 final class ParticipationStore {
     private let key = "campaignParticipations"
+    @ObservationIgnored private var saveTask: Task<Void, Never>?
     private(set) var records: [String: CampaignParticipation] = [:]
 
     init() {
@@ -70,7 +71,12 @@ final class ParticipationStore {
     }
 
     private func save() {
-        guard let data = try? JSONEncoder().encode(records) else { return }
-        UserDefaults.standard.set(data, forKey: key)
+        let key = key
+        let snapshot = records
+        saveTask?.cancel()
+        saveTask = Task.detached(priority: .utility) {
+            guard !Task.isCancelled, let data = try? JSONEncoder().encode(snapshot) else { return }
+            UserDefaults.standard.set(data, forKey: key)
+        }
     }
 }

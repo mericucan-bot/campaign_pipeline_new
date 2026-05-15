@@ -1068,9 +1068,11 @@ private struct AuthOptionsSheet: View {
                                 await authState.signIn(email: email, password: password)
                             }
                             if authState.isAuthenticated {
-                                await syncAfterLogin()
                                 dismiss()
                                 enter()
+                                Task {
+                                    await syncAfterLogin()
+                                }
                             }
                         }
                     } label: {
@@ -1169,9 +1171,11 @@ private struct AuthOptionsSheet: View {
             Task {
                 await authState.signInWithApple(idToken: idToken, nonce: nonce)
                 if authState.isAuthenticated {
-                    await syncAfterLogin()
                     dismiss()
                     enter()
+                    Task {
+                        await syncAfterLogin()
+                    }
                 }
             }
         case .failure(let error):
