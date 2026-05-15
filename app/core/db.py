@@ -443,15 +443,27 @@ def list_campaigns_local(bank=None, search=None, active_only=False):
 
 
 def list_campaigns_supabase(bank=None, search=None, active_only=False):
-    query = supabase.table("campaigns").select("*").order("last_seen", desc=True)
-    if active_only:
-        query = query.eq("is_active", True)
-    if bank:
-        query = query.eq("bank", bank)
-    result = query.execute()
+    page_size = 1000
+    rows = []
+    offset = 0
+
+    while True:
+        query = supabase.table("campaigns").select("*").order("last_seen", desc=True)
+        if active_only:
+            query = query.eq("is_active", True)
+        if bank:
+            query = query.eq("bank", bank)
+
+        result = query.range(offset, offset + page_size - 1).execute()
+        page = result.data or []
+        rows.extend(page)
+        if len(page) < page_size:
+            break
+        offset += page_size
+
     data = [
         row
-        for row in (result.data or [])
+        for row in rows
         if row.get("bank") not in EXCLUDED_BANKS
         and not any(part in (row.get("url") or row.get("external_id") or "") for part in EXCLUDED_URL_PARTS)
     ]

@@ -7,6 +7,7 @@ final class AuthStateStore {
     private let displayNameKey = "authDisplayName"
     private let isGuestKey = "authIsGuest"
     private let sessionKey = "authSession"
+    private let refreshLeeway: TimeInterval = 5 * 60
     private let authService = SupabaseAuthService()
     private let profileService = UserProfileService()
 
@@ -30,7 +31,7 @@ final class AuthStateStore {
 
         if savedSession != nil {
             Task {
-                await refreshProfile()
+                await resumeSavedSession()
             }
         }
     }
@@ -82,6 +83,24 @@ final class AuthStateStore {
     func applyPremiumPurchasePreview() {
         plan = .premium
         authMessage = "Premium aktif edildi. Kalıcı abonelik doğrulaması yayın adımında Supabase/RevenueCat ile bağlanacak."
+    }
+
+    func resumeSavedSession() async {
+        guard let session else {
+            plan = .free
+            return
+        }
+
+        if shouldRefresh(session), let refreshToken = session.refreshToken {
+            do {
+                let refreshed = try await authService.refreshSession(refreshToken: refreshToken)
+                apply(session: refreshed)
+            } catch {
+                authMessage = "Oturum yenilenemedi. Bağlantı düzelince tekrar denenecek veya yeniden giriş yapabilirsin."
+            }
+        }
+
+        await refreshProfile()
     }
 
     func signIn(email: String, password: String) async {
@@ -195,6 +214,11 @@ final class AuthStateStore {
         displayName = newSession.user.email ?? "Kullanıcı"
         isGuest = false
         save()
+    }
+
+    private func shouldRefresh(_ session: AuthSession) -> Bool {
+        guard let expiresAt = session.expiresAt else { return false }
+        return expiresAt.timeIntervalSinceNow < refreshLeeway
     }
 
     private func save() {

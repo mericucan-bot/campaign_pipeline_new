@@ -69,6 +69,7 @@
 - iOS hesap ekranina gizlilik politikasi ve destek linkleri eklendi; App Store listeleme metni icin `docs/app-store-listing-draft.md` taslagi hazirlandi.
 - TestFlight ve gercek cihaz kontrol listesi `docs/testflight-checklist.md` dosyasina ayrildi.
 - App Store Connect'te uygulama kaydi, abonelik urunleri, sandbox tester ve TestFlight upload adimlari `docs/app-store-connect-guide.md` dosyasina ayrildi.
+- App Store yayin oncesi ek kontrol maddeleri `appstore-launch-checklist.md` dosyasinda tutulur; bu liste Apple Sign In, token refresh, kalici premium dogrulamasi, RLS denetimi, ekran goruntuleri ve review notlari icin canli kontrol listesi olarak kullanilir.
 - Apple Developer hesabi, bundle identifier, signing certificate/provisioning ve App Store Connect kaydi yayin oncesi tamamlanir.
 - Yerel test sonrasi TestFlight ic test, sonra sinirli dis test, en son App Store incelemesi hedeflenir.
 - Bu proje SwiftUI native iOS oldugu icin Expo/EAS yerine Xcode archive ve App Store Connect dagitim akisi kullanilir.
@@ -78,6 +79,7 @@
 1. Supabase auth, RLS ve kullanici veri senkronunu tamamla.
 2. Ucretsiz/premium limit kurallarini uygulama icinde merkezi bir entitlement katmanina bagla.
 3. RevenueCat veya StoreKit 2 ile abonelik/paywall akisini ekle. StoreKit hazirlik katmani eklendi; siradaki canli adim App Store Connect'te urunleri acmak veya RevenueCat projesi baglamak.
-4. Privacy policy, destek sayfasi, ikon, ekran goruntuleri ve onboarding metinlerini hazirla.
-5. TestFlight ile gercek cihazda bildirim, hesap, senkron, abonelik ve veri yenileme testlerini yap.
-6. App Store Connect uzerinden incelemeye gonder.
+4. Apple Sign In entegrasyonunu tamamla; e-posta/sifre disindaki sosyal girisler acilmadan Apple girisi review riskini azaltacak sekilde hazir olmalı.
+5. Privacy policy, destek sayfasi, ikon, ekran goruntuleri ve onboarding metinlerini hazirla.
+6. TestFlight ile gercek cihazda bildirim, hesap, senkron, abonelik ve veri yenileme testlerini yap.
+7. App Store Connect uzerinden incelemeye gonder.

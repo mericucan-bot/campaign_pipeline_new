@@ -20,6 +20,7 @@ struct AuthSession: Codable, Equatable {
         case accessToken = "access_token"
         case refreshToken = "refresh_token"
         case expiresIn = "expires_in"
+        case expiresAt = "expires_at"
         case user
     }
 
@@ -36,7 +37,9 @@ struct AuthSession: Codable, Equatable {
         refreshToken = try container.decodeIfPresent(String.self, forKey: .refreshToken)
         user = try container.decode(AuthUser.self, forKey: .user)
 
-        if let expiresIn = try container.decodeIfPresent(Double.self, forKey: .expiresIn) {
+        if let absoluteTimestamp = try container.decodeIfPresent(Double.self, forKey: .expiresAt) {
+            expiresAt = Date(timeIntervalSince1970: absoluteTimestamp)
+        } else if let expiresIn = try container.decodeIfPresent(Double.self, forKey: .expiresIn) {
             expiresAt = Date().addingTimeInterval(expiresIn)
         } else {
             expiresAt = nil
@@ -47,7 +50,7 @@ struct AuthSession: Codable, Equatable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(accessToken, forKey: .accessToken)
         try container.encodeIfPresent(refreshToken, forKey: .refreshToken)
-        try container.encodeIfPresent(expiresAt.map { max(0, $0.timeIntervalSinceNow) }, forKey: .expiresIn)
+        try container.encodeIfPresent(expiresAt?.timeIntervalSince1970, forKey: .expiresAt)
         try container.encode(user, forKey: .user)
     }
 }
@@ -93,6 +96,14 @@ struct SupabaseAuthService {
         try await requestSession(
             path: "auth/v1/signup",
             body: ["email": email, "password": password]
+        )
+    }
+
+    func refreshSession(refreshToken: String) async throws -> AuthSession {
+        try await requestSession(
+            path: "auth/v1/token",
+            queryItems: [URLQueryItem(name: "grant_type", value: "refresh_token")],
+            body: ["refresh_token": refreshToken]
         )
     }
 

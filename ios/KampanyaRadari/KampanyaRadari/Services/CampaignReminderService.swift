@@ -16,7 +16,8 @@ enum CampaignReminderService {
             let center = UNUserNotificationCenter.current()
             for offset in reminderOffsets {
                 guard let fireDate = Calendar.current.date(byAdding: .day, value: -offset, to: expiresAt),
-                      fireDate > Date() else {
+                      let notificationDate = Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: fireDate),
+                      notificationDate > Date() else {
                     continue
                 }
 
@@ -25,7 +26,7 @@ enum CampaignReminderService {
                 content.body = bodyText(for: campaign, record: record, daysBefore: offset)
                 content.sound = .default
 
-                let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+                let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: notificationDate)
                 let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
                 let request = UNNotificationRequest(
                     identifier: reminderID(for: campaign, daysBefore: offset),

@@ -218,6 +218,35 @@ private struct CampaignParticipationRow: Codable {
         case reminderEnabled = "reminder_enabled"
     }
 
+    init(
+        userID: String,
+        campaignID: String,
+        didJoin: Bool,
+        spentAmount: Double,
+        earnedAmount: Double,
+        rewardExpiresAt: String?,
+        reminderEnabled: Bool
+    ) {
+        self.userID = userID
+        self.campaignID = campaignID
+        self.didJoin = didJoin
+        self.spentAmount = spentAmount
+        self.earnedAmount = earnedAmount
+        self.rewardExpiresAt = rewardExpiresAt
+        self.reminderEnabled = reminderEnabled
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        userID = try container.decode(String.self, forKey: .userID)
+        campaignID = try container.decode(String.self, forKey: .campaignID)
+        didJoin = try container.decodeIfPresent(Bool.self, forKey: .didJoin) ?? false
+        spentAmount = try container.decodeIfPresent(Double.self, forKey: .spentAmount) ?? 0
+        earnedAmount = try container.decodeIfPresent(Double.self, forKey: .earnedAmount) ?? 0
+        rewardExpiresAt = try container.decodeIfPresent(String.self, forKey: .rewardExpiresAt)
+        reminderEnabled = try container.decodeIfPresent(Bool.self, forKey: .reminderEnabled) ?? false
+    }
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(userID, forKey: .userID)
