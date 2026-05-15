@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gizlilik Politikası | Kampanya Radarı</title>
+  <style>
+    :root { color-scheme: dark; --bg:#061713; --panel:#102923; --green:#61d0ad; --text:#f7fbf8; --muted:#b8c7c0; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+    main { width:min(900px, calc(100% - 40px)); margin:0 auto; padding:56px 0; }
+    h1 { font-size:clamp(34px,7vw,64px); line-height:1; margin:0 0 12px; }
+    h2 { margin:0 0 10px; font-size:22px; }
+    p, li { color:var(--muted); font-size:16px; }
+    .eyebrow { color:var(--green); font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+    section { background:var(--panel); border:1px solid rgba(97,208,173,.24); border-radius:24px; padding:24px; margin:18px 0; }
+    a { color:var(--green); }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Kampanya Radarı</p>
+    <h1>Gizlilik Politikası</h1>
+    <p>Son güncelleme: 16 Mayıs 2026. Kampanya Radarı, banka ve kart kampanyalarını takip etmeyi kolaylaştıran bilgilendirme uygulamasıdır.</p>
+
+    <section>
+      <h2>Toplanan veriler</h2>
+      <ul>
+        <li>E-posta adresi ve Apple ile giriş bilgisi, hesap oluşturma ve oturum yönetimi için Supabase Auth üzerinden işlenir.</li>
+        <li>Favoriler, Kartlarım tercihleri, kampanya katılım kayıtları, harcadım/kazandım tutarları ve hatırlatıcı tarihleri cihazda saklanır; kullanıcı giriş yaptığında Supabase ile senkronlanabilir.</li>
+        <li>Bildirim izni, puan son kullanım hatırlatıcıları göndermek için iOS tarafından istenir.</li>
+        <li>Premium abonelik durumu App Store/StoreKit üzerinden doğrulanır.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Toplanmayan veriler</h2>
+      <ul>
+        <li>Banka kartı numarası, banka hesabı, müşteri numarası veya banka şifresi toplanmaz.</li>
+        <li>Uygulama finansal işlem yapmaz, kullanıcı adına harcama veya kampanya katılımı gerçekleştirmez.</li>
+        <li>Uygulama kullanıcının banka hesabına erişmez.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Verilerin kullanım amacı</h2>
+      <ul>
+        <li>Kampanyaları filtrelemek, favorileri ve kullanıcının kart tercihlerini göstermek.</li>
+        <li>Kampanya takibi, kazanç kaydı ve puan son kullanım hatırlatıcısı sunmak.</li>
+        <li>Free ve Premium plan limitlerini uygulamak.</li>
+        <li>Hesap ve senkron özelliklerini güvenli şekilde çalıştırmak.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Üçüncü taraf hizmetler</h2>
+      <p>Supabase kimlik doğrulama ve senkron veriler için, Apple App Store ve StoreKit abonelik/satın alma yönetimi için kullanılır. İleride reklam veya analitik SDK'sı eklenirse bu politika ve App Store gizlilik cevapları güncellenecektir.</p>
+    </section>
+
+    <section>
+      <h2>Kullanıcı hakları ve iletişim</h2>
+      <p>Kullanıcı hesabını, favorilerini, kart tercihlerini ve katılım kayıtlarını silme talebi gönderebilir. Destek için <a href="./support.html">Destek</a> sayfasını kullanabilirsin.</p>
+    </section>
+  </main>
+</body>
+</html>
