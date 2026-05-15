@@ -49,7 +49,7 @@ enum EntitlementService {
         return EntitlementRule(
             allowed: false,
             title: "Premium ile sınırsız takip",
-            message: "Free planda 1 aktif puan hatırlatıcısı var. Bir kampanyada deneyip faydasını gördükten sonra Premium ile sınırsız hatırlatıcı açabileceksin."
+            message: "Free planda 1 aktif hatırlatıcı hakkın var. Premium ile tüm kampanyalar için sınırsız hatırlatıcı açabilirsin."
         )
     }
 

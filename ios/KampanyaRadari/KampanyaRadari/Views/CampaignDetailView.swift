@@ -11,6 +11,7 @@ struct CampaignDetailView: View {
     @State private var rewardExpiresAt = Date()
     @State private var hasRewardReminder = false
     @State private var entitlementPrompt: EntitlementRule?
+    @State private var pendingMoneySaveTask: Task<Void, Never>?
 
     var body: some View {
         ZStack {
@@ -91,17 +92,20 @@ struct CampaignDetailView: View {
         .onAppear {
             loadParticipation()
         }
-        .navigationTitle("Detay")
-        .alert(entitlementPrompt?.title ?? "", isPresented: Binding(
-            get: { entitlementPrompt != nil },
-            set: { if !$0 { entitlementPrompt = nil } }
-        )) {
-            Button("Anladım", role: .cancel) {
-                entitlementPrompt = nil
-            }
-        } message: {
-            Text(entitlementPrompt?.message ?? "")
+        .onDisappear {
+            pendingMoneySaveTask?.cancel()
+            saveMoneyFields()
         }
+        .navigationTitle("Detay")
+        .overlay {
+            if let entitlementPrompt {
+                EntitlementPromptOverlay(rule: entitlementPrompt) {
+                    self.entitlementPrompt = nil
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.18), value: entitlementPrompt)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -126,10 +130,10 @@ struct CampaignDetailView: View {
 
             VStack(spacing: 10) {
                 MoneyInputRow(title: "Harcadım", text: $spentText) {
-                    saveMoneyFields()
+                    scheduleMoneySave()
                 }
                 MoneyInputRow(title: "Kazandım", text: $earnedText) {
-                    saveMoneyFields()
+                    scheduleMoneySave()
                 }
             }
 
@@ -173,7 +177,18 @@ struct CampaignDetailView: View {
         record.spentAmount = Double(spentText.replacingOccurrences(of: ",", with: ".")) ?? 0
         record.earnedAmount = Double(earnedText.replacingOccurrences(of: ",", with: ".")) ?? 0
         participation.update(record, for: campaign)
-        CampaignReminderService.syncReminder(for: campaign, record: record)
+        if record.hasReminder {
+            CampaignReminderService.syncReminder(for: campaign, record: record)
+        }
+    }
+
+    private func scheduleMoneySave() {
+        pendingMoneySaveTask?.cancel()
+        pendingMoneySaveTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 650_000_000)
+            guard !Task.isCancelled else { return }
+            saveMoneyFields()
+        }
     }
 
     private var rewardReminderPanel: some View {
@@ -314,5 +329,52 @@ private struct DetailStatPill: View {
         .padding(12)
         .background(.white.opacity(0.72))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+private struct EntitlementPromptOverlay: View {
+    let rule: EntitlementRule
+    let dismiss: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.38)
+                .ignoresSafeArea()
+                .onTapGesture(perform: dismiss)
+
+            VStack(spacing: 16) {
+                Image(systemName: "sparkles")
+                    .font(.title.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+
+                Text(rule.title)
+                    .font(.title3.weight(.black))
+                    .foregroundStyle(AppTheme.ink)
+                    .multilineTextAlignment(.center)
+
+                Text(rule.message)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(AppTheme.muted)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button(action: dismiss) {
+                    Text("Anladım")
+                        .font(.headline.weight(.bold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(AppTheme.dashboardGreen)
+                        .foregroundStyle(AppTheme.ink)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(22)
+            .frame(maxWidth: 320)
+            .background(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: .black.opacity(0.22), radius: 22, x: 0, y: 12)
+            .padding(.horizontal, 26)
+        }
     }
 }

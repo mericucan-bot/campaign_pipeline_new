@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct CampaignCardView: View {
+struct CampaignCardView: View, Equatable {
     let campaign: Campaign
     let isFavorite: Bool
 

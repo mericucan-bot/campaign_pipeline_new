@@ -265,6 +265,7 @@
 				CODE_SIGN_ENTITLEMENTS = KampanyaRadari/KampanyaRadari.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JR37UA55U6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = KampanyaRadari/Info.plist;
@@ -301,6 +302,7 @@
 				CODE_SIGN_ENTITLEMENTS = KampanyaRadari/KampanyaRadari.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JR37UA55U6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = KampanyaRadari/Info.plist;

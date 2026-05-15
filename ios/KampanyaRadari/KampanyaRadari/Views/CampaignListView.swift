@@ -529,6 +529,7 @@ private struct CampaignListScreen: View {
                                             campaign: campaign,
                                             isFavorite: favorites.contains(campaign)
                                         )
+                                        .equatable()
                                     }
                                     .buttonStyle(.plain)
                                 }
