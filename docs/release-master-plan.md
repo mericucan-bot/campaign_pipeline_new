@@ -79,7 +79,7 @@
 1. Supabase auth, RLS ve kullanici veri senkronunu tamamla.
 2. Ucretsiz/premium limit kurallarini uygulama icinde merkezi bir entitlement katmanina bagla.
 3. RevenueCat veya StoreKit 2 ile abonelik/paywall akisini ekle. StoreKit hazirlik katmani eklendi; siradaki canli adim App Store Connect'te urunleri acmak veya RevenueCat projesi baglamak.
-4. Apple Sign In entegrasyonunu tamamla; e-posta/sifre disindaki sosyal girisler acilmadan Apple girisi review riskini azaltacak sekilde hazir olmalı.
+4. Apple Sign In entegrasyonunu tamamla; iOS kod tarafi eklendi, Apple Developer/Supabase provider ayarlari ve gercek cihaz testiyle dogrulanmali.
 5. Privacy policy, destek sayfasi, ikon, ekran goruntuleri ve onboarding metinlerini hazirla.
 6. TestFlight ile gercek cihazda bildirim, hesap, senkron, abonelik ve veri yenileme testlerini yap.
 7. App Store Connect uzerinden incelemeye gonder.

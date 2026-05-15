@@ -99,6 +99,14 @@ struct SupabaseAuthService {
         )
     }
 
+    func signInWithApple(idToken: String, nonce: String) async throws -> AuthSession {
+        try await requestSession(
+            path: "auth/v1/token",
+            queryItems: [URLQueryItem(name: "grant_type", value: "id_token")],
+            body: ["provider": "apple", "id_token": idToken, "nonce": nonce]
+        )
+    }
+
     func refreshSession(refreshToken: String) async throws -> AuthSession {
         try await requestSession(
             path: "auth/v1/token",

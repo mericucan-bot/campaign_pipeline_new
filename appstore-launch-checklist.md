@@ -44,9 +44,9 @@ TestFlight öncesi RLS politikaları tekrar denetlenecek. İstersek daha sonra `
 
 ---
 
-### 🔴 2. Apple Sign In Zorunluluğu
+### 🟡 2. Apple Sign In Zorunluluğu
 
-**Nerede:** `CampaignListView.swift` → `AuthPreviewButton` — şu an "Yakında" olarak kapalı
+**Nerede:** `CampaignListView.swift` → `AuthOptionsSheet`
 
 **Neden kritik:**  
 Apple'ın App Store Review Guideline 4.8 kuralı açık:  
@@ -54,11 +54,16 @@ Apple'ın App Store Review Guideline 4.8 kuralı açık:
 
 E-posta/şifre ile kayıt bir "third-party login" sayılmadığı durumlar olsa da Supabase Auth kullanan bir uygulama için Apple genellikle Apple Sign In istiyor. **İlk gönderimiyle reddedilme ihtimali yüksek.**
 
-**Yapılacak:**
-- Xcode'da "Sign in with Apple" capability'yi aktive et
-- `ASAuthorizationAppleIDProvider` ile akışı yaz
-- `SupabaseAuthService`'e Apple token'ını Supabase'e iletecek endpoint ekle
-- `AuthOptionsSheet`'teki kapalı butonu aç
+**15 Mayıs 2026 güncellemesi:**
+- iOS tarafında `SignInWithAppleButton` aktif edildi.
+- Apple nonce üretimi ve SHA-256 hash akışı eklendi.
+- `SupabaseAuthService.signInWithApple(idToken:nonce:)` ile Apple kimlik token'ı Supabase oturumuna çevriliyor.
+- `KampanyaRadari.entitlements` dosyasına `com.apple.developer.applesignin` capability tanımı eklendi.
+
+**Yapılacak son kontrol:**
+- Apple Developer portalında Bundle ID için "Sign in with Apple" aktif olmalı.
+- Supabase Authentication → Sign In / Providers tarafında Apple provider aktif edilip Apple bilgileri tanımlanmalı.
+- Xcode'da Team seçildikten sonra gerçek cihazda Apple giriş testi yapılmalı.
 
 ---
 
@@ -184,7 +189,7 @@ Google Sign In için OAuth client ID ve Supabase entegrasyonu gerekiyor. Bu Appl
 | # | Görev | Durum | Blocker mı? |
 |---|-------|-------|-------------|
 | 1 | Supabase key fallback'lerini temizle | ✅ **Tamamlandı** | — |
-| 2 | Apple Sign In entegrasyonu | 🔴 **Bekliyor** | Review'da ret riski |
+| 2 | Apple Sign In entegrasyonu | 🟡 **Kod eklendi, portal testi bekliyor** | Review'da ret riski |
 | 3 | App Store Connect kurulumu (bundle ID, abonelik, agreements) | ✅ **Tamamlandı** | — |
 | 4 | Token refresh mekanizması | ✅ **Tamamlandı** | — |
 | 5 | Kalıcı premium doğrulaması | 🟡 **Bekliyor** | Gelir modeli |

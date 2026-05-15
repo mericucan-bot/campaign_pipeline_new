@@ -111,6 +111,22 @@ final class AuthStateStore {
         await authenticate(email: email, password: password, isSignUp: true)
     }
 
+    func signInWithApple(idToken: String, nonce: String) async {
+        isLoading = true
+        authMessage = nil
+
+        do {
+            let newSession = try await authService.signInWithApple(idToken: idToken, nonce: nonce)
+            apply(session: newSession)
+            await refreshProfile()
+            authMessage = "Apple ile giriş başarılı."
+        } catch {
+            authMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
     func sendPasswordReset(email: String) async {
         let cleanedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard cleanedEmail.contains("@") else {

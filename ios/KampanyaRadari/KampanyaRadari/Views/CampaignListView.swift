@@ -1,3 +1,4 @@
+import AuthenticationServices
 import SwiftUI
 
 private enum AppRoute: Hashable {
@@ -1004,6 +1005,7 @@ private struct AuthOptionsSheet: View {
     @State private var email = ""
     @State private var password = ""
     @State private var isSignUp = false
+    @State private var appleSignInNonce: String?
     private let syncService = UserDataSyncService()
 
     var body: some View {
@@ -1023,7 +1025,7 @@ private struct AuthOptionsSheet: View {
                         Text("Hesap")
                             .font(.largeTitle.weight(.bold))
                             .foregroundStyle(.white)
-                        Text("E-posta ile gerçek Supabase hesabı oluştur veya giriş yap. Google ve Apple sonraki yayın adımında bağlanacak.")
+                        Text("E-posta veya Apple ile gerçek Supabase hesabı oluştur ya da giriş yap. Google sonraki yayın adımında bağlanacak.")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.white.opacity(0.68))
                     }
@@ -1104,7 +1106,18 @@ private struct AuthOptionsSheet: View {
 
                     VStack(spacing: 10) {
                         AuthPreviewButton(title: "Google ile giriş", systemImage: "g.circle.fill")
-                        AuthPreviewButton(title: "Apple ile giriş", systemImage: "apple.logo")
+                        SignInWithAppleButton(.continue) { request in
+                            let nonce = AppleSignInNonce.random()
+                            appleSignInNonce = nonce
+                            request.requestedScopes = [.email, .fullName]
+                            request.nonce = AppleSignInNonce.sha256(nonce)
+                        } onCompletion: { result in
+                            handleAppleSignIn(result)
+                        }
+                        .signInWithAppleButtonStyle(.white)
+                        .frame(height: 58)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .disabled(authState.isLoading)
                     }
 
                     Button {
@@ -1138,6 +1151,34 @@ private struct AuthOptionsSheet: View {
             authState.authMessage = "Giriş başarılı. Yerel kayıtların bulut hesabınla senkronlandı."
         } catch {
             authState.authMessage = "Giriş başarılı. Senkron beklemede: \((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)"
+        }
+    }
+
+    private func handleAppleSignIn(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let tokenData = credential.identityToken,
+                  let idToken = String(data: tokenData, encoding: .utf8),
+                  let nonce = appleSignInNonce else {
+                authState.authMessage = "Apple giriş bilgisi okunamadı. Tekrar dene."
+                return
+            }
+
+            Task {
+                await authState.signInWithApple(idToken: idToken, nonce: nonce)
+                if authState.isAuthenticated {
+                    await syncAfterLogin()
+                    dismiss()
+                    enter()
+                }
+            }
+        case .failure(let error):
+            if let authorizationError = error as? ASAuthorizationError,
+               authorizationError.code == .canceled {
+                return
+            }
+            authState.authMessage = "Apple ile giriş tamamlanamadı. \(error.localizedDescription)"
         }
     }
 }
