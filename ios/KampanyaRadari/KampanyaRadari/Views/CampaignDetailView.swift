@@ -162,7 +162,7 @@ struct CampaignDetailView: View {
             rewardReminderPanel
 
             HStack(spacing: 12) {
-                DetailStatPill(title: "Durum", value: record.didJoin ? "Katıldım" : "Takipte")
+                DetailStatPill(title: "Durum", value: record.didJoin ? "Katıldım" : "Takip edilmiyor")
                 DetailStatPill(title: "Hatırlatma", value: record.hasReminder ? "Açık" : "Kapalı")
             }
         }
@@ -230,7 +230,7 @@ struct CampaignDetailView: View {
             guard !Task.isCancelled else { return }
             favorites.set(campaign, isFavorite: targetState)
             originalFavorite = targetState
-            try? await Task.sleep(nanoseconds: 420_000_000)
+            try? await Task.sleep(nanoseconds: 180_000_000)
             guard !Task.isCancelled else { return }
             isShowingActionScan = false
         }

@@ -112,11 +112,16 @@ final class AuthStateStore {
 
     func signOut() {
         let accessToken = session?.accessToken
-        continueAsGuest()
-        if let accessToken {
-            Task {
+        isLoading = true
+        authMessage = nil
+
+        Task {
+            if let accessToken {
                 await authService.signOut(accessToken: accessToken)
             }
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            continueAsGuest()
+            isLoading = false
         }
     }
 

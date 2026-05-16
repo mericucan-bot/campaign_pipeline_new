@@ -88,6 +88,17 @@ struct CampaignListView: View {
                 }
             }
         }
+        .overlay {
+            if authState.isLoading {
+                RadarLoadingOverlay(
+                    title: "İşlem yapılıyor",
+                    message: "Hesap işlemin güvenli şekilde tamamlanıyor."
+                )
+                .allowsHitTesting(true)
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.18), value: authState.isLoading)
     }
 }
 
@@ -750,10 +761,10 @@ private struct CampaignListScreen: View {
         isShowingRadarScan = true
         radarScanTask?.cancel()
         radarScanTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 120_000_000)
+            try? await Task.sleep(nanoseconds: 60_000_000)
             guard !Task.isCancelled else { return }
             openingCampaign = campaign
-            try? await Task.sleep(nanoseconds: 900_000_000)
+            try? await Task.sleep(nanoseconds: 320_000_000)
             guard !Task.isCancelled else { return }
             isShowingRadarScan = false
         }
@@ -1298,6 +1309,17 @@ private struct AuthOptionsSheet: View {
                 }
             }
         }
+        .overlay {
+            if authState.isLoading {
+                RadarLoadingOverlay(
+                    title: "İşlem yapılıyor",
+                    message: "Giriş işlemin güvenli şekilde tamamlanıyor."
+                )
+                .allowsHitTesting(true)
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.18), value: authState.isLoading)
     }
 
     private func syncAfterLogin() async {
@@ -2094,6 +2116,8 @@ private struct ProfileCardsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedBanks: Set<String> = []
     @State private var didLoadSelection = false
+    @State private var isSavingCards = false
+    @State private var didPersistSelection = false
 
     var body: some View {
         ZStack {
@@ -2104,7 +2128,7 @@ private struct ProfileCardsView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     HStack {
                         CircleIconButton(systemName: "chevron.left") {
-                            dismiss()
+                            saveAndDismiss()
                         }
                         Spacer()
                     }
@@ -2171,9 +2195,21 @@ private struct ProfileCardsView: View {
             didLoadSelection = true
         }
         .onDisappear {
-            myCards.replace(with: selectedBanks)
+            if !didPersistSelection {
+                myCards.replace(with: selectedBanks)
+            }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .overlay {
+            if isSavingCards {
+                RadarLoadingOverlay(
+                    title: "İşlem yapılıyor",
+                    message: "Kart tercihlerin kaydediliyor."
+                )
+                .allowsHitTesting(true)
+                .transition(.opacity)
+            }
+        }
     }
 
     private func toggleLocalSelection(_ bank: String) {
@@ -2181,6 +2217,17 @@ private struct ProfileCardsView: View {
             selectedBanks.remove(bank)
         } else {
             selectedBanks.insert(bank)
+        }
+    }
+
+    private func saveAndDismiss() {
+        isSavingCards = true
+        didPersistSelection = true
+        myCards.replace(with: selectedBanks)
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 180_000_000)
+            dismiss()
+            isSavingCards = false
         }
     }
 }
@@ -2248,6 +2295,8 @@ private struct EarningsView: View {
     @State private var openingReminderCampaign: Campaign?
     @State private var isShowingRadarScan = false
     @State private var isShowingClearTrackedConfirmation = false
+    @State private var radarScanTitle = "Radar taraması"
+    @State private var radarScanMessage = "Hatırlatıcı detayı açılıyor."
     @State private var radarScanTask: Task<Void, Never>?
     @Environment(\.dismiss) private var dismiss
 
@@ -2361,13 +2410,23 @@ private struct EarningsView: View {
             }
         }
         .overlay {
-            if isShowingRadarScan {
-                RadarLoadingOverlay(
-                    title: "Radar taraması",
-                    message: "Hatırlatıcı detayı açılıyor."
-                )
-                .allowsHitTesting(false)
-                .transition(.opacity)
+            ZStack {
+                if isShowingClearTrackedConfirmation {
+                    ThemedClearTrackedConfirmationOverlay(
+                        clearAction: clearTrackedCampaigns,
+                        cancelAction: { isShowingClearTrackedConfirmation = false }
+                    )
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                }
+
+                if isShowingRadarScan {
+                    RadarLoadingOverlay(
+                        title: radarScanTitle,
+                        message: radarScanMessage
+                    )
+                    .allowsHitTesting(true)
+                    .transition(.opacity)
+                }
             }
         }
         .navigationDestination(item: $openingReminderCampaign) { campaign in
@@ -2377,18 +2436,6 @@ private struct EarningsView: View {
                 }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .confirmationDialog(
-            "Takip edilen kampanyalar temizlensin mi?",
-            isPresented: $isShowingClearTrackedConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Takiptekileri temizle", role: .destructive) {
-                clearTrackedCampaigns()
-            }
-            Button("Vazgeç", role: .cancel) {}
-        } message: {
-            Text("Katılım, harcama, kazanç ve puan hatırlatıcı kayıtları bu cihazdan kaldırılacak.")
-        }
     }
 
     private var earningsSummary: some View {
@@ -2491,13 +2538,15 @@ private struct EarningsView: View {
     }
 
     private func openReminderCampaign(_ campaign: Campaign) {
+        radarScanTitle = "Radar taraması"
+        radarScanMessage = "Kampanya detayı açılıyor."
         isShowingRadarScan = true
         radarScanTask?.cancel()
         radarScanTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 120_000_000)
+            try? await Task.sleep(nanoseconds: 60_000_000)
             guard !Task.isCancelled else { return }
             openingReminderCampaign = campaign
-            try? await Task.sleep(nanoseconds: 900_000_000)
+            try? await Task.sleep(nanoseconds: 320_000_000)
             guard !Task.isCancelled else { return }
             isShowingRadarScan = false
         }
@@ -2510,12 +2559,99 @@ private struct EarningsView: View {
     }
 
     private func clearTrackedCampaigns() {
+        isShowingClearTrackedConfirmation = false
+        radarScanTitle = "İşlem yapılıyor"
+        radarScanMessage = "Takip edilen kampanyalar temizleniyor."
+        isShowingRadarScan = true
+        radarScanTask?.cancel()
         let items = trackedCampaigns
-        let campaignIDs = Set(items.map { $0.campaign.id })
-        for item in items where item.record.hasReminder {
-            CampaignReminderService.cancelReminders(for: item.campaign)
+        radarScanTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            guard !Task.isCancelled else { return }
+            let campaignIDs = Set(items.map { $0.campaign.id })
+            for item in items where item.record.hasReminder {
+                CampaignReminderService.cancelReminders(for: item.campaign)
+            }
+            participation.removeRecords(forCampaignIDs: campaignIDs)
+            try? await Task.sleep(nanoseconds: 220_000_000)
+            guard !Task.isCancelled else { return }
+            isShowingRadarScan = false
         }
-        participation.removeRecords(forCampaignIDs: campaignIDs)
+    }
+}
+
+private struct ThemedClearTrackedConfirmationOverlay: View {
+    let clearAction: () -> Void
+    let cancelAction: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.58)
+                .ignoresSafeArea()
+                .onTapGesture(perform: cancelAction)
+
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "trash.fill")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(AppTheme.dashboardGreen)
+                        .frame(width: 46, height: 46)
+                        .background(AppTheme.dashboardGreen.opacity(0.15))
+                        .clipShape(Circle())
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Takiptekiler temizlensin mi?")
+                            .font(.title3.weight(.black))
+                            .foregroundStyle(.white)
+                        Text("Katılım, harcama, kazanç ve puan hatırlatıcı kayıtları bu cihazdan kaldırılacak.")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.68))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                HStack(spacing: 10) {
+                    Button(action: cancelAction) {
+                        Text("Vazgeç")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(.white.opacity(0.10))
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    }
+
+                    Button(action: clearAction) {
+                        Text("Temizle")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(AppTheme.nearBlack)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(AppTheme.dashboardGreen)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    }
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: 360)
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.02, green: 0.11, blue: 0.10),
+                        Color(red: 0.01, green: 0.05, blue: 0.05)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(AppTheme.dashboardGreen.opacity(0.32), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.34), radius: 24, x: 0, y: 14)
+            .padding(.horizontal, 22)
+        }
     }
 }
 
