@@ -15,6 +15,8 @@ struct CampaignDetailView: View {
     @State private var hasRewardReminder = false
     @State private var entitlementPrompt: EntitlementRule?
     @State private var pendingMoneySaveTask: Task<Void, Never>?
+    @State private var favoriteSaveTask: Task<Void, Never>?
+    @State private var isShowingActionScan = false
     @State private var hasPendingCommit = false
 
     var body: some View {
@@ -99,19 +101,33 @@ struct CampaignDetailView: View {
         }
         .onDisappear {
             pendingMoneySaveTask?.cancel()
+            favoriteSaveTask?.cancel()
+            commitFavoriteImmediatelyIfNeeded()
             applyMoneyTextToRecord()
             commitParticipationIfNeeded()
         }
         .navigationTitle("Detay")
         .overlay {
-            if let entitlementPrompt {
-                EntitlementPromptOverlay(rule: entitlementPrompt) {
-                    self.entitlementPrompt = nil
+            ZStack {
+                if let entitlementPrompt {
+                    EntitlementPromptOverlay(rule: entitlementPrompt) {
+                        self.entitlementPrompt = nil
+                    }
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
-                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+
+                if isShowingActionScan {
+                    RadarLoadingOverlay(
+                        title: "Kaydediliyor",
+                        message: "Favori durumun güncelleniyor."
+                    )
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+                }
             }
         }
         .animation(.easeInOut(duration: 0.18), value: entitlementPrompt)
+        .animation(.easeInOut(duration: 0.18), value: isShowingActionScan)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
@@ -201,9 +217,30 @@ struct CampaignDetailView: View {
     }
 
     private func commitFavoriteIfNeeded() {
+        guard isFavorite != originalFavorite else {
+            favoriteSaveTask?.cancel()
+            isShowingActionScan = false
+            return
+        }
+        let targetState = isFavorite
+        isShowingActionScan = true
+        favoriteSaveTask?.cancel()
+        favoriteSaveTask = Task { @MainActor in
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            favorites.set(campaign, isFavorite: targetState)
+            originalFavorite = targetState
+            try? await Task.sleep(nanoseconds: 420_000_000)
+            guard !Task.isCancelled else { return }
+            isShowingActionScan = false
+        }
+    }
+
+    private func commitFavoriteImmediatelyIfNeeded() {
         guard isFavorite != originalFavorite else { return }
         favorites.set(campaign, isFavorite: isFavorite)
         originalFavorite = isFavorite
+        isShowingActionScan = false
     }
 
     private func commitParticipationIfNeeded() {

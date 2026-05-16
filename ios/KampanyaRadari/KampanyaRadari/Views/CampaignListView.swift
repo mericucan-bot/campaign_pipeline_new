@@ -521,6 +521,9 @@ private struct CampaignListScreen: View {
     @State private var visibleCampaigns: [Campaign] = []
     @State private var favoriteIDsSnapshot: Set<String> = []
     @State private var myCardBanksSnapshot: Set<String> = []
+    @State private var openingCampaign: Campaign?
+    @State private var isShowingRadarScan = false
+    @State private var radarScanTask: Task<Void, Never>?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -532,9 +535,11 @@ private struct CampaignListScreen: View {
                 .ignoresSafeArea()
 
             if viewModel.isLoading && viewModel.campaigns.isEmpty {
-                ProgressView("Kampanyalar yukleniyor")
-                    .tint(.white)
-                    .foregroundStyle(.white)
+                RadarLoadingOverlay(
+                    title: "Kampanyalar yükleniyor",
+                    message: "Radar güncel fırsatları tarıyor."
+                )
+                .allowsHitTesting(false)
             } else if let errorMessage = viewModel.errorMessage {
                 ContentUnavailableView("Baglanti hatasi", systemImage: "wifi.exclamationmark", description: Text(errorMessage))
                     .foregroundStyle(.white)
@@ -567,8 +572,8 @@ private struct CampaignListScreen: View {
                                 }
 
                                 ForEach(filteredCampaigns) { campaign in
-                                    NavigationLink {
-                                        CampaignDetailView(campaign: campaign, favorites: favorites, participation: participation, authState: authState)
+                                    Button {
+                                        openCampaign(campaign)
                                     } label: {
                                         CampaignCardView(
                                             campaign: campaign,
@@ -633,6 +638,22 @@ private struct CampaignListScreen: View {
                     }
                 }
             }
+        }
+        .overlay {
+            if isShowingRadarScan {
+                RadarLoadingOverlay(
+                    title: "Radar taraması",
+                    message: "Kampanya detayı hazırlanıyor."
+                )
+                .allowsHitTesting(false)
+                .transition(.opacity)
+            }
+        }
+        .navigationDestination(item: $openingCampaign) { campaign in
+            CampaignDetailView(campaign: campaign, favorites: favorites, participation: participation, authState: authState)
+                .onAppear {
+                    stopRadarScan()
+                }
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isShowingFilters) {
@@ -709,6 +730,25 @@ private struct CampaignListScreen: View {
         let favoriteIDs = favoriteIDs ?? favoriteIDsSnapshot
         let myCardBanks = myCardBanks ?? myCardBanksSnapshot
         visibleCampaigns = viewModel.filteredCampaigns(favoriteIDs: favoriteIDs, myCardBanks: myCardBanks)
+    }
+
+    private func openCampaign(_ campaign: Campaign) {
+        isShowingRadarScan = true
+        radarScanTask?.cancel()
+        radarScanTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            guard !Task.isCancelled else { return }
+            openingCampaign = campaign
+            try? await Task.sleep(nanoseconds: 900_000_000)
+            guard !Task.isCancelled else { return }
+            isShowingRadarScan = false
+        }
+    }
+
+    private func stopRadarScan() {
+        radarScanTask?.cancel()
+        radarScanTask = nil
+        isShowingRadarScan = false
     }
 
     private func listHeader(count: Int) -> some View {
@@ -2180,6 +2220,9 @@ private struct EarningsView: View {
     let favorites: FavoritesStore
     let participation: ParticipationStore
     @Bindable var authState: AuthStateStore
+    @State private var openingReminderCampaign: Campaign?
+    @State private var isShowingRadarScan = false
+    @State private var radarScanTask: Task<Void, Never>?
     @Environment(\.dismiss) private var dismiss
 
     private var reminderCampaigns: [(campaign: Campaign, record: CampaignParticipation)] {
@@ -2274,19 +2317,45 @@ private struct EarningsView: View {
                 .padding(.bottom, 30)
             }
         }
+        .overlay {
+            if isShowingRadarScan {
+                RadarLoadingOverlay(
+                    title: "Radar taraması",
+                    message: "Hatırlatıcı detayı açılıyor."
+                )
+                .allowsHitTesting(false)
+                .transition(.opacity)
+            }
+        }
+        .navigationDestination(item: $openingReminderCampaign) { campaign in
+            CampaignDetailView(campaign: campaign, favorites: favorites, participation: participation, authState: authState)
+                .onAppear {
+                    stopReminderRadarScan()
+                }
+        }
         .toolbar(.hidden, for: .navigationBar)
     }
 
     private var earningsSummary: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Özet")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Özet")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text("Harcadığın tutara göre geri kazanım oranı")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.62))
+                }
                 Spacer()
-                Text((participation.totalEarned - participation.totalSpent).currencyText)
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(AppTheme.dashboardGreen)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(rewardReturnRateText)
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(AppTheme.dashboardGreen)
+                    Text("geri kazanım")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.62))
+                }
             }
 
             HStack(spacing: 12) {
@@ -2302,6 +2371,13 @@ private struct EarningsView: View {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .stroke(.white.opacity(0.14), lineWidth: 1)
         }
+    }
+
+    private var rewardReturnRateText: String {
+        guard participation.totalSpent > 0 else { return "%0" }
+        let rate = (participation.totalEarned / participation.totalSpent) * 100
+        let precision = rate < 10 && rate != floor(rate) ? 1 : 0
+        return "%\(rate.formatted(.number.precision(.fractionLength(precision))))"
     }
 
     private var remindersSection: some View {
@@ -2340,8 +2416,8 @@ private struct EarningsView: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(reminderCampaigns, id: \.campaign.id) { item in
-                        NavigationLink {
-                            CampaignDetailView(campaign: item.campaign, favorites: favorites, participation: participation, authState: authState)
+                        Button {
+                            openReminderCampaign(item.campaign)
                         } label: {
                             ReminderCampaignRow(campaign: item.campaign, record: item.record)
                         }
@@ -2357,6 +2433,25 @@ private struct EarningsView: View {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .stroke(AppTheme.dashboardGreen.opacity(0.24), lineWidth: 1)
         }
+    }
+
+    private func openReminderCampaign(_ campaign: Campaign) {
+        isShowingRadarScan = true
+        radarScanTask?.cancel()
+        radarScanTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            guard !Task.isCancelled else { return }
+            openingReminderCampaign = campaign
+            try? await Task.sleep(nanoseconds: 900_000_000)
+            guard !Task.isCancelled else { return }
+            isShowingRadarScan = false
+        }
+    }
+
+    private func stopReminderRadarScan() {
+        radarScanTask?.cancel()
+        radarScanTask = nil
+        isShowingRadarScan = false
     }
 }
 
