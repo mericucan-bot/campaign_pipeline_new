@@ -312,20 +312,26 @@ private struct DashboardHomeView: View {
     }
 
     private var insightCard: some View {
-        HStack(spacing: 18) {
-            CategoryDonutChart(summaries: viewModel.topCategorySummaries, total: viewModel.campaigns.count)
-                .frame(width: 128, height: 128)
+        Group {
+            if viewModel.isLoading && viewModel.campaigns.isEmpty {
+                LoadingInsightCard()
+            } else {
+                HStack(spacing: 18) {
+                    CategoryDonutChart(summaries: viewModel.topCategorySummaries, total: viewModel.campaigns.count)
+                        .frame(width: 128, height: 128)
 
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Kampanya özeti")
-                    .font(.headline.weight(.bold))
-                    .foregroundStyle(.white)
-                StatLine(title: "Toplam kampanya", value: "\(viewModel.campaigns.count)")
-                StatLine(title: "Banka/kart", value: "\(viewModel.bankCount)")
-                StatLine(title: "Kartlarım", value: "\(myCards.banks.count)")
-                StatLine(title: "Favori", value: "\(favorites.ids.count)")
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Kampanya özeti")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.white)
+                        StatLine(title: "Toplam kampanya", value: "\(viewModel.campaigns.count)")
+                        StatLine(title: "Banka/kart", value: "\(viewModel.bankCount)")
+                        StatLine(title: "Kartlarım", value: "\(myCards.banks.count)")
+                        StatLine(title: "Favori", value: "\(favorites.ids.count)")
+                    }
+                    Spacer()
+                }
             }
-            Spacer()
         }
         .padding(18)
         .background(AppTheme.dashboardGreen.opacity(0.14))
@@ -462,6 +468,42 @@ private struct DashboardHomeView: View {
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct LoadingInsightCard: View {
+    @State private var isPulsing = false
+
+    var body: some View {
+        HStack(spacing: 18) {
+            ZStack {
+                Circle()
+                    .stroke(AppTheme.dashboardGreen.opacity(0.22), lineWidth: 16)
+                    .frame(width: 116, height: 116)
+                Circle()
+                    .trim(from: 0, to: 0.72)
+                    .stroke(AppTheme.dashboardGreen, style: StrokeStyle(lineWidth: 16, lineCap: .round))
+                    .frame(width: 116, height: 116)
+                    .rotationEffect(.degrees(isPulsing ? 360 : 0))
+                    .animation(.linear(duration: 1.1).repeatForever(autoreverses: false), value: isPulsing)
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Kampanyalar yükleniyor")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+                Text("Bankalardan gelen güncel veriler hazırlanıyor.")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.70))
+            }
+            Spacer()
+        }
+        .onAppear {
+            isPulsing = true
+        }
     }
 }
 
@@ -1942,11 +1984,7 @@ private struct ProfileCardsView: View {
             didLoadSelection = true
         }
         .onDisappear {
-            let snapshot = selectedBanks
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 700_000_000)
-                myCards.replace(with: snapshot)
-            }
+            myCards.replace(with: selectedBanks)
         }
         .toolbar(.hidden, for: .navigationBar)
     }

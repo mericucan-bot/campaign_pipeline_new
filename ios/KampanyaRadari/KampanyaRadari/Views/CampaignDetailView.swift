@@ -66,7 +66,7 @@ struct CampaignDetailView: View {
                         HStack {
                             Button {
                                 isFavorite.toggle()
-                                scheduleCommit()
+                                commitFavoriteIfNeeded()
                             } label: {
                                 Label(
                                     isFavorite ? "Favorilerden cikar" : "Favoriye ekle",
@@ -100,7 +100,7 @@ struct CampaignDetailView: View {
         .onDisappear {
             pendingMoneySaveTask?.cancel()
             applyMoneyTextToRecord()
-            commitChangesAfterLeaving()
+            commitParticipationIfNeeded()
         }
         .navigationTitle("Detay")
         .overlay {
@@ -200,34 +200,19 @@ struct CampaignDetailView: View {
         hasPendingCommit = true
     }
 
-    private func commitChangesAfterLeaving() {
-        guard hasPendingCommit
-            || isFavorite != originalFavorite
-            || record != originalRecord else {
-            return
-        }
+    private func commitFavoriteIfNeeded() {
+        guard isFavorite != originalFavorite else { return }
+        favorites.set(campaign, isFavorite: isFavorite)
+        originalFavorite = isFavorite
+    }
 
-        let campaign = campaign
-        let favorites = favorites
-        let participation = participation
-        let favoriteSnapshot = isFavorite
-        let originalFavoriteSnapshot = originalFavorite
+    private func commitParticipationIfNeeded() {
+        guard hasPendingCommit || record != originalRecord else { return }
         let recordSnapshot = record
-        let originalRecordSnapshot = originalRecord
-
-        Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 1_200_000_000)
-            guard !Task.isCancelled else { return }
-
-            if favoriteSnapshot != originalFavoriteSnapshot {
-                favorites.set(campaign, isFavorite: favoriteSnapshot)
-            }
-
-            if recordSnapshot != originalRecordSnapshot {
-                participation.update(recordSnapshot, for: campaign)
-                CampaignReminderService.syncReminder(for: campaign, record: recordSnapshot)
-            }
-        }
+        participation.update(recordSnapshot, for: campaign)
+        CampaignReminderService.syncReminder(for: campaign, record: recordSnapshot)
+        originalRecord = recordSnapshot
+        hasPendingCommit = false
     }
 
     private var rewardReminderPanel: some View {
