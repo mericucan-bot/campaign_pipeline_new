@@ -39,6 +39,7 @@ struct Campaign: Identifiable, Codable, Hashable {
         let normalized = source
             .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
             .lowercased()
+            .replacingOccurrences(of: "ı", with: "i")
 
         if normalized == "ykb" || normalized.contains("yapi kredi") {
             return "Yapı Kredi"

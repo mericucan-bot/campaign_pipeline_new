@@ -134,7 +134,7 @@ struct CampaignCardView: View, Equatable {
         if bank.contains(" on ") || bank == "on" || bank.contains("on kart") { return Color(red: 0.02, green: 0.74, blue: 0.35) }
         if bank.contains("teb") { return Color(red: 0.03, green: 0.57, blue: 0.28) }
         if bank.contains("vakif") { return Color(red: 0.94, green: 0.58, blue: 0.08) }
-        if bank.contains("yapi") { return Color(red: 0.48, green: 0.23, blue: 0.82) }
+        if isYapiKrediBank { return Color(red: 0.56, green: 0.19, blue: 0.73) }
         if bank.contains("qnb") { return Color(red: 0.52, green: 0.23, blue: 0.68) }
         if bank.contains("deniz") { return Color(red: 0.14, green: 0.47, blue: 0.88) }
         if bank.contains("kuveyt") { return Color(red: 0.08, green: 0.58, blue: 0.36) }
@@ -146,6 +146,20 @@ struct CampaignCardView: View, Equatable {
         campaign.displayBank
             .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
             .lowercased()
+            .replacingOccurrences(of: "ı", with: "i")
+    }
+
+    private var isYapiKrediBank: Bool {
+        let bank = normalizedBankName
+        let rawBank = campaign.bank
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+            .lowercased()
+            .replacingOccurrences(of: "ı", with: "i")
+        return bank == "ykb"
+            || bank.contains("yapi kredi")
+            || bank.contains("world")
+            || rawBank.contains("yapi kredi")
+            || rawBank.contains("world")
     }
 
     private var bankMarkKind: BankMarkKind {
@@ -159,7 +173,7 @@ struct CampaignCardView: View, Equatable {
         if bank.contains(" on ") || bank == "on" || bank.contains("on kart") { return .onDigital }
         if bank.contains("teb") { return .teb }
         if bank.contains("vakif") { return .vakif }
-        if bank.contains("yapi") || bank.contains("world") { return .yapiKredi }
+        if isYapiKrediBank { return .yapiKredi }
         if bank.contains("qnb") { return .qnb }
         if bank.contains("deniz") { return .deniz }
         if bank.contains("kuveyt") { return .kuveyt }
@@ -361,7 +375,7 @@ private struct BankMarkView: View {
         case .vakif:
             return [Color(red: 1.00, green: 0.78, blue: 0.22), Color(red: 0.90, green: 0.44, blue: 0.03)]
         case .yapiKredi:
-            return [Color(red: 0.92, green: 0.78, blue: 1.00), Color(red: 0.42, green: 0.16, blue: 0.78)]
+            return [Color(red: 0.98, green: 0.64, blue: 1.00), Color(red: 0.42, green: 0.14, blue: 0.72)]
         case .qnb:
             return [Color(red: 0.78, green: 0.46, blue: 0.88), Color(red: 0.36, green: 0.12, blue: 0.56)]
         case .deniz:
