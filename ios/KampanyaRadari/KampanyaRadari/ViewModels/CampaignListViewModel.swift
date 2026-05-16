@@ -210,7 +210,6 @@ final class CampaignListViewModel {
 
     private func canonicalCategory(for campaign: Campaign) -> String {
         let haystack = [
-            campaign.category,
             campaign.title,
             campaign.summary,
             campaign.description
@@ -235,7 +234,26 @@ final class CampaignListViewModel {
         if haystack.contains("restoran") || haystack.contains("restaurant") || haystack.contains("cafe") || haystack.contains("yemek") || haystack.contains("bigchefs") || haystack.contains("cookshop") {
             return CampaignCategory.restaurant.rawValue
         }
-        if haystack.contains("seyahat") || haystack.contains("otel") || haystack.contains("ucak") || haystack.contains("bilet") || haystack.contains("tatil") || haystack.contains("jolly") || haystack.contains("enuygun") {
+        if haystack.contains("seyahat")
+            || haystack.contains("otel")
+            || haystack.contains("hotel")
+            || haystack.contains("konaklama")
+            || haystack.contains("ucak")
+            || haystack.contains("ucak bileti")
+            || haystack.contains("otobus bileti")
+            || haystack.contains("obilet")
+            || haystack.contains("tatil")
+            || haystack.contains("havalimani")
+            || haystack.contains("lounge")
+            || haystack.contains("transfer")
+            || haystack.contains("arac kiralama")
+            || haystack.contains("yurt disi cikis")
+            || haystack.contains("cikis harci")
+            || haystack.contains("pazaramatatil")
+            || haystack.contains("tatilbudur")
+            || haystack.contains("jolly")
+            || haystack.contains("yolcu360")
+            || haystack.contains("enuygun") {
             return CampaignCategory.travel.rawValue
         }
         return CampaignCategory.online.rawValue
