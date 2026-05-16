@@ -1141,6 +1141,7 @@ private struct AuthOptionsSheet: View {
     let participation: ParticipationStore
     let enter: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var displayName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var isSignUp = false
@@ -1164,7 +1165,7 @@ private struct AuthOptionsSheet: View {
                         Text("Hesap")
                             .font(.largeTitle.weight(.bold))
                             .foregroundStyle(.white)
-                        Text("E-posta veya Apple ile gerçek Supabase hesabı oluştur ya da giriş yap. Google sonraki yayın adımında bağlanacak.")
+                        Text("E-posta veya Apple ile hesap oluştur ya da giriş yap. Google sonraki yayın adımında bağlanacak.")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.white.opacity(0.68))
                     }
@@ -1188,6 +1189,10 @@ private struct AuthOptionsSheet: View {
                     .pickerStyle(.segmented)
 
                     VStack(spacing: 12) {
+                        if isSignUp {
+                            AuthTextField(title: "Adın (isteğe bağlı)", text: $displayName, systemImage: "person.fill")
+                                .textInputAutocapitalization(.words)
+                        }
                         AuthTextField(title: "E-posta", text: $email, systemImage: "envelope.fill")
                             .textInputAutocapitalization(.never)
                             .keyboardType(.emailAddress)
@@ -1201,7 +1206,7 @@ private struct AuthOptionsSheet: View {
                     Button {
                         Task {
                             if isSignUp {
-                                await authState.signUp(email: email, password: password)
+                                await authState.signUp(email: email, password: password, displayName: displayName)
                             } else {
                                 await authState.signIn(email: email, password: password)
                             }
@@ -1307,7 +1312,7 @@ private struct AuthOptionsSheet: View {
             }
 
             Task {
-                await authState.signInWithApple(idToken: idToken, nonce: nonce)
+                await authState.signInWithApple(idToken: idToken, nonce: nonce, preferredName: appleDisplayName(from: credential))
                 if authState.isAuthenticated {
                     dismiss()
                     enter()
@@ -1323,6 +1328,12 @@ private struct AuthOptionsSheet: View {
             }
             authState.authMessage = "Apple ile giriş tamamlanamadı. \(error.localizedDescription)"
         }
+    }
+
+    private func appleDisplayName(from credential: ASAuthorizationAppleIDCredential) -> String? {
+        guard let fullName = credential.fullName else { return nil }
+        let formatted = PersonNameComponentsFormatter.localizedString(from: fullName, style: .default)
+        return AuthStateStore.cleanDisplayName(formatted)
     }
 }
 
@@ -1473,14 +1484,14 @@ private struct AccountView: View {
                             .foregroundStyle(.white)
                             .lineLimit(2)
                             .minimumScaleFactor(0.62)
-                        Text(authState.isAuthenticated ? "Hesabın Supabase Auth ile açık. Favori, kart ve kazanç kayıtlarını buluta senkronlayabilirsin." : "Misafir kullanım açık. Yayın aşamasında Google ve Apple girişi de buraya bağlanacak.")
+                        Text(authState.accountDescriptionText)
                             .font(.headline)
                             .foregroundStyle(.white.opacity(0.76))
                     }
 
                     VStack(alignment: .leading, spacing: 14) {
-                        AccountStatusRow(title: "Oturum", value: authState.isAuthenticated ? "Supabase hesabı" : "Misafir", systemImage: "person.fill")
-                        AccountStatusRow(title: "E-posta", value: authState.email ?? "Bağlı değil", systemImage: "envelope.fill")
+                        AccountStatusRow(title: "Oturum", value: authState.accountKindText, systemImage: "person.fill")
+                        AccountStatusRow(title: authState.emailLabelText, value: authState.emailDisplayText, systemImage: "envelope.fill")
                         AccountStatusRow(title: "Senkron", value: authState.isAuthenticated ? "Bulut senkron hazır" : "Cihazda saklanıyor", systemImage: "arrow.triangle.2.circlepath")
                         AccountStatusRow(title: "Plan", value: authState.plan.displayName, systemImage: "creditcard.fill")
                         AccountStatusRow(

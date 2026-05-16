@@ -32,20 +32,14 @@ struct UserProfile: Decodable {
         case premiumUntil = "premium_until"
     }
 
-    private static func date(from text: String) -> Date? {
-        if let date = iso8601WithFractionalSeconds.date(from: text) {
+    nonisolated private static func date(from text: String) -> Date? {
+        let fractionalFormatter = ISO8601DateFormatter()
+        fractionalFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = fractionalFormatter.date(from: text) {
             return date
         }
-        return iso8601.date(from: text)
+        return ISO8601DateFormatter().date(from: text)
     }
-
-    private static let iso8601WithFractionalSeconds: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter
-    }()
-
-    private static let iso8601 = ISO8601DateFormatter()
 }
 
 struct UserProfileService {
@@ -58,7 +52,7 @@ struct UserProfileService {
 
         let row = ProfileInsertRow(
             id: session.user.id,
-            displayName: session.user.email,
+            displayName: session.user.metadata?.displayName,
             avatarURL: nil,
             plan: SubscriptionPlan.free.rawValue,
             planStatus: "active"
@@ -68,6 +62,20 @@ struct UserProfileService {
         request.httpMethod = "POST"
         request.setValue("resolution=ignore-duplicates,return=minimal", forHTTPHeaderField: "Prefer")
         request.httpBody = try JSONEncoder().encode([row])
+        try await send(request)
+    }
+
+    func updateDisplayName(session: AuthSession, displayName: String) async throws {
+        guard var components = URLComponents(url: AppConfig.supabaseURL.appendingPathComponent("rest/v1/profiles"), resolvingAgainstBaseURL: false) else {
+            throw URLError(.badURL)
+        }
+        components.queryItems = [URLQueryItem(name: "id", value: "eq.\(session.user.id)")]
+        guard let url = components.url else { throw URLError(.badURL) }
+
+        var request = authorizedRequest(url: url, session: session)
+        request.httpMethod = "PATCH"
+        request.setValue("return=minimal", forHTTPHeaderField: "Prefer")
+        request.httpBody = try JSONEncoder().encode(ProfileDisplayNameUpdateRow(displayName: displayName))
         try await send(request)
     }
 
@@ -139,6 +147,14 @@ private struct ProfileInsertRow: Encodable {
         case avatarURL = "avatar_url"
         case plan
         case planStatus = "plan_status"
+    }
+}
+
+private struct ProfileDisplayNameUpdateRow: Encodable {
+    let displayName: String
+
+    enum CodingKeys: String, CodingKey {
+        case displayName = "display_name"
     }
 }
 

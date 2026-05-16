@@ -5,6 +5,7 @@ import Observation
 @Observable
 final class AuthStateStore {
     private let displayNameKey = "authDisplayName"
+    private let authProviderKey = "authProvider"
     private let isGuestKey = "authIsGuest"
     private let sessionKey = "authSession"
     private let refreshLeeway: TimeInterval = 5 * 60
@@ -15,6 +16,7 @@ final class AuthStateStore {
     var isGuest: Bool
     var email: String?
     var userID: String?
+    var authProvider: AuthProvider
     var authMessage: String?
     var isLoading = false
     var passwordResetAccessToken: String?
@@ -24,10 +26,17 @@ final class AuthStateStore {
     init() {
         let savedSession = Self.loadSession(key: sessionKey)
         session = savedSession
-        displayName = UserDefaults.standard.string(forKey: displayNameKey) ?? savedSession?.user.email ?? "Misafir"
+        displayName = "Misafir"
+        authProvider = AuthProvider(rawValue: UserDefaults.standard.string(forKey: authProviderKey) ?? "")
+            ?? (savedSession == nil ? .guest : (Self.isApplePrivateRelay(savedSession?.user.email) ? .apple : .email))
         isGuest = UserDefaults.standard.object(forKey: isGuestKey) as? Bool ?? (savedSession == nil)
         email = savedSession?.user.email
         userID = savedSession?.user.id
+        displayName = UserDefaults.standard.string(forKey: displayNameKey)
+            ?? Self.friendlyDisplayName(preferredName: savedSession?.user.metadata?.displayName, email: email, provider: authProvider)
+        if Self.isUnfriendlyRelayName(displayName, email: email) {
+            displayName = Self.friendlyDisplayName(preferredName: savedSession?.user.metadata?.displayName, email: email, provider: authProvider)
+        }
 
         if savedSession != nil {
             Task {
@@ -38,6 +47,36 @@ final class AuthStateStore {
 
     var statusText: String {
         isGuest ? "Misafir mod" : displayName
+    }
+
+    var accountKindText: String {
+        guard isAuthenticated else { return "Misafir" }
+        switch authProvider {
+        case .apple:
+            return "Apple hesabı"
+        case .email:
+            return "E-posta hesabı"
+        case .guest:
+            return "Misafir"
+        }
+    }
+
+    var emailLabelText: String {
+        guard isAuthenticated else { return "E-posta" }
+        if authProvider == .apple && Self.isApplePrivateRelay(email) {
+            return "Apple gizli e-posta"
+        }
+        return "E-posta"
+    }
+
+    var emailDisplayText: String {
+        email ?? "Bağlı değil"
+    }
+
+    var accountDescriptionText: String {
+        isAuthenticated
+            ? "Favori, kart ve kazanç kayıtlarını buluta senkronlayabilirsin."
+            : "Misafir kullanım açık. Hesap bağlarsan favorilerin, kartların ve kazanç kayıtların cihazlar arasında taşınır."
     }
 
     var isAuthenticated: Bool {
@@ -57,6 +96,7 @@ final class AuthStateStore {
         isGuest = true
         email = nil
         userID = nil
+        authProvider = .guest
         session = nil
         authMessage = nil
         plan = .free
@@ -94,7 +134,7 @@ final class AuthStateStore {
         if shouldRefresh(session), let refreshToken = session.refreshToken {
             do {
                 let refreshed = try await authService.refreshSession(refreshToken: refreshToken)
-                apply(session: refreshed)
+                apply(session: refreshed, provider: authProvider)
             } catch {
                 authMessage = "Oturum yenilenemedi. Bağlantı düzelince tekrar denenecek veya yeniden giriş yapabilirsin."
             }
@@ -107,17 +147,22 @@ final class AuthStateStore {
         await authenticate(email: email, password: password, isSignUp: false)
     }
 
-    func signUp(email: String, password: String) async {
-        await authenticate(email: email, password: password, isSignUp: true)
+    func signUp(email: String, password: String, displayName: String? = nil) async {
+        await authenticate(email: email, password: password, isSignUp: true, displayName: displayName)
     }
 
-    func signInWithApple(idToken: String, nonce: String) async {
+    func signInWithApple(idToken: String, nonce: String, preferredName: String? = nil) async {
         isLoading = true
         authMessage = nil
 
         do {
             let newSession = try await authService.signInWithApple(idToken: idToken, nonce: nonce)
-            apply(session: newSession)
+            apply(session: newSession, provider: .apple, preferredName: preferredName)
+            if let cleanName = Self.cleanDisplayName(preferredName) {
+                Task {
+                    try? await profileService.updateDisplayName(session: newSession, displayName: cleanName)
+                }
+            }
             authMessage = "Apple ile giriş başarılı."
             Task {
                 await refreshProfile()
@@ -181,7 +226,7 @@ final class AuthStateStore {
         isLoading = false
     }
 
-    private func authenticate(email: String, password: String, isSignUp: Bool) async {
+    private func authenticate(email: String, password: String, isSignUp: Bool, displayName: String? = nil) async {
         let cleanedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard cleanedEmail.contains("@"), password.count >= 6 else {
             authMessage = "E-posta geçerli olmalı, şifre en az 6 karakter olmalı."
@@ -195,7 +240,12 @@ final class AuthStateStore {
             let newSession = isSignUp
                 ? try await authService.signUp(email: cleanedEmail, password: password)
                 : try await authService.signIn(email: cleanedEmail, password: password)
-            apply(session: newSession)
+            apply(session: newSession, provider: .email, preferredName: displayName)
+            if isSignUp, let cleanName = Self.cleanDisplayName(displayName) {
+                Task {
+                    try? await profileService.updateDisplayName(session: newSession, displayName: cleanName)
+                }
+            }
             authMessage = isSignUp ? "Hesap oluşturuldu ve giriş yapıldı." : "Giriş başarılı."
             Task {
                 await refreshProfile()
@@ -217,7 +267,8 @@ final class AuthStateStore {
             try await profileService.ensureProfile(session: session)
             if let profile = try await profileService.fetchProfile(session: session) {
                 plan = profile.effectivePlan
-                if let displayName = profile.displayName, !displayName.isEmpty {
+                if let displayName = Self.cleanDisplayName(profile.displayName),
+                   !Self.isUnfriendlyRelayName(displayName, email: email) {
                     self.displayName = displayName
                     save()
                 }
@@ -227,11 +278,12 @@ final class AuthStateStore {
         }
     }
 
-    private func apply(session newSession: AuthSession) {
+    private func apply(session newSession: AuthSession, provider: AuthProvider = .email, preferredName: String? = nil) {
         session = newSession
         email = newSession.user.email
         userID = newSession.user.id
-        displayName = newSession.user.email ?? "Kullanıcı"
+        authProvider = provider
+        displayName = Self.friendlyDisplayName(preferredName: preferredName ?? newSession.user.metadata?.displayName, email: newSession.user.email, provider: provider)
         isGuest = false
         save()
     }
@@ -243,6 +295,7 @@ final class AuthStateStore {
 
     private func save() {
         UserDefaults.standard.set(displayName, forKey: displayNameKey)
+        UserDefaults.standard.set(authProvider.rawValue, forKey: authProviderKey)
         UserDefaults.standard.set(isGuest, forKey: isGuestKey)
         if let session, let data = try? JSONEncoder().encode(session) {
             UserDefaults.standard.set(data, forKey: sessionKey)
@@ -265,4 +318,41 @@ final class AuthStateStore {
         return allItems.first(where: { $0.name == "access_token" })?.value
             ?? allItems.first(where: { $0.name == "token" })?.value
     }
+
+    private static func friendlyDisplayName(preferredName: String?, email: String?, provider: AuthProvider) -> String {
+        if let name = cleanDisplayName(preferredName) {
+            return name
+        }
+        if provider == .apple {
+            return "Apple ile giriş"
+        }
+        if let email, !isApplePrivateRelay(email) {
+            return email
+        }
+        return "Kullanıcı"
+    }
+
+    static func cleanDisplayName(_ value: String?) -> String? {
+        guard let cleaned = value?.trimmingCharacters(in: .whitespacesAndNewlines), !cleaned.isEmpty else {
+            return nil
+        }
+        return cleaned
+    }
+
+    static func isApplePrivateRelay(_ email: String?) -> Bool {
+        email?.lowercased().contains("@privaterelay.appleid.com") == true
+    }
+
+    private static func isUnfriendlyRelayName(_ value: String, email: String?) -> Bool {
+        guard isApplePrivateRelay(email) else { return false }
+        let normalizedValue = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let localPart = email?.split(separator: "@").first.map(String.init)?.lowercased()
+        return normalizedValue.contains("@privaterelay.appleid.com") || normalizedValue == localPart
+    }
+}
+
+enum AuthProvider: String, Codable {
+    case guest
+    case email
+    case apple
 }

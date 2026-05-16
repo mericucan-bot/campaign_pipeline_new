@@ -3,10 +3,28 @@ import Foundation
 struct AuthUser: Codable, Equatable {
     let id: String
     let email: String?
+    let metadata: AuthUserMetadata?
 
     enum CodingKeys: String, CodingKey {
         case id
         case email
+        case metadata = "user_metadata"
+    }
+}
+
+struct AuthUserMetadata: Codable, Equatable {
+    let fullName: String?
+    let name: String?
+
+    enum CodingKeys: String, CodingKey {
+        case fullName = "full_name"
+        case name
+    }
+
+    var displayName: String? {
+        [fullName, name]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty }
     }
 }
 
