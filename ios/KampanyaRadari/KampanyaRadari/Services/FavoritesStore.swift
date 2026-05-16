@@ -20,7 +20,10 @@ final class FavoritesStore {
     }
 
     func set(_ campaign: Campaign, isFavorite: Bool) {
-        if ids.contains(campaign.id) {
+        let containsCampaign = ids.contains(campaign.id)
+        guard containsCampaign != isFavorite else { return }
+
+        if containsCampaign {
             if !isFavorite {
                 ids.remove(campaign.id)
             }
@@ -31,6 +34,7 @@ final class FavoritesStore {
     }
 
     func replace(with newIDs: Set<String>) {
+        guard ids != newIDs else { return }
         ids = newIDs
         save()
     }

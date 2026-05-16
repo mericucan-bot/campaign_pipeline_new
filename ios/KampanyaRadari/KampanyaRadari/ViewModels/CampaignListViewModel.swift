@@ -54,6 +54,7 @@ final class CampaignListViewModel {
     var sortOption: CampaignSortOption = .expiringSoon
     var isLoading = false
     var errorMessage: String?
+    var campaignsRevision = 0
 
     private let service = CampaignService()
 
@@ -268,6 +269,7 @@ final class CampaignListViewModel {
         errorMessage = nil
         do {
             campaigns = try await service.fetchActiveCampaigns()
+            campaignsRevision += 1
         } catch {
             errorMessage = "Kampanyalar yuklenemedi. \(error.localizedDescription)"
         }

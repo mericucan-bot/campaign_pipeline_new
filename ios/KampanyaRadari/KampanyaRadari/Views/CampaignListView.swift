@@ -476,11 +476,14 @@ private struct CampaignListScreen: View {
     @State private var isShowingBankFilters = false
     @State private var isShowingSortOptions = false
     @State private var showScrollToTop = false
-    @State private var scrollOffset: CGFloat = 0
+    @State private var visibleCampaigns: [Campaign] = []
+    @State private var favoriteIDsSnapshot: Set<String> = []
+    @State private var myCardBanksSnapshot: Set<String> = []
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        let filteredCampaigns = viewModel.filteredCampaigns(favoriteIDs: favorites.ids, myCardBanks: myCards.banks)
+        let filteredCampaigns = visibleCampaigns
+        let favoriteIDs = favoriteIDsSnapshot
 
         ZStack(alignment: .bottomTrailing) {
             AppTheme.blueBackground
@@ -527,7 +530,7 @@ private struct CampaignListScreen: View {
                                     } label: {
                                         CampaignCardView(
                                             campaign: campaign,
-                                            isFavorite: favorites.contains(campaign)
+                                            isFavorite: favoriteIDs.contains(campaign.id)
                                         )
                                         .equatable()
                                     }
@@ -552,7 +555,6 @@ private struct CampaignListScreen: View {
                     }
                     .coordinateSpace(name: "campaignListScroll")
                     .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                        scrollOffset = offset
                         let shouldShow = offset < -320
                         if showScrollToTop != shouldShow {
                             withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
@@ -594,8 +596,8 @@ private struct CampaignListScreen: View {
         .sheet(isPresented: $isShowingFilters) {
             FilterSheet(
                 viewModel: viewModel,
-                favoriteCount: favorites.ids.count,
-                myCardCount: myCards.banks.count,
+                favoriteCount: favoriteIDsSnapshot.count,
+                myCardCount: myCardBanksSnapshot.count,
                 showsCategoryFilter: !lockCategoryFilter
             )
                 .presentationDetents([.medium, .large])
@@ -611,6 +613,60 @@ private struct CampaignListScreen: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
+        .onAppear {
+            refreshSnapshotsAndVisibleCampaigns()
+        }
+        .onChange(of: viewModel.campaignsRevision) { _, _ in
+            refreshSnapshotsAndVisibleCampaigns()
+        }
+        .onChange(of: viewModel.searchText) { _, _ in
+            refreshVisibleCampaigns()
+        }
+        .onChange(of: viewModel.selectedBanks) { _, _ in
+            refreshVisibleCampaigns()
+        }
+        .onChange(of: viewModel.selectedCategories) { _, _ in
+            refreshVisibleCampaigns()
+        }
+        .onChange(of: viewModel.selectedRewardType) { _, _ in
+            refreshVisibleCampaigns()
+        }
+        .onChange(of: viewModel.showFavoritesOnly) { _, _ in
+            refreshVisibleCampaigns()
+        }
+        .onChange(of: viewModel.showMyCardsOnly) { _, _ in
+            refreshVisibleCampaigns()
+        }
+        .onChange(of: viewModel.sortOption) { _, _ in
+            refreshVisibleCampaigns()
+        }
+        .onChange(of: favorites.ids) { _, newIDs in
+            favoriteIDsSnapshot = newIDs
+            if viewModel.showFavoritesOnly {
+                refreshVisibleCampaigns(favoriteIDs: newIDs)
+            }
+        }
+        .onChange(of: myCards.banks) { _, newBanks in
+            myCardBanksSnapshot = newBanks
+            if viewModel.showMyCardsOnly {
+                refreshVisibleCampaigns(myCardBanks: newBanks)
+            }
+        }
+    }
+
+    private func refreshSnapshotsAndVisibleCampaigns() {
+        favoriteIDsSnapshot = favorites.ids
+        myCardBanksSnapshot = myCards.banks
+        refreshVisibleCampaigns(favoriteIDs: favoriteIDsSnapshot, myCardBanks: myCardBanksSnapshot)
+    }
+
+    private func refreshVisibleCampaigns(
+        favoriteIDs: Set<String>? = nil,
+        myCardBanks: Set<String>? = nil
+    ) {
+        let favoriteIDs = favoriteIDs ?? favoriteIDsSnapshot
+        let myCardBanks = myCardBanks ?? myCardBanksSnapshot
+        visibleCampaigns = viewModel.filteredCampaigns(favoriteIDs: favoriteIDs, myCardBanks: myCardBanks)
     }
 
     private func listHeader(count: Int) -> some View {
@@ -656,7 +712,7 @@ private struct CampaignListScreen: View {
                 Text(viewModel.showFavoritesOnly ? "Favoriler gösteriliyor" : "Favorilerim")
                     .font(.headline.weight(.bold))
                 Spacer()
-                Text("\(favorites.ids.count)")
+                Text("\(favoriteIDsSnapshot.count)")
                     .font(.subheadline.weight(.bold))
                     .padding(.horizontal, 11)
                     .padding(.vertical, 6)

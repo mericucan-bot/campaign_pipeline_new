@@ -57,6 +57,8 @@ final class ParticipationStore {
     }
 
     func update(_ record: CampaignParticipation, forCampaignID campaignID: String) {
+        guard records[campaignID] != record else { return }
+
         if record == CampaignParticipation() {
             records.removeValue(forKey: campaignID)
         } else {
@@ -66,6 +68,7 @@ final class ParticipationStore {
     }
 
     func replace(with newRecords: [String: CampaignParticipation]) {
+        guard records != newRecords else { return }
         records = newRecords
         save()
     }

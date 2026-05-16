@@ -25,6 +25,7 @@ final class MyCardsStore {
     }
 
     func clear() {
+        guard !banks.isEmpty else { return }
         banks = []
         save()
     }
