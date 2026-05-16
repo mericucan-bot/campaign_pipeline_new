@@ -55,7 +55,7 @@ struct CampaignListView: View {
                         case .profile:
                             ProfileCardsView(viewModel: viewModel, myCards: myCards)
                         case .earnings:
-                            EarningsView(viewModel: viewModel, participation: participation)
+                            EarningsView(viewModel: viewModel, favorites: favorites, participation: participation, authState: authState)
                         case .account:
                             AccountView(authState: authState, favorites: favorites, myCards: myCards, participation: participation)
                         }
@@ -1595,7 +1595,7 @@ private struct AccountView: View {
 }
 
 private struct AccountLegalLinks: View {
-    @Environment(\.openURL) private var openURL
+    @State private var document: LegalDocument?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -1605,10 +1605,10 @@ private struct AccountLegalLinks: View {
 
             VStack(spacing: 10) {
                 AccountLinkButton(title: "Gizlilik Politikası", subtitle: "Hangi verileri neden kullandığımız", systemImage: "lock.shield.fill") {
-                    openURL(AppLinks.privacy)
+                    document = .privacy
                 }
                 AccountLinkButton(title: "Destek", subtitle: "Sık sorulan sorular ve yardım", systemImage: "questionmark.circle.fill") {
-                    openURL(AppLinks.support)
+                    document = .support
                 }
             }
         }
@@ -1618,6 +1618,128 @@ private struct AccountLegalLinks: View {
         .overlay {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .stroke(.white.opacity(0.12), lineWidth: 1)
+        }
+        .sheet(item: $document) { document in
+            LegalDocumentSheet(document: document)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
+    }
+}
+
+private enum LegalDocument: Identifiable {
+    case privacy
+    case support
+
+    var id: String {
+        title
+    }
+
+    var title: String {
+        switch self {
+        case .privacy: "Gizlilik Politikası"
+        case .support: "Destek"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .privacy:
+            "Son güncelleme: 16 Mayıs 2026. Kampanya Radarı, banka ve kart kampanyalarını takip etmeyi kolaylaştıran bilgilendirme uygulamasıdır."
+        case .support:
+            "Banka ve kart kampanyalarını takip ederken ihtiyaç duyabileceğin temel yardım bilgileri."
+        }
+    }
+
+    var sections: [LegalSection] {
+        switch self {
+        case .privacy:
+            [
+                LegalSection(title: "Toplanan veriler", body: "E-posta adresi ve Apple ile giriş bilgisi hesap oluşturma ve oturum yönetimi için Supabase Auth üzerinden işlenir. Favoriler, Kartlarım tercihleri, kampanya katılım kayıtları, harcadım/kazandım tutarları ve hatırlatıcı tarihleri cihazda saklanır; kullanıcı giriş yaptığında Supabase ile senkronlanabilir."),
+                LegalSection(title: "Toplanmayan veriler", body: "Banka kartı numarası, banka hesabı, müşteri numarası veya banka şifresi toplanmaz. Uygulama finansal işlem yapmaz, kullanıcı adına harcama veya kampanya katılımı gerçekleştirmez."),
+                LegalSection(title: "Verilerin kullanım amacı", body: "Kampanyaları filtrelemek, favorileri ve kullanıcının kart tercihlerini göstermek; kampanya takibi, kazanç kaydı ve puan son kullanım hatırlatıcısı sunmak; Free ve Premium plan limitlerini uygulamak için kullanılır."),
+                LegalSection(title: "Üçüncü taraf hizmetler", body: "Supabase kimlik doğrulama ve senkron veriler için, Apple App Store ve StoreKit abonelik ve satın alma yönetimi için kullanılır. İleride reklam veya analitik SDK'sı eklenirse bu politika ve App Store gizlilik cevapları güncellenecektir."),
+                LegalSection(title: "Kullanıcı hakları", body: "Kullanıcı hesabını, favorilerini, kart tercihlerini ve katılım kayıtlarını silme talebi gönderebilir. Destek ekranındaki bilgilerle iletişim kurulabilir.")
+            ]
+        case .support:
+            [
+                LegalSection(title: "Kampanya Radarı ne yapar?", body: "Banka ve kart kampanyalarını tek ekranda keşfetmene, favorilere almana, kendi kartlarına göre filtrelemene ve puan son kullanım hatırlatıcıları kurmana yardımcı olur."),
+                LegalSection(title: "Kampanyaya uygulama üzerinden katılabilir miyim?", body: "Hayır. Uygulama bilgilendirme ve takip aracıdır. Kampanyaya katılım için ilgili bankanın resmi sitesi veya mobil uygulaması kullanılmalıdır."),
+                LegalSection(title: "Banka bilgilerimi giriyor muyum?", body: "Hayır. Uygulama banka kartı numarası, banka hesabı, müşteri numarası veya banka şifresi istemez."),
+                LegalSection(title: "Hatırlatıcılar nasıl çalışır?", body: "Bir kampanyada Katıldım seçildiğinde puan son kullanım tarihi ve tutar girilebilir. Bildirim izni verilirse uygulama son kullanım tarihinden önce hatırlatma gönderebilir."),
+                LegalSection(title: "Destek talebi için hangi bilgiler gerekir?", body: "Cihaz modeli, iOS sürümü, sorunun oluştuğu ekran, varsa ekran görüntüsü ve yaklaşık tarih/saat bilgisi destek sürecini hızlandırır.")
+            ]
+        }
+    }
+}
+
+private struct LegalSection: Identifiable {
+    let id = UUID()
+    let title: String
+    let body: String
+}
+
+private struct LegalDocumentSheet: View {
+    let document: LegalDocument
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            AppTheme.dashboardBackground
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Kampanya Radarı")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(AppTheme.dashboardGreen)
+                            Text(document.title)
+                                .font(.largeTitle.weight(.bold))
+                                .foregroundStyle(.white)
+                        }
+                        Spacer()
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(AppTheme.nearBlack)
+                                .frame(width: 48, height: 48)
+                                .background(.white)
+                                .clipShape(Circle())
+                        }
+                    }
+
+                    Text(document.subtitle)
+                        .font(.headline)
+                        .foregroundStyle(.white.opacity(0.72))
+
+                    VStack(spacing: 12) {
+                        ForEach(document.sections) { section in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(section.title)
+                                    .font(.headline.weight(.bold))
+                                    .foregroundStyle(.white)
+                                Text(section.body)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.white.opacity(0.68))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(16)
+                            .background(AppTheme.dashboardGreen.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                    .stroke(AppTheme.dashboardGreen.opacity(0.22), lineWidth: 1)
+                            }
+                        }
+                    }
+                }
+                .padding(22)
+            }
         }
     }
 }
@@ -2055,8 +2177,25 @@ private struct ProfileBankRow: View {
 
 private struct EarningsView: View {
     @Bindable var viewModel: CampaignListViewModel
+    let favorites: FavoritesStore
     let participation: ParticipationStore
+    @Bindable var authState: AuthStateStore
     @Environment(\.dismiss) private var dismiss
+
+    private var reminderCampaigns: [(campaign: Campaign, record: CampaignParticipation)] {
+        viewModel.campaigns.compactMap { campaign in
+            guard let record = participation.records[campaign.id], record.hasReminder else { return nil }
+            return (campaign, record)
+        }
+        .sorted {
+            let firstDate = $0.record.rewardExpiresAt ?? .distantFuture
+            let secondDate = $1.record.rewardExpiresAt ?? .distantFuture
+            if firstDate != secondDate {
+                return firstDate < secondDate
+            }
+            return $0.campaign.title.localizedCaseInsensitiveCompare($1.campaign.title) == .orderedAscending
+        }
+    }
 
     private var trackedCampaigns: [(campaign: Campaign, record: CampaignParticipation)] {
         viewModel.campaigns.compactMap { campaign in
@@ -2098,6 +2237,7 @@ private struct EarningsView: View {
                     }
 
                     earningsSummary
+                    remindersSection
 
                     VStack(alignment: .leading, spacing: 14) {
                         Text("Takip edilen kampanyalar")
@@ -2161,6 +2301,61 @@ private struct EarningsView: View {
         .overlay {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .stroke(.white.opacity(0.14), lineWidth: 1)
+        }
+    }
+
+    private var remindersSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Hatırlatıcılarım")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text("\(reminderCampaigns.count) aktif puan hatırlatıcısı")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.62))
+                }
+                Spacer()
+                Image(systemName: "bell.badge.fill")
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+                    .frame(width: 44, height: 44)
+                    .background(AppTheme.dashboardGreen.opacity(0.14))
+                    .clipShape(Circle())
+            }
+
+            if reminderCampaigns.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Aktif hatırlatıcı yok")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text("Bir kampanya detayında Katıldım ve puan son kullanım hatırlatıcısını açınca burada listelenecek.")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.66))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .background(.white.opacity(0.07))
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(reminderCampaigns, id: \.campaign.id) { item in
+                        NavigationLink {
+                            CampaignDetailView(campaign: item.campaign, favorites: favorites, participation: participation, authState: authState)
+                        } label: {
+                            ReminderCampaignRow(campaign: item.campaign, record: item.record)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .background(AppTheme.dashboardGreen.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(AppTheme.dashboardGreen.opacity(0.24), lineWidth: 1)
         }
     }
 }
@@ -2233,6 +2428,56 @@ private struct EarningsCampaignRow: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+        }
+    }
+}
+
+private struct ReminderCampaignRow: View {
+    let campaign: Campaign
+    let record: CampaignParticipation
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(AppTheme.dashboardGreen.opacity(0.2))
+                    .frame(width: 44, height: 44)
+                Image(systemName: "bell.fill")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(campaign.displayBank)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+                Text(campaign.title)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                HStack(spacing: 8) {
+                    if let rewardExpiresAt = record.rewardExpiresAt {
+                        Label(rewardExpiresAt.shortDateText, systemImage: "calendar")
+                    }
+                    Label(record.earnedAmount.currencyText, systemImage: "banknote")
+                }
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.white.opacity(0.7))
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.white.opacity(0.46))
+                .padding(.top, 12)
+        }
+        .padding(16)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .stroke(.white.opacity(0.12), lineWidth: 1)
         }
     }
