@@ -73,6 +73,16 @@ final class ParticipationStore {
         save()
     }
 
+    func removeRecords(forCampaignIDs campaignIDs: Set<String>) {
+        guard !campaignIDs.isEmpty else { return }
+        let oldRecords = records
+        records = records.filter { campaignID, _ in
+            !campaignIDs.contains(campaignID)
+        }
+        guard records != oldRecords else { return }
+        save()
+    }
+
     private func save() {
         let key = key
         let snapshot = records

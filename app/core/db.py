@@ -27,7 +27,7 @@ BANK_LABELS = {
     "QNB CardFinans": "QNB",
     "TEB Bonus": "TEB",
     "VakifBank": "Vakif",
-    "Yapi Kredi World": "YKB",
+    "Yapi Kredi World": "Yapı Kredi",
     "Ziraat Bankkart": "Ziraat",
     "Manuel Favori": "Manuel",
 }

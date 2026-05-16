@@ -444,28 +444,42 @@ private struct DashboardHomeView: View {
                 HStack {
                     Text("Kazançlarım")
                         .font(.title3.weight(.bold))
-                        .foregroundStyle(AppTheme.ink)
+                        .foregroundStyle(.white)
                     Spacer()
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .foregroundStyle(AppTheme.dashboardGreen)
                     Image(systemName: "chevron.right")
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(AppTheme.muted)
+                        .foregroundStyle(.white.opacity(0.62))
                 }
 
                 HStack(spacing: 12) {
-                    LightStatTile(title: "Katılım", value: "\(participation.joinedCount)")
-                    LightStatTile(title: "Harcama", value: participation.totalSpent.currencyText)
-                    LightStatTile(title: "Kazanç", value: participation.totalEarned.currencyText)
+                    DarkStatTile(title: "Katılım", value: "\(participation.joinedCount)")
+                    DarkStatTile(title: "Harcama", value: participation.totalSpent.currencyText)
+                    DarkStatTile(title: "Kazanç", value: participation.totalEarned.currencyText)
                 }
 
                 Text("Kampanya detaylarında katılım ve kazanç bilgilerini işaretleyebilirsin.")
                     .font(.footnote)
-                    .foregroundStyle(AppTheme.muted)
+                    .foregroundStyle(.white.opacity(0.66))
             }
             .padding(18)
-            .background(.white)
+            .background {
+                LinearGradient(
+                    colors: [
+                        AppTheme.panelBlack.opacity(0.98),
+                        Color(red: 0.03, green: 0.16, blue: 0.14).opacity(0.98)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(AppTheme.dashboardGreen.opacity(0.28), lineWidth: 1)
+            }
+            .shadow(color: AppTheme.dashboardGreen.opacity(0.12), radius: 14, x: 0, y: 8)
         }
         .buttonStyle(.plain)
     }
@@ -2233,6 +2247,7 @@ private struct EarningsView: View {
     @Bindable var authState: AuthStateStore
     @State private var openingReminderCampaign: Campaign?
     @State private var isShowingRadarScan = false
+    @State private var isShowingClearTrackedConfirmation = false
     @State private var radarScanTask: Task<Void, Never>?
     @Environment(\.dismiss) private var dismiss
 
@@ -2294,9 +2309,26 @@ private struct EarningsView: View {
                     remindersSection
 
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("Takip edilen kampanyalar")
-                            .font(.title3.weight(.bold))
-                            .foregroundStyle(.white)
+                        HStack(alignment: .center) {
+                            Text("Takip edilen kampanyalar")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(.white)
+                            Spacer()
+                            if !trackedCampaigns.isEmpty {
+                                Button {
+                                    isShowingClearTrackedConfirmation = true
+                                } label: {
+                                    Label("Takiptekileri temizle", systemImage: "trash")
+                                        .font(.caption.weight(.bold))
+                                        .foregroundStyle(AppTheme.dashboardGreen)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 9)
+                                        .background(AppTheme.dashboardGreen.opacity(0.14))
+                                        .clipShape(Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
 
                         if trackedCampaigns.isEmpty {
                             VStack(alignment: .leading, spacing: 10) {
@@ -2345,6 +2377,18 @@ private struct EarningsView: View {
                 }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .confirmationDialog(
+            "Takip edilen kampanyalar temizlensin mi?",
+            isPresented: $isShowingClearTrackedConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Takiptekileri temizle", role: .destructive) {
+                clearTrackedCampaigns()
+            }
+            Button("Vazgeç", role: .cancel) {}
+        } message: {
+            Text("Katılım, harcama, kazanç ve puan hatırlatıcı kayıtları bu cihazdan kaldırılacak.")
+        }
     }
 
     private var earningsSummary: some View {
@@ -2463,6 +2507,15 @@ private struct EarningsView: View {
         radarScanTask?.cancel()
         radarScanTask = nil
         isShowingRadarScan = false
+    }
+
+    private func clearTrackedCampaigns() {
+        let items = trackedCampaigns
+        let campaignIDs = Set(items.map { $0.campaign.id })
+        for item in items where item.record.hasReminder {
+            CampaignReminderService.cancelReminders(for: item.campaign)
+        }
+        participation.removeRecords(forCampaignIDs: campaignIDs)
     }
 }
 

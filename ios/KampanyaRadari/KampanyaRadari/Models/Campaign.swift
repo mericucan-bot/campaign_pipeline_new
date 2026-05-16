@@ -34,8 +34,16 @@ struct Campaign: Identifiable, Codable, Hashable {
     }
 
     var displayBank: String {
-        guard let bankLabel, !bankLabel.isEmpty else { return bank }
-        return bankLabel
+        let label = bankLabel?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let source = (label?.isEmpty == false ? label : bank) ?? bank
+        let normalized = source
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+            .lowercased()
+
+        if normalized == "ykb" || normalized.contains("yapi kredi") {
+            return "Yapı Kredi"
+        }
+        return source
     }
 
     var displaySummary: String {
