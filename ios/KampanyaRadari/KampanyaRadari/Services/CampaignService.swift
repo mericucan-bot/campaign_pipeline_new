@@ -12,7 +12,7 @@ struct CampaignService {
             campaigns.append(contentsOf: page)
 
             if page.count < pageSize {
-                return campaigns
+                return campaigns.filter { $0.isCurrentOrUndated }
             }
             offset += pageSize
         }
@@ -63,5 +63,13 @@ struct CampaignService {
         }
 
         return try JSONDecoder.campaignDecoder.decode([Campaign].self, from: data)
+    }
+}
+
+private extension Campaign {
+    var isCurrentOrUndated: Bool {
+        guard let validTo else { return true }
+        let calendar = Calendar.current
+        return calendar.startOfDay(for: validTo) >= calendar.startOfDay(for: Date())
     }
 }

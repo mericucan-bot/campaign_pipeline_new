@@ -1,4 +1,4 @@
-from .db import upsert_campaign, mark_inactive
+from .db import mark_expired_inactive, mark_inactive, upsert_campaign
 
 def run_pipeline(fetch_func, bank_name):
     data = fetch_func()
@@ -24,4 +24,5 @@ def run_pipeline(fetch_func, bank_name):
             print(f"ERROR {item.get('title', 'unknown')}: {exc}")
 
     mark_inactive(active_bank, active_ids)
+    mark_expired_inactive(active_bank)
     return stats

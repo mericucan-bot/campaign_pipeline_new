@@ -2,7 +2,7 @@ import json
 from datetime import date, datetime
 from pathlib import Path
 
-from app.core.db import list_campaigns
+from app.core.db import is_current_or_undated, list_campaigns
 from app.dashboard import build_bank_health, dedupe_campaigns, enrich_campaigns, bank_label
 
 
@@ -19,7 +19,7 @@ def serialize_campaign(item):
     else:
         row["deadline"] = None
     row["bank_label"] = bank_label(row.get("bank") or "")
-    row["is_active"] = bool(row.get("is_active"))
+    row["is_active"] = bool(row.get("is_active")) and is_current_or_undated(row)
     row["favorite"] = False
     return row
 
@@ -60,7 +60,7 @@ def merge_with_previous(current_campaigns, previous_campaigns):
 
 
 def build_stats(campaigns):
-    active = [item for item in campaigns if bool(item.get("is_active"))]
+    active = [item for item in campaigns if bool(item.get("is_active")) and is_current_or_undated(item)]
     banks = sorted({item["bank"] for item in campaigns if item.get("bank")})
     return {
         "total": len(campaigns),

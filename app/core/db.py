@@ -390,6 +390,46 @@ def mark_inactive_supabase(bank, active_external_ids):
             ).execute()
 
 
+def mark_expired_inactive(bank):
+    return mark_expired_inactive_supabase(bank) if USE_SUPABASE else mark_expired_inactive_local(bank)
+
+
+def mark_expired_inactive_local(bank):
+    init_local_db()
+    timestamp = now_iso()
+    today = date.today().isoformat()
+
+    with get_connection() as conn:
+        conn.execute(
+            """
+            UPDATE campaigns
+            SET is_active = 0, last_seen = ?
+            WHERE bank = ?
+              AND is_active = 1
+              AND valid_to IS NOT NULL
+              AND valid_to != ''
+              AND valid_to < ?
+            """,
+            (timestamp, bank, today),
+        )
+
+
+def mark_expired_inactive_supabase(bank):
+    timestamp = now_iso()
+    today = date.today().isoformat()
+
+    supabase.table("campaigns").update(
+        {"is_active": False, "last_seen": timestamp}
+    ).eq("bank", bank).eq("is_active", True).lt("valid_to", today).execute()
+
+
+def is_current_or_undated(row):
+    valid_to = row.get("valid_to")
+    if not valid_to:
+        return True
+    return str(valid_to)[:10] >= date.today().isoformat()
+
+
 def list_campaigns(bank=None, search=None, active_only=False):
     if USE_SUPABASE:
         try:
@@ -421,6 +461,9 @@ def list_campaigns_local(bank=None, search=None, active_only=False):
 
     with get_connection() as conn:
         rows = [dict(row) for row in conn.execute(query, params).fetchall()]
+
+    if active_only:
+        rows = [row for row in rows if is_current_or_undated(row)]
 
     if search:
         needle = normalize_search(search)
@@ -468,6 +511,9 @@ def list_campaigns_supabase(bank=None, search=None, active_only=False):
         and not any(part in (row.get("url") or row.get("external_id") or "") for part in EXCLUDED_URL_PARTS)
     ]
 
+    if active_only:
+        data = [row for row in data if is_current_or_undated(row)]
+
     if search:
         needle = normalize_search(search)
         data = [
@@ -489,7 +535,7 @@ def list_campaigns_supabase(bank=None, search=None, active_only=False):
 
 def get_stats():
     campaigns = list_campaigns()
-    active = [item for item in campaigns if bool(item.get("is_active"))]
+    active = [item for item in campaigns if bool(item.get("is_active")) and is_current_or_undated(item)]
     banks = sorted({item["bank"] for item in campaigns})
     return {
         "total": len(campaigns),
