@@ -12,7 +12,7 @@ struct CampaignService {
             campaigns.append(contentsOf: page)
 
             if page.count < pageSize {
-                return campaigns.filter { $0.isCurrentOrUndated }
+                return campaigns.filter { $0.isCurrentOrUndated && $0.isDisplayableCampaign }
             }
             offset += pageSize
         }
@@ -71,5 +71,41 @@ private extension Campaign {
         guard let validTo else { return true }
         let calendar = Calendar.current
         return calendar.startOfDay(for: validTo) >= calendar.startOfDay(for: Date())
+    }
+
+    var isDisplayableCampaign: Bool {
+        let normalizedTitle = title.normalizedCampaignText
+        guard normalizedTitle.count > 2 else { return false }
+
+        let blockedTitles: Set<String> = [
+            "70 giyim",
+            "8 yurt disi alisverisi",
+            "8 yurtdisi alisverisi",
+        ]
+        if blockedTitles.contains(normalizedTitle) {
+            return false
+        }
+
+        let body = [title, summary, description]
+            .compactMap { $0 }
+            .joined(separator: " ")
+            .normalizedCampaignText
+        if body.contains("tum haklari saklidir"),
+           normalizedTitle.hasPrefix("70 ") || normalizedTitle.hasPrefix("8 ") {
+            return false
+        }
+
+        return true
+    }
+}
+
+private extension String {
+    var normalizedCampaignText: String {
+        folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "tr_TR"))
+            .lowercased()
+            .replacingOccurrences(of: "ı", with: "i")
+            .replacingOccurrences(of: #"[^a-z0-9%+ ]+"#, with: " ", options: .regularExpression)
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

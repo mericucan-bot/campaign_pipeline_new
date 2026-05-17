@@ -127,7 +127,8 @@ struct CampaignDetailView: View {
                         title: "Kaydediliyor",
                         message: "Favori durumun güncelleniyor."
                     )
-                    .allowsHitTesting(false)
+                    .allowsHitTesting(true)
+                    .zIndex(20)
                     .transition(.opacity)
                 }
             }
@@ -229,14 +230,14 @@ struct CampaignDetailView: View {
             return
         }
         let targetState = isFavorite
-            isShowingActionScan = true
         favoriteSaveTask?.cancel()
+        isShowingActionScan = true
         favoriteSaveTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 40_000_000)
+            try? await Task.sleep(nanoseconds: 120_000_000)
             guard !Task.isCancelled else { return }
             favorites.set(campaign, isFavorite: targetState)
             originalFavorite = targetState
-            try? await Task.sleep(nanoseconds: 160_000_000)
+            try? await Task.sleep(nanoseconds: 520_000_000)
             guard !Task.isCancelled else { return }
             isShowingActionScan = false
         }

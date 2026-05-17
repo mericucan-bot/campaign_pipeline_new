@@ -9,7 +9,19 @@ enum UserDataSyncError: LocalizedError {
         case .missingSession:
             return "Senkron için aktif oturum bulunamadı."
         case .requestFailed(let message):
+            if message.isExpiredJWTMessage {
+                return "Oturum süresi doldu. Oturum yenilenip senkron tekrar denenecek."
+            }
             return message
+        }
+    }
+
+    var isExpiredJWT: Bool {
+        switch self {
+        case .missingSession:
+            return false
+        case .requestFailed(let message):
+            return message.isExpiredJWTMessage
         }
     }
 }
@@ -157,6 +169,15 @@ struct UserDataSyncService {
         return object["message"] as? String
             ?? object["hint"] as? String
             ?? object["details"] as? String
+    }
+}
+
+private extension String {
+    var isExpiredJWTMessage: Bool {
+        let normalized = lowercased()
+        return normalized.contains("jwt expired")
+            || normalized.contains("token expired")
+            || normalized.contains("expired jwt")
     }
 }
 

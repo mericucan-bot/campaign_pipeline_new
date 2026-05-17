@@ -162,6 +162,21 @@ final class AuthStateStore {
         await refreshProfile()
     }
 
+    func sessionForNetwork(forceRefresh: Bool = false) async throws -> AuthSession {
+        guard let currentSession = session else {
+            throw SupabaseAuthError.server("Oturum bulunamadı. Tekrar giriş yapman gerekebilir.")
+        }
+
+        guard let refreshToken = currentSession.refreshToken,
+              forceRefresh || shouldRefresh(currentSession) else {
+            return currentSession
+        }
+
+        let refreshed = try await authService.refreshSession(refreshToken: refreshToken)
+        apply(session: refreshed, provider: authProvider, preferredName: displayName)
+        return refreshed
+    }
+
     func signIn(email: String, password: String) async {
         await authenticate(email: email, password: password, isSignUp: false)
     }

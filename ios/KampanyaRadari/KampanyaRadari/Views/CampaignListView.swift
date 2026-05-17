@@ -1429,15 +1429,30 @@ private struct AuthOptionsSheet: View {
 
     private func syncAfterLogin() async {
         do {
+            try await syncUserDataWithFreshSession()
+            authState.authMessage = "Giriş başarılı. Yerel kayıtların bulut hesabınla senkronlandı."
+        } catch {
+            authState.authMessage = "Giriş başarılı. Senkron beklemede: \((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)"
+        }
+    }
+
+    private func syncUserDataWithFreshSession() async throws {
+        let session = try await authState.sessionForNetwork()
+        do {
             try await syncService.sync(
-                session: authState.session,
+                session: session,
                 favorites: favorites,
                 myCards: myCards,
                 participation: participation
             )
-            authState.authMessage = "Giriş başarılı. Yerel kayıtların bulut hesabınla senkronlandı."
-        } catch {
-            authState.authMessage = "Giriş başarılı. Senkron beklemede: \((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)"
+        } catch let error as UserDataSyncError where error.isExpiredJWT {
+            let refreshedSession = try await authState.sessionForNetwork(forceRefresh: true)
+            try await syncService.sync(
+                session: refreshedSession,
+                favorites: favorites,
+                myCards: myCards,
+                participation: participation
+            )
         }
     }
 
@@ -1775,10 +1790,30 @@ private struct AccountView: View {
         defer { isSyncing = false }
 
         do {
-            try await syncService.sync(session: authState.session, favorites: favorites, myCards: myCards, participation: participation)
+            try await syncUserDataWithFreshSession()
             syncMessage = "Favoriler, kartlarım ve katılım kayıtların bulut hesabınla senkronlandı."
         } catch {
             syncMessage = "Senkron beklemede: \((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)"
+        }
+    }
+
+    private func syncUserDataWithFreshSession() async throws {
+        let session = try await authState.sessionForNetwork()
+        do {
+            try await syncService.sync(
+                session: session,
+                favorites: favorites,
+                myCards: myCards,
+                participation: participation
+            )
+        } catch let error as UserDataSyncError where error.isExpiredJWT {
+            let refreshedSession = try await authState.sessionForNetwork(forceRefresh: true)
+            try await syncService.sync(
+                session: refreshedSession,
+                favorites: favorites,
+                myCards: myCards,
+                participation: participation
+            )
         }
     }
 }
