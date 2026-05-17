@@ -49,6 +49,14 @@ final class AuthStateStore {
         isGuest ? "Misafir mod" : displayName
     }
 
+    var needsDisplayNamePrompt: Bool {
+        guard isAuthenticated else { return false }
+        return Self.cleanDisplayName(displayName) == nil
+            || displayName == "Kullanıcı"
+            || displayName == "Apple ile giriş"
+            || Self.isUnfriendlyRelayName(displayName, email: email)
+    }
+
     var accountKindText: String {
         guard isAuthenticated else { return "Misafir" }
         switch authProvider {
@@ -70,7 +78,10 @@ final class AuthStateStore {
     }
 
     var emailDisplayText: String {
-        email ?? "Bağlı değil"
+        if authProvider == .apple && Self.isApplePrivateRelay(email) {
+            return "Apple tarafından gizlendi"
+        }
+        return email ?? "Bağlı değil"
     }
 
     var accountDescriptionText: String {
@@ -115,13 +126,16 @@ final class AuthStateStore {
         isLoading = true
         authMessage = nil
 
-        Task {
-            if let accessToken {
-                await authService.signOut(accessToken: accessToken)
-            }
-            try? await Task.sleep(nanoseconds: 250_000_000)
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 160_000_000)
             continueAsGuest()
             isLoading = false
+        }
+
+        if let accessToken {
+            Task.detached(priority: .utility) {
+                await SupabaseAuthService().signOut(accessToken: accessToken)
+            }
         }
     }
 
@@ -229,6 +243,24 @@ final class AuthStateStore {
         }
 
         isLoading = false
+    }
+
+    func updateDisplayName(_ value: String) async {
+        guard let cleanName = Self.cleanDisplayName(value) else {
+            authMessage = "Ad alanı boş olamaz."
+            return
+        }
+
+        displayName = cleanName
+        authMessage = nil
+        save()
+
+        guard let session else { return }
+        do {
+            try await profileService.updateDisplayName(session: session, displayName: cleanName)
+        } catch {
+            authMessage = "Ad kaydedildi. Bulut senkronu bağlantı düzelince tekrar denenebilir."
+        }
     }
 
     private func authenticate(email: String, password: String, isSignUp: Bool, displayName: String? = nil) async {

@@ -226,11 +226,11 @@ struct CampaignDetailView: View {
         isShowingActionScan = true
         favoriteSaveTask?.cancel()
         favoriteSaveTask = Task { @MainActor in
-            await Task.yield()
+            try? await Task.sleep(nanoseconds: 90_000_000)
             guard !Task.isCancelled else { return }
             favorites.set(campaign, isFavorite: targetState)
             originalFavorite = targetState
-            try? await Task.sleep(nanoseconds: 180_000_000)
+            try? await Task.sleep(nanoseconds: 220_000_000)
             guard !Task.isCancelled else { return }
             isShowingActionScan = false
         }

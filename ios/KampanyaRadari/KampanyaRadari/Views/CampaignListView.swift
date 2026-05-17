@@ -88,6 +88,15 @@ struct CampaignListView: View {
                 }
             }
         }
+        .sheet(isPresented: Binding(
+            get: { authState.passwordResetAccessToken == nil && authState.needsDisplayNamePrompt },
+            set: { _ in }
+        )) {
+            DisplayNamePromptSheet(authState: authState)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+                .interactiveDismissDisabled(true)
+        }
         .overlay {
             if authState.isLoading {
                 RadarLoadingOverlay(
@@ -99,6 +108,76 @@ struct CampaignListView: View {
             }
         }
         .animation(.easeInOut(duration: 0.18), value: authState.isLoading)
+    }
+}
+
+private struct DisplayNamePromptSheet: View {
+    @Bindable var authState: AuthStateStore
+    @State private var displayName = ""
+    @State private var isSaving = false
+
+    var body: some View {
+        ZStack {
+            AppTheme.dashboardBackground
+                .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 20) {
+                Capsule()
+                    .fill(.white.opacity(0.28))
+                    .frame(width: 44, height: 5)
+                    .frame(maxWidth: .infinity)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Seni nasıl çağıralım?")
+                        .font(.largeTitle.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text("Profilinde teknik hesap bilgileri yerine bu adı göstereceğim.")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.68))
+                }
+
+                AuthTextField(title: "Adın", text: $displayName, systemImage: "person.fill")
+                    .textInputAutocapitalization(.words)
+
+                if let message = authState.authMessage {
+                    AuthMessageBanner(message: message, isPositive: authState.isAuthMessagePositive)
+                }
+
+                Button {
+                    guard !isSaving else { return }
+                    isSaving = true
+                    Task {
+                        await authState.updateDisplayName(displayName)
+                        isSaving = false
+                    }
+                } label: {
+                    HStack {
+                        if isSaving {
+                            ProgressView()
+                                .tint(AppTheme.nearBlack)
+                        }
+                        Text("Devam et")
+                            .font(.headline.weight(.bold))
+                    }
+                    .foregroundStyle(AppTheme.nearBlack)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(AppTheme.dashboardGreen)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                }
+                .disabled(AuthStateStore.cleanDisplayName(displayName) == nil || isSaving)
+
+                Spacer(minLength: 0)
+            }
+            .padding(22)
+        }
+        .onAppear {
+            if displayName.isEmpty,
+               authState.displayName != "Kullanıcı",
+               authState.displayName != "Apple ile giriş" {
+                displayName = authState.displayName
+            }
+        }
     }
 }
 
@@ -1890,6 +1969,8 @@ private struct AccountStatusRow: View {
                 Text(value)
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.72)
             }
             Spacer()
         }
@@ -2221,11 +2302,15 @@ private struct ProfileCardsView: View {
     }
 
     private func saveAndDismiss() {
+        guard !isSavingCards else { return }
         isSavingCards = true
         didPersistSelection = true
-        myCards.replace(with: selectedBanks)
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 180_000_000)
+            try? await Task.sleep(nanoseconds: 90_000_000)
+            guard !Task.isCancelled else { return }
+            myCards.replace(with: selectedBanks)
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            guard !Task.isCancelled else { return }
             dismiss()
             isSavingCards = false
         }
