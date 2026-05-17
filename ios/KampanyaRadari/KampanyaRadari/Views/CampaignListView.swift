@@ -115,11 +115,15 @@ private struct DisplayNamePromptSheet: View {
     @Bindable var authState: AuthStateStore
     @State private var displayName = ""
     @State private var isSaving = false
+    @FocusState private var isNameFocused: Bool
 
     var body: some View {
         ZStack {
             AppTheme.dashboardBackground
                 .ignoresSafeArea()
+                .onTapGesture {
+                    isNameFocused = false
+                }
 
             VStack(alignment: .leading, spacing: 20) {
                 Capsule()
@@ -128,16 +132,37 @@ private struct DisplayNamePromptSheet: View {
                     .frame(maxWidth: .infinity)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Seni nasıl çağıralım?")
+                    Text("Profil adı")
                         .font(.largeTitle.weight(.bold))
                         .foregroundStyle(.white)
-                    Text("Profilinde teknik hesap bilgileri yerine bu adı göstereceğim.")
+                    Text("Profilinde görünmesini istediğin ismi gir.")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.68))
                 }
 
-                AuthTextField(title: "Adın", text: $displayName, systemImage: "person.fill")
-                    .textInputAutocapitalization(.words)
+                HStack(spacing: 12) {
+                    Image(systemName: "person.fill")
+                        .foregroundStyle(AppTheme.dashboardGreen)
+                    ZStack(alignment: .leading) {
+                        if displayName.isEmpty {
+                            Text("Ad Soyad")
+                                .foregroundStyle(.white.opacity(0.44))
+                        }
+                        TextField("", text: $displayName)
+                            .focused($isNameFocused)
+                            .textInputAutocapitalization(.words)
+                            .submitLabel(.done)
+                            .foregroundStyle(.white)
+                    }
+                }
+                .font(.headline.weight(.semibold))
+                .padding(16)
+                .background(.white.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(.white.opacity(0.12), lineWidth: 1)
+                }
 
                 if let message = authState.authMessage {
                     AuthMessageBanner(message: message, isPositive: authState.isAuthMessagePositive)
@@ -177,6 +202,10 @@ private struct DisplayNamePromptSheet: View {
                authState.displayName != "Apple ile giriş" {
                 displayName = authState.displayName
             }
+        }
+        .task {
+            try? await Task.sleep(nanoseconds: 220_000_000)
+            isNameFocused = true
         }
     }
 }
@@ -837,15 +866,12 @@ private struct CampaignListScreen: View {
     }
 
     private func openCampaign(_ campaign: Campaign) {
-        isShowingRadarScan = true
         radarScanTask?.cancel()
+        openingCampaign = campaign
         radarScanTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 60_000_000)
+            try? await Task.sleep(nanoseconds: 180_000_000)
             guard !Task.isCancelled else { return }
-            openingCampaign = campaign
-            try? await Task.sleep(nanoseconds: 320_000_000)
-            guard !Task.isCancelled else { return }
-            isShowingRadarScan = false
+            isShowingRadarScan = openingCampaign == campaign
         }
     }
 
@@ -1605,9 +1631,6 @@ private struct AccountView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 14) {
-                        AccountStatusRow(title: "Oturum", value: authState.accountKindText, systemImage: "person.fill")
-                        AccountStatusRow(title: authState.emailLabelText, value: authState.emailDisplayText, systemImage: "envelope.fill")
-                        AccountStatusRow(title: "Senkron", value: authState.isAuthenticated ? "Bulut senkron hazır" : "Cihazda saklanıyor", systemImage: "arrow.triangle.2.circlepath")
                         AccountStatusRow(title: "Plan", value: authState.plan.displayName, systemImage: "creditcard.fill")
                         AccountStatusRow(
                             title: "Hatırlatıcı",

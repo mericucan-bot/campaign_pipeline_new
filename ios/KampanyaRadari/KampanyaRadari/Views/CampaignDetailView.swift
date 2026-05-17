@@ -18,6 +18,7 @@ struct CampaignDetailView: View {
     @State private var favoriteSaveTask: Task<Void, Never>?
     @State private var isShowingActionScan = false
     @State private var hasPendingCommit = false
+    @FocusState private var focusedMoneyField: MoneyField?
 
     var body: some View {
         ZStack {
@@ -95,6 +96,7 @@ struct CampaignDetailView: View {
                 }
                 .padding(18)
             }
+            .scrollDismissesKeyboard(.interactively)
         }
         .onAppear {
             loadParticipation()
@@ -102,7 +104,11 @@ struct CampaignDetailView: View {
         .onDisappear {
             pendingMoneySaveTask?.cancel()
             favoriteSaveTask?.cancel()
-            commitFavoriteImmediatelyIfNeeded()
+            if isFavorite != originalFavorite {
+                favorites.set(campaign, isFavorite: isFavorite)
+                originalFavorite = isFavorite
+            }
+            isShowingActionScan = false
             applyMoneyTextToRecord()
             commitParticipationIfNeeded()
         }
@@ -151,10 +157,10 @@ struct CampaignDetailView: View {
             }
 
             VStack(spacing: 10) {
-                MoneyInputRow(title: "Harcadım", text: $spentText) {
+                MoneyInputRow(title: "Harcadım", text: $spentText, field: .spent, focusedField: $focusedMoneyField) {
                     scheduleMoneySave()
                 }
-                MoneyInputRow(title: "Kazandım", text: $earnedText) {
+                MoneyInputRow(title: "Kazandım", text: $earnedText, field: .earned, focusedField: $focusedMoneyField) {
                     scheduleMoneySave()
                 }
             }
@@ -223,24 +229,17 @@ struct CampaignDetailView: View {
             return
         }
         let targetState = isFavorite
-        isShowingActionScan = true
+            isShowingActionScan = true
         favoriteSaveTask?.cancel()
         favoriteSaveTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 90_000_000)
+            try? await Task.sleep(nanoseconds: 40_000_000)
             guard !Task.isCancelled else { return }
             favorites.set(campaign, isFavorite: targetState)
             originalFavorite = targetState
-            try? await Task.sleep(nanoseconds: 220_000_000)
+            try? await Task.sleep(nanoseconds: 160_000_000)
             guard !Task.isCancelled else { return }
             isShowingActionScan = false
         }
-    }
-
-    private func commitFavoriteImmediatelyIfNeeded() {
-        guard isFavorite != originalFavorite else { return }
-        favorites.set(campaign, isFavorite: isFavorite)
-        originalFavorite = isFavorite
-        isShowingActionScan = false
     }
 
     private func commitParticipationIfNeeded() {
@@ -341,9 +340,16 @@ struct CampaignDetailView: View {
     }
 }
 
+private enum MoneyField: Hashable {
+    case spent
+    case earned
+}
+
 private struct MoneyInputRow: View {
     let title: String
     @Binding var text: String
+    let field: MoneyField
+    var focusedField: FocusState<MoneyField?>.Binding
     let onChange: () -> Void
 
     var body: some View {
@@ -358,6 +364,7 @@ private struct MoneyInputRow: View {
                 .font(.headline.weight(.bold))
                 .foregroundStyle(AppTheme.ink)
                 .frame(maxWidth: 120)
+                .focused(focusedField, equals: field)
                 .onChange(of: text) { _, _ in
                     onChange()
                 }
@@ -365,9 +372,23 @@ private struct MoneyInputRow: View {
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(AppTheme.muted)
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            focusedField.wrappedValue = field
+        }
         .padding(12)
         .background(.white.opacity(0.72))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .toolbar {
+            if focusedField.wrappedValue == field {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Tamam") {
+                        focusedField.wrappedValue = nil
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -7,7 +7,7 @@ struct RadarLoadingOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.34)
+            Color.black.opacity(0.58)
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {
@@ -57,13 +57,23 @@ struct RadarLoadingOverlay: View {
             }
             .padding(24)
             .frame(maxWidth: 300)
-            .background(.ultraThinMaterial)
+            .background(
+                LinearGradient(
+                    colors: [
+                        AppTheme.panelBlack.opacity(0.98),
+                        Color(red: 0.02, green: 0.13, blue: 0.11).opacity(0.98)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .stroke(AppTheme.dashboardGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(AppTheme.dashboardGreen.opacity(0.48), lineWidth: 1)
             }
-            .shadow(color: .black.opacity(0.28), radius: 24, x: 0, y: 16)
+            .shadow(color: AppTheme.dashboardGreen.opacity(0.20), radius: 18, x: 0, y: 0)
+            .shadow(color: .black.opacity(0.34), radius: 24, x: 0, y: 16)
         }
     }
 }

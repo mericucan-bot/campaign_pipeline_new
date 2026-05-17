@@ -86,7 +86,7 @@ final class AuthStateStore {
 
     var accountDescriptionText: String {
         isAuthenticated
-            ? "Favori, kart ve kazanç kayıtlarını buluta senkronlayabilirsin."
+            ? "Favorilerin, kartların ve kazanç kayıtların hesabında saklanır."
             : "Misafir kullanım açık. Hesap bağlarsan favorilerin, kartların ve kazanç kayıtların cihazlar arasında taşınır."
     }
 
