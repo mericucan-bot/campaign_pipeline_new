@@ -144,6 +144,19 @@ final class AuthStateStore {
         authMessage = "Premium aktif edildi. Kalıcı abonelik doğrulaması yayın adımında Supabase/RevenueCat ile bağlanacak."
     }
 
+    func applyStoreEntitlements(_ activeProductIDs: Set<PremiumProductID>) {
+        if !activeProductIDs.isEmpty {
+            plan = .premium
+            return
+        }
+
+        if plan == .premium {
+            Task {
+                await refreshProfile()
+            }
+        }
+    }
+
     func resumeSavedSession() async {
         guard let session else {
             plan = .free

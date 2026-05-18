@@ -138,7 +138,7 @@ final class PremiumPurchaseService {
 
         do {
             try await AppStore.sync()
-            let activeIDs = await activePremiumProductIDs()
+            let activeIDs = await currentPremiumProductIDs()
             if activeIDs.isEmpty {
                 statusMessage = "Geri yüklenecek aktif Premium abonelik bulunamadı."
                 return false
@@ -148,6 +148,29 @@ final class PremiumPurchaseService {
         } catch {
             statusMessage = "Geri yükleme tamamlanamadı: \(readableMessage(from: error))"
             return false
+        }
+    }
+
+    func currentPremiumProductIDs() async -> Set<PremiumProductID> {
+        var ids = Set<PremiumProductID>()
+        for await result in Transaction.currentEntitlements {
+            guard let transaction = try? checkVerified(result),
+                  let productID = PremiumProductID(rawValue: transaction.productID) else {
+                continue
+            }
+            ids.insert(productID)
+        }
+        return ids
+    }
+
+    func listenForTransactionUpdates(onEntitlementsChanged: @escaping @MainActor (Set<PremiumProductID>) -> Void) async {
+        for await result in Transaction.updates {
+            guard let transaction = try? checkVerified(result) else {
+                continue
+            }
+            await transaction.finish()
+            let activeIDs = await currentPremiumProductIDs()
+            onEntitlementsChanged(activeIDs)
         }
     }
 
@@ -162,18 +185,6 @@ final class PremiumPurchaseService {
                 isStoreProductReady: false
             )
         }
-    }
-
-    private func activePremiumProductIDs() async -> Set<PremiumProductID> {
-        var ids = Set<PremiumProductID>()
-        for await result in Transaction.currentEntitlements {
-            guard let transaction = try? checkVerified(result),
-                  let productID = PremiumProductID(rawValue: transaction.productID) else {
-                continue
-            }
-            ids.insert(productID)
-        }
-        return ids
     }
 
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {

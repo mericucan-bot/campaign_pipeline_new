@@ -14,6 +14,7 @@ struct CampaignListView: View {
     @State private var myCards = MyCardsStore()
     @State private var participation = ParticipationStore()
     @State private var authState = AuthStateStore()
+    @State private var purchaseService = PremiumPurchaseService()
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var hasEnteredApp = false
     @State private var path: [AppRoute] = []
@@ -57,7 +58,7 @@ struct CampaignListView: View {
                         case .earnings:
                             EarningsView(viewModel: viewModel, favorites: favorites, participation: participation, authState: authState)
                         case .account:
-                            AccountView(authState: authState, favorites: favorites, myCards: myCards, participation: participation)
+                            AccountView(authState: authState, favorites: favorites, myCards: myCards, participation: participation, purchaseService: purchaseService)
                         }
                     }
                 }
@@ -71,6 +72,13 @@ struct CampaignListView: View {
         .task {
             if viewModel.campaigns.isEmpty {
                 await viewModel.load()
+            }
+        }
+        .task {
+            let activeIDs = await purchaseService.currentPremiumProductIDs()
+            authState.applyStoreEntitlements(activeIDs)
+            await purchaseService.listenForTransactionUpdates { activeIDs in
+                authState.applyStoreEntitlements(activeIDs)
             }
         }
         .onOpenURL { url in
@@ -1615,6 +1623,7 @@ private struct AccountView: View {
     let favorites: FavoritesStore
     let myCards: MyCardsStore
     let participation: ParticipationStore
+    let purchaseService: PremiumPurchaseService
     @Environment(\.dismiss) private var dismiss
     @State private var syncMessage: String?
     @State private var isSyncing = false
@@ -1727,7 +1736,7 @@ private struct AccountView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $isShowingPaywall) {
-            PaywallPreviewSheet(authState: authState)
+            PaywallPreviewSheet(authState: authState, purchaseService: purchaseService)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -2042,8 +2051,8 @@ private struct AccountStatusRow: View {
 
 private struct PaywallPreviewSheet: View {
     @Bindable var authState: AuthStateStore
+    let purchaseService: PremiumPurchaseService
     @Environment(\.dismiss) private var dismiss
-    @State private var purchaseService = PremiumPurchaseService()
 
     var body: some View {
         ZStack {
@@ -2123,7 +2132,12 @@ private struct PaywallPreviewSheet: View {
                             Task {
                                 let didPurchase = await purchaseService.purchaseSelectedOffering()
                                 if didPurchase {
-                                    authState.applyPremiumPurchasePreview()
+                                    let activeIDs = await purchaseService.currentPremiumProductIDs()
+                                    if activeIDs.isEmpty {
+                                        authState.applyPremiumPurchasePreview()
+                                    } else {
+                                        authState.applyStoreEntitlements(activeIDs)
+                                    }
                                 }
                             }
                         } label: {
@@ -2147,7 +2161,8 @@ private struct PaywallPreviewSheet: View {
                             Task {
                                 let didRestore = await purchaseService.restorePurchases()
                                 if didRestore {
-                                    authState.applyPremiumPurchasePreview()
+                                    let activeIDs = await purchaseService.currentPremiumProductIDs()
+                                    authState.applyStoreEntitlements(activeIDs)
                                 }
                             }
                         } label: {
