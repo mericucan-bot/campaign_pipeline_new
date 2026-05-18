@@ -23,6 +23,9 @@ def run_pipeline(fetch_func, bank_name):
             stats["errors"] += 1
             print(f"ERROR {item.get('title', 'unknown')}: {exc}")
 
-    mark_inactive(active_bank, active_ids)
+    if active_ids:
+        mark_inactive(active_bank, active_ids)
+    else:
+        print(f"WARN: {active_bank} için hiç aktif kampanya bulunamadı, mark_inactive atlandı.")
     mark_expired_inactive(active_bank)
     return stats
