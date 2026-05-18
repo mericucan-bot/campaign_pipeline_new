@@ -350,15 +350,28 @@ final class AuthStateStore {
         UserDefaults.standard.set(authProvider.rawValue, forKey: authProviderKey)
         UserDefaults.standard.set(isGuest, forKey: isGuestKey)
         if let session, let data = try? JSONEncoder().encode(session) {
-            UserDefaults.standard.set(data, forKey: sessionKey)
+            try? KeychainHelper.write(data, key: sessionKey)
+            UserDefaults.standard.removeObject(forKey: sessionKey)
         } else {
+            try? KeychainHelper.delete(key: sessionKey)
             UserDefaults.standard.removeObject(forKey: sessionKey)
         }
     }
 
     private static func loadSession(key: String) -> AuthSession? {
-        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
-        return try? JSONDecoder().decode(AuthSession.self, from: data)
+        if let keychainData = try? KeychainHelper.read(key: key),
+           let session = try? JSONDecoder().decode(AuthSession.self, from: keychainData) {
+            return session
+        }
+
+        guard let defaultsData = UserDefaults.standard.data(forKey: key),
+              let session = try? JSONDecoder().decode(AuthSession.self, from: defaultsData) else {
+            return nil
+        }
+
+        try? KeychainHelper.write(defaultsData, key: key)
+        UserDefaults.standard.removeObject(forKey: key)
+        return session
     }
 
     private static func recoveryAccessToken(from url: URL) -> String? {
