@@ -1383,10 +1383,15 @@ private struct AuthOptionsSheet: View {
                     VStack(spacing: 10) {
                         AuthPreviewButton(title: "Google ile giriş", systemImage: "g.circle.fill")
                         SignInWithAppleButton(.continue) { request in
-                            let nonce = AppleSignInNonce.random()
-                            appleSignInNonce = nonce
-                            request.requestedScopes = [.email, .fullName]
-                            request.nonce = AppleSignInNonce.sha256(nonce)
+                            do {
+                                let nonce = try AppleSignInNonce.random()
+                                appleSignInNonce = nonce
+                                request.requestedScopes = [.email, .fullName]
+                                request.nonce = AppleSignInNonce.sha256(nonce)
+                            } catch {
+                                appleSignInNonce = nil
+                                authState.authMessage = "Apple ile giriş başlatılamadı, tekrar dene."
+                            }
                         } onCompletion: { result in
                             handleAppleSignIn(result)
                         }

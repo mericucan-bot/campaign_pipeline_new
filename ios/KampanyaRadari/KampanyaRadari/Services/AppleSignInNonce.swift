@@ -2,10 +2,16 @@ import CryptoKit
 import Foundation
 import Security
 
-enum AppleSignInNonce {
-    private static let charset = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+enum AppleSignInError: LocalizedError {
+    case nonceFailed
 
-    static func random(length: Int = 32) -> String {
+    var errorDescription: String? { "Güvenli nonce üretilemedi." }
+}
+
+enum AppleSignInNonce {
+    private static let charset = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._")
+
+    static func random(length: Int = 32) throws -> String {
         precondition(length > 0)
 
         var result = ""
@@ -15,7 +21,7 @@ enum AppleSignInNonce {
             var randoms = [UInt8](repeating: 0, count: 16)
             let status = SecRandomCopyBytes(kSecRandomDefault, randoms.count, &randoms)
             if status != errSecSuccess {
-                fatalError("Güvenli Apple Sign In nonce üretilemedi.")
+                throw AppleSignInError.nonceFailed
             }
 
             for random in randoms {
