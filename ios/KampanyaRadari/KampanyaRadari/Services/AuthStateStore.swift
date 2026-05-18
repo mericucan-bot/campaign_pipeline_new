@@ -392,7 +392,7 @@ final class AuthStateStore {
         let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         let allItems = fragmentItems + queryItems
         let type = allItems.first(where: { $0.name == "type" })?.value
-        guard type == nil || type == "recovery" || type == "signup" else { return nil }
+        guard type == "recovery" || type == "signup" else { return nil }
         return allItems.first(where: { $0.name == "access_token" })?.value
             ?? allItems.first(where: { $0.name == "token" })?.value
     }
