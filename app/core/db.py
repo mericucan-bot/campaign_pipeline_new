@@ -11,7 +11,7 @@ from .config import DB_PATH, USE_SUPABASE, SUPABASE_KEY, SUPABASE_URL
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY) if USE_SUPABASE else None
 
-EXCLUDED_BANKS = {"HSBC", "ING", "Odeabank", "DenizBank", "QNB Finansbank", "TEB", "Halkbank"}
+EXCLUDED_BANKS = {"HSBC", "ING", "Odeabank", "Halkbank"}
 EXCLUDED_URL_PARTS = ["yapikredi.com.tr"]
 
 BANK_LABELS = {
