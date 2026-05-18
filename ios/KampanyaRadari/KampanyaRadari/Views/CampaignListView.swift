@@ -1763,7 +1763,7 @@ private struct AccountView: View {
                     Text("Premium")
                         .font(.title3.weight(.bold))
                         .foregroundStyle(.white)
-                    Text("Sınırsız hatırlatıcı, reklamsız kullanım ve gelişmiş kazanç raporları için hazır alan.")
+                    Text("Öncelikli hatırlatıcı, reklamsız kullanım ve gelişmiş kazanç raporları için hazır alan.")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.70))
                 }
@@ -2066,7 +2066,7 @@ private struct PaywallPreviewSheet: View {
                             Text("Kampanya Radarı Premium")
                                 .font(.largeTitle.weight(.bold))
                                 .foregroundStyle(.white)
-                            Text("Sınırsız hatırlatıcı, reklamsız kullanım ve gelişmiş kazanç takibi için yayın aboneliği.")
+                            Text("Öncelikli hatırlatıcı, reklamsız kullanım ve gelişmiş kazanç takibi için yayın aboneliği.")
                                 .font(.headline)
                                 .foregroundStyle(.white.opacity(0.72))
                         }
@@ -2084,7 +2084,7 @@ private struct PaywallPreviewSheet: View {
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
-                        PaywallBenefitRow(icon: "bell.badge.fill", title: "Sınırsız hatırlatıcı", text: "Birden fazla kampanya için puan son kullanım bildirimleri.")
+                        PaywallBenefitRow(icon: "bell.badge.fill", title: "Öncelikli hatırlatıcı", text: "Birden fazla kampanya için puan son kullanım bildirimleri.")
                         PaywallBenefitRow(icon: "chart.line.uptrend.xyaxis", title: "Gelişmiş kazanç raporu", text: "Harcama, kazanım ve net faydayı daha ayrıntılı takip.")
                         PaywallBenefitRow(icon: "rectangle.on.rectangle.slash", title: "Reklamsız deneyim", text: "Ücretsiz sürümdeki reklam alanları Premium’da kapanır.")
                         PaywallBenefitRow(icon: "creditcard.and.123", title: "Kişisel kart önerileri", text: "Kartlarına göre daha alakalı kampanyaları öne çıkarma altyapısı.")

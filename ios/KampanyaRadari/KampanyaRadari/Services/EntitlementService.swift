@@ -34,7 +34,7 @@ enum EntitlementService {
             return EntitlementRule(
                 allowed: true,
                 title: "Premium hatırlatıcı",
-                message: "Premium planda sınırsız kampanya hatırlatıcısı kullanabilirsin."
+                message: "Premium planda kampanya hatırlatıcılarını öncelikli bildirim yönetimiyle kullanabilirsin."
             )
         }
 
@@ -48,14 +48,14 @@ enum EntitlementService {
 
         return EntitlementRule(
             allowed: false,
-            title: "Premium ile sınırsız takip",
-            message: "Free planda 1 aktif hatırlatıcı hakkın var. Premium ile tüm kampanyalar için sınırsız hatırlatıcı açabilirsin."
+            title: "Premium ile öncelikli takip",
+            message: "Free planda 1 aktif hatırlatıcı hakkın var. Premium ile kampanya hatırlatıcılarını öncelikli bildirim yönetimiyle kullanabilirsin."
         )
     }
 
     static func reminderAllowanceText(plan: SubscriptionPlan, participation: ParticipationStore) -> String {
         if plan.isPremiumLike {
-            return "Sınırsız hatırlatıcı"
+            return "Öncelikli hatırlatıcı"
         }
         return "\(participation.activeReminderCount)/1 aktif hatırlatıcı"
     }
