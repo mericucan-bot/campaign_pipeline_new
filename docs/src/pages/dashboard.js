@@ -746,7 +746,12 @@ function scheduleNotif(kampanya) {
   ].filter((uyari) => uyari.zaman > new Date());
   if (!uyarilar.length) return;
   const kayitli = JSON.parse(localStorage.getItem("kr-notifs") || "{}");
-  kayitli[kampanya.id] = uyarilar.map((uyari) => ({ zaman: uyari.zaman.toISOString(), mesaj: uyari.mesaj, gosterildi: false }));
+  const mevcut = kayitli[kampanya.id] || [];
+  kayitli[kampanya.id] = uyarilar.map((uyari) => {
+    const zaman = uyari.zaman.toISOString();
+    const eskiUyari = mevcut.find((item) => item.zaman === zaman);
+    return { zaman, mesaj: uyari.mesaj, gosterildi: eskiUyari?.gosterildi ?? false };
+  });
   localStorage.setItem("kr-notifs", JSON.stringify(kayitli));
 }
 
