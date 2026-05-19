@@ -28,8 +28,17 @@ enum EntitlementService {
     static func canUseRewardReminder(
         plan: SubscriptionPlan,
         participation: ParticipationStore,
-        campaignID: String
+        campaignID: String,
+        isGuest: Bool = false
     ) -> EntitlementRule {
+        if isGuest {
+            return EntitlementRule(
+                allowed: false,
+                title: "Giriş gerekli",
+                message: "Hatırlatıcı eklemek için hesap oluşturman veya giriş yapman gerekiyor."
+            )
+        }
+
         if plan.isPremiumLike {
             return EntitlementRule(
                 allowed: true,

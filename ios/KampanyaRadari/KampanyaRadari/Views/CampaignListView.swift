@@ -81,6 +81,13 @@ struct CampaignListView: View {
                 authState.applyStoreEntitlements(activeIDs)
             }
         }
+        .onChange(of: authState.isAuthenticated) { _, isAuthenticated in
+            guard isAuthenticated else { return }
+            Task {
+                let activeIDs = await purchaseService.currentPremiumProductIDs()
+                authState.applyStoreEntitlements(activeIDs)
+            }
+        }
         .onOpenURL { url in
             hasCompletedOnboarding = true
             hasEnteredApp = true
@@ -2137,13 +2144,15 @@ private struct PaywallPreviewSheet: View {
                         Button {
                             Task {
                                 let didPurchase = await purchaseService.purchaseSelectedOffering()
+                                let activeIDs = await purchaseService.currentPremiumProductIDs()
                                 if didPurchase {
-                                    let activeIDs = await purchaseService.currentPremiumProductIDs()
                                     if activeIDs.isEmpty {
                                         authState.applyPremiumPurchasePreview()
                                     } else {
                                         authState.applyStoreEntitlements(activeIDs)
                                     }
+                                } else if !activeIDs.isEmpty {
+                                    authState.applyStoreEntitlements(activeIDs)
                                 }
                             }
                         } label: {

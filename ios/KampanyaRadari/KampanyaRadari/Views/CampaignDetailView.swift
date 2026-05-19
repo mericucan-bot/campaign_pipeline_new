@@ -68,6 +68,14 @@ struct CampaignDetailView: View {
 
                         HStack {
                             Button {
+                                guard !authState.isGuest else {
+                                    entitlementPrompt = EntitlementRule(
+                                        allowed: false,
+                                        title: "Giriş gerekli",
+                                        message: "Favorileri kaydetmek için hesap oluşturman veya giriş yapman gerekiyor."
+                                    )
+                                    return
+                                }
                                 isFavorite.toggle()
                                 commitFavoriteIfNeeded()
                             } label: {
@@ -302,7 +310,8 @@ struct CampaignDetailView: View {
                 let rule = EntitlementService.canUseRewardReminder(
                     plan: authState.plan,
                     participation: participation,
-                    campaignID: campaign.id
+                    campaignID: campaign.id,
+                    isGuest: authState.isGuest
                 )
                 guard rule.allowed else {
                     hasRewardReminder = false
