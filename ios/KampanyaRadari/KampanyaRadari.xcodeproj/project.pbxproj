@@ -73,6 +73,7 @@
 				49FC6EA72FAFC2F900EA662F /* Sources */,
 				49FC6EA82FAFC2F900EA662F /* Frameworks */,
 				49FC6EA92FAFC2F900EA662F /* Resources */,
+				7C8F3A1C2FB5200100D4A3A1 /* Generate Sentry dSYM */,
 			);
 			buildRules = (
 			);
@@ -135,6 +136,32 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		7C8F3A1C2FB5200100D4A3A1 /* Generate Sentry dSYM */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/Sentry.framework/Sentry",
+			);
+			name = "Generate Sentry dSYM";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DWARF_DSYM_FOLDER_PATH)/Sentry.framework.dSYM/Contents/Info.plist",
+				"$(DWARF_DSYM_FOLDER_PATH)/Sentry.framework.dSYM/Contents/Resources/DWARF/Sentry",
+				"$(DWARF_DSYM_FOLDER_PATH)/Sentry.framework.dSYM/Contents/Resources/Relocations/aarch64/Sentry.yml",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "SENTRY_BINARY=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sentry.framework/Sentry\"\nSENTRY_DSYM=\"${DWARF_DSYM_FOLDER_PATH}/Sentry.framework.dSYM\"\nTEMP_DSYM=\"${TARGET_TEMP_DIR}/Sentry.framework.dSYM\"\n\nif [ -f \"$SENTRY_BINARY\" ]; then\n    rm -rf \"$TEMP_DSYM\"\n    /usr/bin/dsymutil \"$SENTRY_BINARY\" -o \"$TEMP_DSYM\" || true\n    if [ -d \"$TEMP_DSYM\" ]; then\n        /usr/bin/ditto \"$TEMP_DSYM\" \"$SENTRY_DSYM\"\n    fi\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		49FC6EA72FAFC2F900EA662F /* Sources */ = {
@@ -279,6 +306,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = KampanyaRadari/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Kampanya Radarı";
@@ -315,6 +343,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 5;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = KampanyaRadari/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Kampanya Radarı";
