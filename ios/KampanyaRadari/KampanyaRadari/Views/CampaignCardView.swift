@@ -60,7 +60,7 @@ struct CampaignCardView: View, Equatable {
                 }
 
                 Divider()
-                    .overlay(.white.opacity(0.12))
+                    .overlay(AppTheme.borderSubtle)
 
                 HStack {
                     InfoLabel(systemImage: "person.2", text: socialProofText)
@@ -73,17 +73,14 @@ struct CampaignCardView: View, Equatable {
                     .foregroundStyle(AppTheme.dashboardGreen)
                 }
             }
-            .padding(14)
+            .padding(16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [
-                            AppTheme.panelBlack.opacity(0.98),
-                            Color(red: 0.02, green: 0.10, blue: 0.10).opacity(0.98)
-                        ],
+                        colors: [AppTheme.panelBlack, AppTheme.deepBlue],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -91,10 +88,10 @@ struct CampaignCardView: View, Equatable {
         }
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(accent.opacity(0.58), lineWidth: 1)
+                .stroke(AppTheme.borderSubtle, lineWidth: 1)
         }
-        .shadow(color: accent.opacity(0.16), radius: 10, x: 0, y: 5)
-        .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 8)
+        .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
+        .shadow(color: accent.opacity(0.12), radius: 16, x: 0, y: 0)
     }
 
     private var bankRail: some View {
@@ -116,7 +113,7 @@ struct CampaignCardView: View, Equatable {
         .frame(width: 78)
         .background {
             LinearGradient(
-                colors: [accent.opacity(0.92), accent.opacity(0.36)],
+                colors: [accent.opacity(0.85), accent.opacity(0.25)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
