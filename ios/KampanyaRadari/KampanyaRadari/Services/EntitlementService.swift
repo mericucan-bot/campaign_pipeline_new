@@ -68,4 +68,41 @@ enum EntitlementService {
         }
         return "\(participation.activeReminderCount)/1 aktif hatırlatıcı"
     }
+
+    static let freeFavoriteLimit = 3
+
+    static func canAddFavorite(
+        plan: SubscriptionPlan,
+        favorites: FavoritesStore,
+        campaignID: String,
+        isGuest: Bool = false
+    ) -> EntitlementRule {
+        if isGuest {
+            return EntitlementRule(
+                allowed: false,
+                title: "Giriş gerekli",
+                message: "Favorileri kaydetmek için hesap oluşturman veya giriş yapman gerekiyor."
+            )
+        }
+        if plan.isPremiumLike {
+            return EntitlementRule(allowed: true, title: "", message: "")
+        }
+        // Zaten favoride → kaldırmaya izin ver
+        if favorites.ids.contains(campaignID) {
+            return EntitlementRule(allowed: true, title: "", message: "")
+        }
+        if favorites.ids.count < freeFavoriteLimit {
+            return EntitlementRule(allowed: true, title: "", message: "")
+        }
+        return EntitlementRule(
+            allowed: false,
+            title: "Favori limitine ulaştın",
+            message: "Free planda \(freeFavoriteLimit) favori kampanya saklayabilirsin. Premium ile sınırsız favori ekleyebilirsin."
+        )
+    }
+
+    static func favoriteAllowanceText(plan: SubscriptionPlan, favorites: FavoritesStore) -> String {
+        if plan.isPremiumLike { return "Sınırsız favori" }
+        return "\(min(favorites.ids.count, freeFavoriteLimit))/\(freeFavoriteLimit) favori"
+    }
 }

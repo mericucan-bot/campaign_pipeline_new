@@ -68,12 +68,14 @@ struct CampaignDetailView: View {
 
                         HStack {
                             Button {
-                                guard !authState.isGuest else {
-                                    entitlementPrompt = EntitlementRule(
-                                        allowed: false,
-                                        title: "Giriş gerekli",
-                                        message: "Favorileri kaydetmek için hesap oluşturman veya giriş yapman gerekiyor."
-                                    )
+                                let rule = EntitlementService.canAddFavorite(
+                                    plan: authState.plan,
+                                    favorites: favorites,
+                                    campaignID: campaign.id,
+                                    isGuest: authState.isGuest
+                                )
+                                guard rule.allowed else {
+                                    entitlementPrompt = rule
                                     return
                                 }
                                 isFavorite.toggle()

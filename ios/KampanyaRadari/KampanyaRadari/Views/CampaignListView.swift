@@ -74,6 +74,11 @@ struct CampaignListView: View {
             if viewModel.campaigns.isEmpty {
                 await viewModel.load()
             }
+            NewCampaignAlertService.checkAndSchedule(
+                campaigns: viewModel.campaigns,
+                myCardBanks: myCards.banks,
+                plan: authState.plan
+            )
         }
         .task {
             let activeIDs = await purchaseService.currentPremiumProductIDs()
@@ -88,6 +93,14 @@ struct CampaignListView: View {
                 let activeIDs = await purchaseService.currentPremiumProductIDs()
                 authState.applyStoreEntitlements(activeIDs)
             }
+        }
+        .onChange(of: authState.plan) { _, newPlan in
+            guard newPlan.isPremiumLike, !viewModel.campaigns.isEmpty else { return }
+            NewCampaignAlertService.checkAndSchedule(
+                campaigns: viewModel.campaigns,
+                myCardBanks: myCards.banks,
+                plan: newPlan
+            )
         }
         .onOpenURL { url in
             hasCompletedOnboarding = true
@@ -1684,6 +1697,16 @@ private struct AccountView: View {
                             value: EntitlementService.reminderAllowanceText(plan: authState.plan, participation: participation),
                             systemImage: "bell.badge.fill"
                         )
+                        AccountStatusRow(
+                            title: "Favori",
+                            value: EntitlementService.favoriteAllowanceText(plan: authState.plan, favorites: favorites),
+                            systemImage: "star.fill"
+                        )
+                        AccountStatusRow(
+                            title: "Kart alarmı",
+                            value: authState.plan.isPremiumLike ? "Aktif" : "Premium gerekli",
+                            systemImage: "bell.and.waves.left.and.right.fill"
+                        )
                     }
                     .padding(18)
                     .background(.white.opacity(0.08))
@@ -2101,7 +2124,7 @@ private struct PaywallPreviewSheet: View {
                             Text("Kampanya Radarı Premium")
                                 .font(.largeTitle.weight(.bold))
                                 .foregroundStyle(.white)
-                            Text("Öncelikli hatırlatıcı, reklamsız kullanım ve gelişmiş kazanç takibi için yayın aboneliği.")
+                            Text("Kartına özel kampanya alarmı, sınırsız favori ve sınırsız hatırlatıcı.")
                                 .font(.headline)
                                 .foregroundStyle(.white.opacity(0.72))
                         }
@@ -2120,10 +2143,10 @@ private struct PaywallPreviewSheet: View {
                     }
 
                     VStack(alignment: .leading, spacing: 12) {
-                        PaywallBenefitRow(icon: "bell.badge.fill", title: "Öncelikli hatırlatıcı", text: "Birden fazla kampanya için puan son kullanım bildirimleri.")
-                        PaywallBenefitRow(icon: "chart.line.uptrend.xyaxis", title: "Gelişmiş kazanç raporu", text: "Harcama, kazanım ve net faydayı daha ayrıntılı takip.")
-                        PaywallBenefitRow(icon: "rectangle.on.rectangle.slash", title: "Reklamsız deneyim", text: "Ücretsiz sürümdeki reklam alanları Premium’da kapanır.")
-                        PaywallBenefitRow(icon: "creditcard.and.123", title: "Kişisel kart önerileri", text: "Kartlarına göre daha alakalı kampanyaları öne çıkarma altyapısı.")
+                        PaywallBenefitRow(icon: "bell.and.waves.left.and.right.fill", title: "Kartıma özel yeni kampanya alarmı", text: "Kartlarımda kayıtlı bankalar için yeni kampanya çıktığında bildirim alırsın.")
+                        PaywallBenefitRow(icon: "star.fill", title: "Sınırsız favori", text: "Free planda 3 favori hakkın var. Premium ile sınırsız kampanya kaydet.")
+                        PaywallBenefitRow(icon: "bell.badge.fill", title: "Sınırsız hatırlatıcı", text: "Birden fazla kampanya için puan son kullanım bildirimleri.")
+                        PaywallBenefitRow(icon: "chart.line.uptrend.xyaxis", title: "Gelişmiş kazanç takibi", text: "Harcama, kazanım ve net faydayı takip et.")
                     }
 
                     VStack(spacing: 12) {
