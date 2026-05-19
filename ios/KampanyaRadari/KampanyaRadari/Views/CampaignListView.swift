@@ -957,16 +957,17 @@ private struct CampaignListScreen: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .font(.title3.weight(.semibold))
-                .foregroundStyle(AppTheme.ink)
+                .foregroundStyle(AppTheme.muted)
             TextField("Market, taksit, seyahat", text: $viewModel.searchText)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
+                .foregroundStyle(AppTheme.textPrimary)
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
-        .background(.white)
+        .background(AppTheme.deepBlue)
         .clipShape(Capsule())
-        .shadow(color: .black.opacity(0.18), radius: 18, x: 0, y: 10)
+        .overlay(Capsule().strokeBorder(AppTheme.borderSubtle, lineWidth: 1))
     }
 
     private var bankFilter: some View {
@@ -1054,11 +1055,12 @@ private struct CircleIconButton: View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(AppTheme.ink)
+                .foregroundStyle(.white)
                 .frame(width: 46, height: 46)
-                .background(.white)
+                .background(AppTheme.panelBlack)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.16), radius: 12, x: 0, y: 8)
+                .overlay(Circle().strokeBorder(AppTheme.borderSubtle, lineWidth: 1))
+                .shadow(color: .black.opacity(0.30), radius: 12, x: 0, y: 6)
         }
     }
 }
@@ -1123,7 +1125,7 @@ private struct CategoryTile: View {
 
                 Text(summary.name)
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(AppTheme.ink)
+                    .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(2)
 
                 Text("\(summary.count) kampanya")
@@ -1142,13 +1144,13 @@ private struct CategoryTile: View {
     private var tileColor: Color {
         switch summary.name.lowercased() {
         case let name where name.contains("market"):
-            return Color(red: 1.0, green: 0.94, blue: 0.94)
+            return AppTheme.panelBlack
         case let name where name.contains("akaryakit") || name.contains("yakıt") || name.contains("yakit"):
-            return AppTheme.cream
+            return AppTheme.deepBlue
         case let name where name.contains("seyahat"):
-            return Color(red: 0.92, green: 0.98, blue: 0.90)
+            return AppTheme.panelBlack
         case let name where name.contains("online"):
-            return Color(red: 0.92, green: 0.94, blue: 1.0)
+            return AppTheme.panelBlack
         default:
             return AppTheme.softGreen.opacity(0.88)
         }
@@ -1184,7 +1186,7 @@ private struct LightStatTile: View {
                 .foregroundStyle(AppTheme.muted)
             Text(value)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(AppTheme.ink)
+                .foregroundStyle(AppTheme.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
@@ -1222,10 +1224,11 @@ private struct PasswordResetSheet: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.headline.weight(.bold))
-                            .foregroundStyle(AppTheme.nearBlack)
+                            .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
-                            .background(.white)
+                            .background(AppTheme.panelBlack)
                             .clipShape(Circle())
+                            .overlay(Circle().strokeBorder(AppTheme.borderSubtle, lineWidth: 1))
                     }
                 }
 
@@ -1313,10 +1316,11 @@ private struct AuthOptionsSheet: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.headline.weight(.bold))
-                            .foregroundStyle(AppTheme.nearBlack)
+                            .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
-                            .background(.white)
+                            .background(AppTheme.panelBlack)
                             .clipShape(Circle())
+                            .overlay(Circle().strokeBorder(AppTheme.borderSubtle, lineWidth: 1))
                     }
                 }
 
@@ -1943,10 +1947,11 @@ private struct LegalDocumentSheet: View {
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.headline.weight(.bold))
-                                .foregroundStyle(AppTheme.nearBlack)
+                                .foregroundStyle(.white)
                                 .frame(width: 48, height: 48)
-                                .background(.white)
+                                .background(AppTheme.panelBlack)
                                 .clipShape(Circle())
+                                .overlay(Circle().strokeBorder(AppTheme.borderSubtle, lineWidth: 1))
                         }
                     }
 
@@ -2076,10 +2081,11 @@ private struct PaywallPreviewSheet: View {
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.headline.weight(.bold))
-                                .foregroundStyle(AppTheme.nearBlack)
+                                .foregroundStyle(.white)
                                 .frame(width: 44, height: 44)
-                                .background(.white)
+                                .background(AppTheme.panelBlack)
                                 .clipShape(Circle())
+                                .overlay(Circle().strokeBorder(AppTheme.borderSubtle, lineWidth: 1))
                         }
                     }
 
@@ -3087,10 +3093,11 @@ private struct FilterSheet: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.headline.weight(.bold))
-                    .foregroundStyle(AppTheme.nearBlack)
+                    .foregroundStyle(.white)
                     .frame(width: 44, height: 44)
-                    .background(.white)
+                    .background(AppTheme.panelBlack)
                     .clipShape(Circle())
+                    .overlay(Circle().strokeBorder(AppTheme.borderSubtle, lineWidth: 1))
             }
         }
     }
@@ -3123,10 +3130,11 @@ private struct BankFilterSheet: View {
                             } label: {
                                 Image(systemName: "xmark")
                                     .font(.headline.weight(.bold))
-                                    .foregroundStyle(AppTheme.nearBlack)
+                                    .foregroundStyle(.white)
                                     .frame(width: 44, height: 44)
-                                    .background(.white)
+                                    .background(AppTheme.panelBlack)
                                     .clipShape(Circle())
+                                    .overlay(Circle().strokeBorder(AppTheme.borderSubtle, lineWidth: 1))
                             }
                         }
 
@@ -3189,10 +3197,11 @@ private struct SortSheet: View {
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.headline.weight(.bold))
-                                .foregroundStyle(AppTheme.nearBlack)
+                                .foregroundStyle(.white)
                                 .frame(width: 44, height: 44)
-                                .background(.white)
+                                .background(AppTheme.panelBlack)
                                 .clipShape(Circle())
+                                .overlay(Circle().strokeBorder(AppTheme.borderSubtle, lineWidth: 1))
                         }
                     }
 
