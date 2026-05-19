@@ -18,6 +18,7 @@ struct CampaignListView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var hasEnteredApp = false
     @State private var path: [AppRoute] = []
+    @State private var isShowingNamePrompt = false
 
     var body: some View {
         Group {
@@ -103,14 +104,16 @@ struct CampaignListView: View {
                 }
             }
         }
-        .sheet(isPresented: Binding(
-            get: { authState.passwordResetAccessToken == nil && authState.needsDisplayNamePrompt },
-            set: { _ in }
-        )) {
-            DisplayNamePromptSheet(authState: authState)
+        .sheet(isPresented: $isShowingNamePrompt) {
+            DisplayNamePromptSheet(authState: authState) {
+                isShowingNamePrompt = false
+            }
                 .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
+                .presentationDragIndicator(.hidden)
                 .interactiveDismissDisabled(true)
+        }
+        .onChange(of: authState.needsDisplayNamePrompt) { _, needs in
+            if needs { isShowingNamePrompt = true }
         }
         .overlay {
             if authState.isLoading || authState.isSyncing {
@@ -130,6 +133,7 @@ struct CampaignListView: View {
 
 private struct DisplayNamePromptSheet: View {
     @Bindable var authState: AuthStateStore
+    let onDone: () -> Void
     @State private var displayName = ""
     @State private var isSaving = false
     @FocusState private var isNameFocused: Bool
@@ -191,6 +195,9 @@ private struct DisplayNamePromptSheet: View {
                     Task {
                         await authState.updateDisplayName(displayName)
                         isSaving = false
+                        if AuthStateStore.cleanDisplayName(authState.displayName) != nil {
+                            onDone()
+                        }
                     }
                 } label: {
                     HStack {
@@ -221,7 +228,7 @@ private struct DisplayNamePromptSheet: View {
             }
         }
         .task {
-            try? await Task.sleep(nanoseconds: 220_000_000)
+            try? await Task.sleep(nanoseconds: 700_000_000)
             isNameFocused = true
         }
     }
@@ -1746,6 +1753,22 @@ private struct AccountView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
+        .overlay {
+            if authState.isLoading {
+                RadarLoadingOverlay(
+                    title: "Çıkış yapılıyor",
+                    message: "Hesabından güvenli şekilde çıkılıyor."
+                )
+                .allowsHitTesting(true)
+                .transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.18), value: authState.isLoading)
+        .onChange(of: authState.isAuthenticated) { _, isAuthenticated in
+            if !isAuthenticated {
+                dismiss()
+            }
+        }
         .sheet(isPresented: $isShowingPaywall) {
             PaywallPreviewSheet(authState: authState, purchaseService: purchaseService)
                 .presentationDetents([.medium, .large])
