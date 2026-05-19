@@ -54,7 +54,7 @@ struct CampaignDetailView: View {
                                 .foregroundStyle(AppTheme.dashboardGreen)
                             Text(campaign.title)
                                 .font(.title2.weight(.bold))
-                                .foregroundStyle(AppTheme.ink)
+                                .foregroundStyle(AppTheme.textPrimary)
                             Text(campaign.deadlineText)
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(.orange)
@@ -91,8 +91,13 @@ struct CampaignDetailView: View {
                         }
                     }
                     .padding(20)
-                    .background(.white)
+                    .background(AppTheme.panelBlack)
                     .clipShape(RoundedRectangle(cornerRadius: 34, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 34, style: .continuous)
+                            .strokeBorder(AppTheme.borderSubtle, lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
                 }
                 .padding(18)
             }
@@ -146,7 +151,7 @@ struct CampaignDetailView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Kampanya takibi")
                         .font(.headline.weight(.bold))
-                        .foregroundStyle(AppTheme.ink)
+                        .foregroundStyle(AppTheme.textPrimary)
                     Text("Katılım, harcama ve kazancını burada tut.")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(AppTheme.muted)
@@ -174,7 +179,7 @@ struct CampaignDetailView: View {
             }
         }
         .padding(16)
-        .background(AppTheme.softGreen.opacity(0.72))
+        .background(AppTheme.deepBlue)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
@@ -258,7 +263,7 @@ struct CampaignDetailView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Puan harcama hatırlatıcısı")
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(AppTheme.ink)
+                        .foregroundStyle(AppTheme.textPrimary)
                     Text("Katıldım seçiliyken son kullanımdan 7 gün, 3 gün ve son gün önce bildirim gönderirim.")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(AppTheme.muted)
@@ -274,9 +279,9 @@ struct CampaignDetailView: View {
                     displayedComponents: .date
                 )
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(AppTheme.ink)
+                .foregroundStyle(AppTheme.textPrimary)
                 .padding(12)
-                .background(.white.opacity(0.72))
+                .background(AppTheme.panelBlack)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
 
@@ -285,7 +290,7 @@ struct CampaignDetailView: View {
                 .foregroundStyle(AppTheme.dashboardGreen)
         }
         .padding(12)
-        .background(.white.opacity(0.42))
+        .background(AppTheme.panelBlack)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
@@ -357,13 +362,13 @@ private struct MoneyInputRow: View {
         HStack {
             Text(title)
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(AppTheme.ink)
+                .foregroundStyle(AppTheme.textPrimary)
             Spacer()
             TextField("0", text: $text)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
                 .font(.headline.weight(.bold))
-                .foregroundStyle(AppTheme.ink)
+                .foregroundStyle(AppTheme.textPrimary)
                 .frame(maxWidth: 120)
                 .focused(focusedField, equals: field)
                 .onChange(of: text) { _, _ in
@@ -378,7 +383,7 @@ private struct MoneyInputRow: View {
             focusedField.wrappedValue = field
         }
         .padding(12)
-        .background(.white.opacity(0.72))
+        .background(AppTheme.panelBlack)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .toolbar {
             if focusedField.wrappedValue == field {
@@ -404,11 +409,11 @@ private struct DetailStatPill: View {
                 .foregroundStyle(AppTheme.muted)
             Text(value)
                 .font(.subheadline.weight(.bold))
-                .foregroundStyle(AppTheme.ink)
+                .foregroundStyle(AppTheme.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(.white.opacity(0.72))
+        .background(AppTheme.panelBlack)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
@@ -430,7 +435,7 @@ private struct EntitlementPromptOverlay: View {
 
                 Text(rule.title)
                     .font(.title3.weight(.black))
-                    .foregroundStyle(AppTheme.ink)
+                    .foregroundStyle(AppTheme.textPrimary)
                     .multilineTextAlignment(.center)
 
                 Text(rule.message)
@@ -452,7 +457,7 @@ private struct EntitlementPromptOverlay: View {
             }
             .padding(22)
             .frame(maxWidth: 320)
-            .background(.white)
+            .background(AppTheme.panelBlack)
             .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
             .shadow(color: .black.opacity(0.22), radius: 22, x: 0, y: 12)
             .padding(.horizontal, 26)
