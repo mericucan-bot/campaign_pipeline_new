@@ -113,16 +113,18 @@ struct CampaignListView: View {
                 .interactiveDismissDisabled(true)
         }
         .overlay {
-            if authState.isLoading {
+            if authState.isLoading || authState.isSyncing {
                 RadarLoadingOverlay(
-                    title: "İşlem yapılıyor",
-                    message: "Hesap işlemin güvenli şekilde tamamlanıyor."
+                    title: authState.isSyncing ? "Senkronlanıyor" : "İşlem yapılıyor",
+                    message: authState.isSyncing
+                        ? "Hesap verilerin güvenle aktarılıyor."
+                        : "Hesap işlemin güvenli şekilde tamamlanıyor."
                 )
                 .allowsHitTesting(true)
                 .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.18), value: authState.isLoading)
+        .animation(.easeInOut(duration: 0.18), value: authState.isLoading || authState.isSyncing)
     }
 }
 
@@ -1362,9 +1364,7 @@ private struct AuthOptionsSheet: View {
                             if authState.isAuthenticated {
                                 dismiss()
                                 enter()
-                                Task {
-                                    await syncAfterLogin()
-                                }
+                                await syncAfterLogin()
                             }
                         }
                     } label: {
@@ -1452,6 +1452,8 @@ private struct AuthOptionsSheet: View {
     }
 
     private func syncAfterLogin() async {
+        authState.isSyncing = true
+        defer { authState.isSyncing = false }
         do {
             try await syncUserDataWithFreshSession()
             authState.authMessage = "Giriş başarılı. Yerel kayıtların bulut hesabınla senkronlandı."
@@ -1496,9 +1498,7 @@ private struct AuthOptionsSheet: View {
                 if authState.isAuthenticated {
                     dismiss()
                     enter()
-                    Task {
-                        await syncAfterLogin()
-                    }
+                    await syncAfterLogin()
                 }
             }
         case .failure(let error):
