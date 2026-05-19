@@ -45,6 +45,7 @@ enum CampaignCategory: String, CaseIterable, Identifiable {
 @Observable
 final class CampaignListViewModel {
     var campaigns: [Campaign] = []
+    private var categoryCache: [String: String] = [:]
     var searchText = ""
     var selectedBanks: Set<String> = []
     var selectedCategories: Set<String> = []
@@ -209,6 +210,13 @@ final class CampaignListViewModel {
     }
 
     private func canonicalCategory(for campaign: Campaign) -> String {
+        if let cached = categoryCache[campaign.id] { return cached }
+        let result = Self.computeCanonicalCategory(for: campaign)
+        categoryCache[campaign.id] = result
+        return result
+    }
+
+    nonisolated static func computeCanonicalCategory(for campaign: Campaign) -> String {
         let haystack = [
             campaign.title,
             campaign.summary,
@@ -286,7 +294,16 @@ final class CampaignListViewModel {
         isLoading = true
         errorMessage = nil
         do {
-            campaigns = try await service.fetchActiveCampaigns()
+            let fetched = try await service.fetchActiveCampaigns()
+            let cache: [String: String] = await Task.detached(priority: .userInitiated) {
+                Dictionary(
+                    uniqueKeysWithValues: fetched.map {
+                        ($0.id, CampaignListViewModel.computeCanonicalCategory(for: $0))
+                    }
+                )
+            }.value
+            categoryCache = cache
+            campaigns = fetched
             campaignsRevision += 1
         } catch {
             errorMessage = "Kampanyalar yuklenemedi. \(error.localizedDescription)"
