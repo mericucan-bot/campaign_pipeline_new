@@ -33,6 +33,8 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>SentryDSN</key>
+	<string>https://48df1186fa26ab6ca1c6270c754d6a5b@o4511415741644800.ingest.de.sentry.io/4511415779262544</string>
 	<key>SupabaseAnonKey</key>
 	<string>sb_publishable_8qo0lf-XuimNd1ZIIU5xLg_DXLFCsbd</string>
 	<key>SupabaseURL</key>

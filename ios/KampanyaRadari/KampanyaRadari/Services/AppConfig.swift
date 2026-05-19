@@ -18,4 +18,8 @@ enum AppConfig {
     static var authRedirectURL: String {
         Bundle.main.object(forInfoDictionaryKey: "AuthRedirectURL") as? String ?? "kampanyaradari://auth-callback"
     }
+
+    static var sentryDSN: String {
+        Bundle.main.object(forInfoDictionaryKey: "SentryDSN") as? String ?? ""
+    }
 }
