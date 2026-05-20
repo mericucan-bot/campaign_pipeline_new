@@ -772,7 +772,14 @@ private struct CampaignListScreen: View {
                     }
                     .coordinateSpace(name: "campaignListScroll")
                     .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
-                        let shouldShow = offset < -320
+                        let shouldShow = offset < -80
+                        if showScrollToTop != shouldShow {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
+                                showScrollToTop = shouldShow
+                            }
+                        }
+                    }
+                    .scrollToTopGeometryTracking { shouldShow in
                         if showScrollToTop != shouldShow {
                             withAnimation(.spring(response: 0.28, dampingFraction: 0.82)) {
                                 showScrollToTop = shouldShow
@@ -801,7 +808,7 @@ private struct CampaignListScreen: View {
                                         .shadow(color: .black.opacity(0.24), radius: 16, x: 0, y: 10)
                                 }
                                 .padding(.trailing, 18)
-                                .padding(.bottom, 10)
+                                .padding(.bottom, 24)
                                 .transition(.move(edge: .bottom).combined(with: .opacity))
                             }
                         }
@@ -3352,5 +3359,20 @@ private struct ScrollOffsetPreferenceKey: PreferenceKey {
 
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func scrollToTopGeometryTracking(_ updateVisibility: @escaping (Bool) -> Void) -> some View {
+        if #available(iOS 18.0, *) {
+            self.onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y > 80
+            } action: { _, shouldShow in
+                updateVisibility(shouldShow)
+            }
+        } else {
+            self
+        }
     }
 }
