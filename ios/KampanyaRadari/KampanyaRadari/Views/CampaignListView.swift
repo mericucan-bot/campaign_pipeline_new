@@ -379,6 +379,7 @@ private struct OnboardingRadarPage: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
+                .frame(maxHeight: 72)
 
             // Illustration
             ZStack {
@@ -387,24 +388,24 @@ private struct OnboardingRadarPage: View {
                     colors: [AppTheme.dashboardGreen.opacity(0.14), Color.clear],
                     center: .center,
                     startRadius: 0,
-                    endRadius: 160
+                    endRadius: 185
                 )
-                .frame(width: 360, height: 360)
+                .frame(width: 400, height: 400)
 
                 // Concentric rings
-                ForEach([320, 235, 158, 88] as [CGFloat], id: \.self) { d in
+                ForEach([350, 258, 174, 96] as [CGFloat], id: \.self) { d in
                     Circle()
-                        .stroke(AppTheme.dashboardGreen.opacity(d == 88 ? 0.55 : 0.2), lineWidth: 1)
+                        .stroke(AppTheme.dashboardGreen.opacity(d == 96 ? 0.55 : 0.2), lineWidth: 1)
                         .frame(width: d, height: d)
                 }
 
                 // Crosshair lines
                 Rectangle()
                     .fill(AppTheme.dashboardGreen.opacity(0.12))
-                    .frame(width: 320, height: 1)
+                    .frame(width: 350, height: 1)
                 Rectangle()
                     .fill(AppTheme.dashboardGreen.opacity(0.12))
-                    .frame(width: 1, height: 320)
+                    .frame(width: 1, height: 350)
 
                 // Radar sweep (sector + spoke)
                 ZStack {
@@ -419,14 +420,14 @@ private struct OnboardingRadarPage: View {
                                 center: .center
                             )
                         )
-                        .frame(width: 320, height: 320)
+                        .frame(width: 350, height: 350)
 
                     Path { p in
-                        p.move(to: CGPoint(x: 160, y: 160))
-                        p.addLine(to: CGPoint(x: 320, y: 160))
+                        p.move(to: CGPoint(x: 175, y: 175))
+                        p.addLine(to: CGPoint(x: 350, y: 175))
                     }
                     .stroke(AppTheme.dashboardGreen.opacity(0.9), lineWidth: 1.5)
-                    .frame(width: 320, height: 320)
+                    .frame(width: 350, height: 350)
                 }
                 .rotationEffect(.degrees(sweepAngle))
 
@@ -437,12 +438,12 @@ private struct OnboardingRadarPage: View {
                     .shadow(color: AppTheme.dashboardGreen, radius: 6)
 
                 // Category chips — repositioned for larger radar
-                radarChip("cart.fill",    "Market",    dx: -112, dy: -78, delay: 0.30)
-                radarChip("fuelpump.fill","Yakıt",     dx:  104, dy: -100, delay: 0.50)
-                radarChip("airplane",     "Seyahat",   dx:  104, dy:  90, delay: 0.70)
-                radarChip("bag.fill",     "Alışveriş", dx: -104, dy: 106, delay: 0.90)
+                radarChip("cart.fill",    "Market",    dx: -118, dy: -86, delay: 0.30)
+                radarChip("fuelpump.fill","Yakıt",     dx:  112, dy: -108, delay: 0.50)
+                radarChip("airplane",     "Seyahat",   dx:  112, dy:  98, delay: 0.70)
+                radarChip("bag.fill",     "Alışveriş", dx: -112, dy: 112, delay: 0.90)
             }
-            .frame(width: 360, height: 360)
+            .frame(width: 390, height: 390)
             .onAppear {
                 appeared = true
                 withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
@@ -456,10 +457,10 @@ private struct OnboardingRadarPage: View {
             VStack(alignment: .leading, spacing: 14) {
                 OnboardingLogoBadge()
                 Text("En iyi fırsatları\nradarınla yakala!")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 31, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                 Text("Binlerce kampanya içinden sana en uygun olanları radarında bul ve adım adım takip et.")
-                    .font(.system(size: 15))
+                    .font(.system(size: 16))
                     .foregroundStyle(.white.opacity(0.58))
                     .lineSpacing(3)
             }
@@ -514,6 +515,7 @@ private struct OnboardingBanksPage: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
+                .frame(maxHeight: 72)
 
             // Illustration — actual bank logos image (3-row layout)
             ZStack {
@@ -521,9 +523,9 @@ private struct OnboardingBanksPage: View {
                     colors: [AppTheme.dashboardGreen.opacity(0.12), AppTheme.deepBlue.opacity(0.22), Color.clear],
                     center: .center,
                     startRadius: 20,
-                    endRadius: 240
+                    endRadius: 275
                 )
-                .frame(width: 360, height: 360)
+                .frame(width: 430, height: 430)
                 .blur(radius: 12)
 
                 Image("OnboardingBanks")
@@ -532,7 +534,7 @@ private struct OnboardingBanksPage: View {
                     .blendMode(.screen)
                     .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .padding(.horizontal, 4)
-                    .frame(maxHeight: 400)
+                    .frame(maxHeight: 460)
             }
             .scaleEffect(appeared ? 1 : 0.88)
             .opacity(appeared ? 1 : 0)
@@ -545,10 +547,10 @@ private struct OnboardingBanksPage: View {
             VStack(alignment: .leading, spacing: 14) {
                 OnboardingLogoBadge()
                 Text("Sana özel\nöneriler!")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 31, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                 Text("Alışveriş alışkanlıklarını analiz eder, elindeki kartlara özel en iyi kampanyaları önerir.")
-                    .font(.system(size: 15))
+                    .font(.system(size: 16))
                     .foregroundStyle(.white.opacity(0.58))
                     .lineSpacing(3)
             }
@@ -568,6 +570,7 @@ private struct OnboardingSavingsPage: View {
     var body: some View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
+                .frame(maxHeight: 72)
 
             // Illustration — real wallet image
             ZStack {
@@ -576,21 +579,21 @@ private struct OnboardingSavingsPage: View {
                     colors: [AppTheme.dashboardGreen.opacity(0.15), Color.clear],
                     center: .center,
                     startRadius: 10,
-                    endRadius: 150
+                    endRadius: 185
                 )
-                .frame(width: 320, height: 320)
+                .frame(width: 390, height: 390)
                 .blur(radius: 10)
 
                 Image("OnboardingWallet2")
                     .resizable()
                     .scaledToFit()
                     .blendMode(.screen)
-                    .frame(maxHeight: 330)
+                    .frame(maxHeight: 390)
                     .scaleEffect(appeared ? 1 : 0.85)
                     .opacity(appeared ? 1 : 0)
                     .animation(.spring(response: 0.55, dampingFraction: 0.72).delay(0.1), value: appeared)
             }
-            .frame(height: 340)
+            .frame(height: 400)
             .onAppear { appeared = true }
 
             Spacer()
@@ -599,10 +602,10 @@ private struct OnboardingSavingsPage: View {
             VStack(alignment: .leading, spacing: 14) {
                 OnboardingLogoBadge()
                 Text("Tasarruf et,\nkazancını artır!")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 31, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                 Text("Kaçırdığın fırsatları bul, birikimini artır, her alışverişte ekstra kazanç sağla.")
-                    .font(.system(size: 15))
+                    .font(.system(size: 16))
                     .foregroundStyle(.white.opacity(0.58))
                     .lineSpacing(3)
             }
