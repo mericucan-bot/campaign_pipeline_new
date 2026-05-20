@@ -437,10 +437,10 @@ private struct OnboardingRadarPage: View {
                     .shadow(color: AppTheme.dashboardGreen, radius: 6)
 
                 // Category chips — repositioned for larger radar
-                radarChip("cart.fill",    "Market",    dx: -120, dy: -75, delay: 0.30)
-                radarChip("fuelpump.fill","Yakıt",     dx:  108, dy: -98, delay: 0.50)
-                radarChip("airplane",     "Seyahat",   dx:  112, dy:  88, delay: 0.70)
-                radarChip("bag.fill",     "Alışveriş", dx: -110, dy: 104, delay: 0.90)
+                radarChip("cart.fill",    "Market",    dx: -112, dy: -78, delay: 0.30)
+                radarChip("fuelpump.fill","Yakıt",     dx:  104, dy: -100, delay: 0.50)
+                radarChip("airplane",     "Seyahat",   dx:  104, dy:  90, delay: 0.70)
+                radarChip("bag.fill",     "Alışveriş", dx: -104, dy: 106, delay: 0.90)
             }
             .frame(width: 360, height: 360)
             .onAppear {
@@ -487,22 +487,22 @@ private struct OnboardingChip: View {
     let label: String
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 9) {
             Image(systemName: icon)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: 22, weight: .semibold))
                 .foregroundStyle(AppTheme.dashboardGreen)
             Text(label)
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.9))
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
         .background(
             Capsule()
                 .fill(Color.white.opacity(0.09))
                 .overlay(Capsule().stroke(AppTheme.dashboardGreen.opacity(0.42), lineWidth: 1))
         )
-        .shadow(color: AppTheme.dashboardGreen.opacity(0.22), radius: 6)
+        .shadow(color: AppTheme.dashboardGreen.opacity(0.24), radius: 10)
     }
 }
 
@@ -516,16 +516,28 @@ private struct OnboardingBanksPage: View {
             Spacer(minLength: 0)
 
             // Illustration — actual bank logos image (3-row layout)
-            Image("OnboardingBanks")
-                .resizable()
-                .scaledToFit()
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(.horizontal, 4)
-                .frame(maxHeight: 400)
-                .scaleEffect(appeared ? 1 : 0.88)
-                .opacity(appeared ? 1 : 0)
-                .animation(.spring(response: 0.5, dampingFraction: 0.72).delay(0.1), value: appeared)
-                .onAppear { appeared = true }
+            ZStack {
+                RadialGradient(
+                    colors: [AppTheme.dashboardGreen.opacity(0.12), AppTheme.deepBlue.opacity(0.22), Color.clear],
+                    center: .center,
+                    startRadius: 20,
+                    endRadius: 240
+                )
+                .frame(width: 360, height: 360)
+                .blur(radius: 12)
+
+                Image("OnboardingBanks")
+                    .resizable()
+                    .scaledToFit()
+                    .blendMode(.screen)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .padding(.horizontal, 4)
+                    .frame(maxHeight: 400)
+            }
+            .scaleEffect(appeared ? 1 : 0.88)
+            .opacity(appeared ? 1 : 0)
+            .animation(.spring(response: 0.5, dampingFraction: 0.72).delay(0.1), value: appeared)
+            .onAppear { appeared = true }
 
             Spacer(minLength: 8)
 
@@ -572,12 +584,13 @@ private struct OnboardingSavingsPage: View {
                 Image("OnboardingWallet2")
                     .resizable()
                     .scaledToFit()
-                    .frame(maxHeight: 290)
+                    .blendMode(.screen)
+                    .frame(maxHeight: 330)
                     .scaleEffect(appeared ? 1 : 0.85)
                     .opacity(appeared ? 1 : 0)
                     .animation(.spring(response: 0.55, dampingFraction: 0.72).delay(0.1), value: appeared)
             }
-            .frame(height: 310)
+            .frame(height: 340)
             .onAppear { appeared = true }
 
             Spacer()
