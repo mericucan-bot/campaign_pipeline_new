@@ -569,7 +569,7 @@ private struct OnboardingSavingsPage: View {
                 .frame(width: 320, height: 320)
                 .blur(radius: 10)
 
-                Image("OnboardingWallet")
+                Image("OnboardingWallet2")
                     .resizable()
                     .scaledToFit()
                     .frame(maxHeight: 290)
