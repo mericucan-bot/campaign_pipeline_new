@@ -431,9 +431,14 @@ private struct DashboardHomeView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Kampanya Radarı")
-                        .font(.largeTitle.weight(.bold))
-                        .foregroundStyle(.white)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Kampanya")
+                            .font(.system(size: 36, weight: .black))
+                            .foregroundStyle(.white)
+                        Text("Radarı")
+                            .font(.system(size: 36, weight: .black))
+                            .foregroundStyle(AppTheme.dashboardGreen)
+                    }
                     Text(authState.statusText)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(AppTheme.dashboardGreen)
@@ -694,6 +699,7 @@ private struct CampaignListScreen: View {
     @State private var openingCampaign: Campaign?
     @State private var isShowingRadarScan = false
     @State private var radarScanTask: Task<Void, Never>?
+    @State private var isShowingClearFavoritesConfirmation = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -938,9 +944,22 @@ private struct CampaignListScreen: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text(listTitle)
-                    .font(.largeTitle.weight(.bold))
-                    .foregroundStyle(.white)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(listTitle)
+                        .font(.largeTitle.weight(.bold))
+                        .foregroundStyle(.white)
+                    Spacer()
+                    if viewModel.showFavoritesOnly && !favorites.ids.isEmpty {
+                        Button {
+                            isShowingClearFavoritesConfirmation = true
+                        } label: {
+                            Label("Tümünü kaldır", systemImage: "trash")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(.red.opacity(0.82))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
                 Text("\(count) sonuç listeleniyor")
                     .font(.headline)
                     .foregroundStyle(.white.opacity(0.82))
@@ -950,6 +969,18 @@ private struct CampaignListScreen: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 18)
+        .confirmationDialog(
+            "Tüm favorileri kaldır",
+            isPresented: $isShowingClearFavoritesConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Tümünü Kaldır", role: .destructive) {
+                favorites.removeAll()
+            }
+            Button("Vazgeç", role: .cancel) {}
+        } message: {
+            Text("\(favorites.ids.count) favori kampanya listeden kaldırılacak.")
+        }
     }
 
     private var listTitle: String {

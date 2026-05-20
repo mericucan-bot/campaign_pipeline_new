@@ -39,6 +39,12 @@ final class FavoritesStore {
         save()
     }
 
+    func removeAll() {
+        guard !ids.isEmpty else { return }
+        ids = []
+        save()
+    }
+
     private func save() {
         let key = key
         let snapshot = Array(ids)
