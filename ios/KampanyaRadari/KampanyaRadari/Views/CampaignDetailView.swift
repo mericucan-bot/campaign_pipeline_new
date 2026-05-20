@@ -222,6 +222,10 @@ struct CampaignDetailView: View {
         Binding {
             record.didJoin
         } set: { newValue in
+            guard !authState.isGuest else {
+                entitlementPrompt = EntitlementService.canTrackCampaign(isGuest: true)
+                return
+            }
             record.didJoin = newValue
             if !newValue {
                 hasRewardReminder = false
@@ -313,6 +317,8 @@ struct CampaignDetailView: View {
                     in: Date()...,
                     displayedComponents: .date
                 )
+                .tint(AppTheme.dashboardGreen)
+                .environment(\.colorScheme, .dark)
                 .font(.subheadline.weight(.bold))
                 .foregroundStyle(AppTheme.textPrimary)
                 .padding(12)

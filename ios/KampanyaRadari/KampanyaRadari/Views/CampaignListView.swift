@@ -987,10 +987,16 @@ private struct CampaignListScreen: View {
             Image(systemName: "magnifyingglass")
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(AppTheme.muted)
-            TextField("Market, taksit, seyahat", text: $viewModel.searchText)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .foregroundStyle(AppTheme.textPrimary)
+            ZStack(alignment: .leading) {
+                if viewModel.searchText.isEmpty {
+                    Text("Market, ulaşım, taksit…")
+                        .foregroundStyle(AppTheme.muted)
+                }
+                TextField("", text: $viewModel.searchText)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .foregroundStyle(AppTheme.textPrimary)
+            }
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 14)
