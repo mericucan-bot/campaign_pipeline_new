@@ -551,146 +551,33 @@ private struct OnboardingBanksPage: View {
 
 private struct OnboardingSavingsPage: View {
     @State private var appeared = false
-    @State private var pulseScale: CGFloat = 1.0
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            // Illustration — wallet with cards, % badge, coins
+            // Illustration — real wallet image
             ZStack {
-                // Green radial glow platform
+                // Green radial glow behind image
                 RadialGradient(
-                    colors: [AppTheme.dashboardGreen.opacity(0.18), Color.clear],
+                    colors: [AppTheme.dashboardGreen.opacity(0.15), Color.clear],
                     center: .center,
                     startRadius: 10,
-                    endRadius: 140
+                    endRadius: 150
                 )
-                .frame(width: 280, height: 280)
-                .blur(radius: 8)
+                .frame(width: 320, height: 320)
+                .blur(radius: 10)
 
-                // Concentric rings behind wallet
-                ForEach([240, 175] as [CGFloat], id: \.self) { d in
-                    Circle()
-                        .stroke(AppTheme.dashboardGreen.opacity(0.10), lineWidth: 1)
-                        .frame(width: d)
-                }
-
-                // Pulsing outer ring
-                Circle()
-                    .stroke(AppTheme.dashboardGreen.opacity(0.13), lineWidth: 1)
-                    .frame(width: 240)
-                    .scaleEffect(pulseScale)
-                    .opacity(appeared ? max(0, 2.1 - pulseScale) : 0)
-
-                // ── Wallet composition ──────────────────────────────────
-                ZStack(alignment: .center) {
-                    // Dark card (back, tilted left)
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(LinearGradient(
-                            colors: [Color(hex: "#252535"), Color(hex: "#141420")],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        ))
-                        .frame(width: 148, height: 92)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-                        .rotationEffect(.degrees(-14), anchor: .init(x: 0.5, y: 1.3))
-                        .offset(x: -14, y: -52)
-                        .shadow(color: .black.opacity(0.4), radius: 6, x: -2, y: 4)
-
-                    // Green card (front, slight tilt)
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(LinearGradient(
-                            colors: [Color(hex: "#1E6B3C"), Color(hex: "#0A3820")],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        ))
-                        .frame(width: 148, height: 92)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(AppTheme.dashboardGreen.opacity(0.3), lineWidth: 1)
-                        )
-                        .rotationEffect(.degrees(-4), anchor: .init(x: 0.5, y: 1.3))
-                        .offset(x: 6, y: -48)
-                        .shadow(color: AppTheme.dashboardGreen.opacity(0.2), radius: 6, x: 0, y: 4)
-
-                    // Wallet body
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(LinearGradient(
-                            colors: [Color(hex: "#282828"), Color(hex: "#0E0E0E")],
-                            startPoint: .top, endPoint: .bottom
-                        ))
-                        .frame(width: 175, height: 108)
-                        .overlay(
-                            // Top highlight edge
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [Color.white.opacity(0.18), Color.white.opacity(0.04)],
-                                        startPoint: .top, endPoint: .bottom
-                                    ),
-                                    lineWidth: 1
-                                )
-                        )
-                        .shadow(color: .black.opacity(0.55), radius: 18, x: 0, y: 10)
-
-                    // Wallet clasp (gold button)
-                    Circle()
-                        .fill(LinearGradient(
-                            colors: [Color(hex: "#F8D27A"), Color(hex: "#9A6010")],
-                            startPoint: .top, endPoint: .bottom
-                        ))
-                        .frame(width: 13)
-                        .shadow(color: Color(hex: "#F8D27A").opacity(0.6), radius: 4)
-                        .offset(x: 72, y: 34)
-
-                    // % badge (lower-left of wallet)
-                    ZStack {
-                        Circle()
-                            .fill(LinearGradient(
-                                colors: [Color(hex: "#1E7A2A"), Color(hex: "#0A3A10")],
-                                startPoint: .topLeading, endPoint: .bottomTrailing
-                            ))
-                            .frame(width: 54)
-                            .overlay(
-                                Circle()
-                                    .stroke(AppTheme.dashboardGreen.opacity(0.6), lineWidth: 1.5)
-                            )
-                            .shadow(color: AppTheme.dashboardGreen.opacity(0.55), radius: 10)
-                        Text("%")
-                            .font(.system(size: 26, weight: .black, design: .rounded))
-                            .foregroundStyle(AppTheme.dashboardGreen)
-                            .shadow(color: AppTheme.dashboardGreen.opacity(0.8), radius: 4)
-                    }
-                    .offset(x: -95, y: 58)
-                    .scaleEffect(appeared ? 1 : 0.4)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.65).delay(0.35), value: appeared)
-
-                    // Coin stack (bottom-right)
-                    ZStack {
-                        // Shadow coin (bottom)
-                        coinDisc(y: 8)
-                        // Middle coin
-                        coinDisc(y: 4)
-                        // Top coin
-                        coinDisc(y: 0)
-                    }
-                    .offset(x: 62, y: 90)
-                    .scaleEffect(appeared ? 1 : 0.3)
-                    .animation(.spring(response: 0.5, dampingFraction: 0.65).delay(0.50), value: appeared)
-                }
-                .scaleEffect(appeared ? 1 : 0.82)
-                .opacity(appeared ? 1 : 0)
-                .animation(.spring(response: 0.55, dampingFraction: 0.7).delay(0.1), value: appeared)
+                Image("OnboardingWallet")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxHeight: 290)
+                    .scaleEffect(appeared ? 1 : 0.85)
+                    .opacity(appeared ? 1 : 0)
+                    .animation(.spring(response: 0.55, dampingFraction: 0.72).delay(0.1), value: appeared)
             }
             .frame(height: 310)
-            .onAppear {
-                appeared = true
-                withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
-                    pulseScale = 1.3
-                }
-            }
+            .onAppear { appeared = true }
 
             Spacer()
 
@@ -712,20 +599,6 @@ private struct OnboardingSavingsPage: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func coinDisc(y: CGFloat) -> some View {
-        Ellipse()
-            .fill(LinearGradient(
-                colors: [Color(hex: "#F8D27A"), Color(hex: "#B97924")],
-                startPoint: .top, endPoint: .bottom
-            ))
-            .frame(width: 38, height: 12)
-            .overlay(
-                Ellipse()
-                    .stroke(Color(hex: "#F8D27A").opacity(0.5), lineWidth: 1)
-            )
-            .shadow(color: Color(hex: "#F8D27A").opacity(0.3), radius: 3)
-            .offset(y: y)
-    }
 }
 
 private struct DashboardHomeView: View {
