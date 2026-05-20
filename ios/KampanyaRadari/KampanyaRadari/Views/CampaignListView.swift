@@ -511,33 +511,20 @@ private struct OnboardingChip: View {
 private struct OnboardingBanksPage: View {
     @State private var appeared = false
 
-    // (letter, display name, top color, bottom color)
-    private let row1: [(String, String, Color, Color)] = [
-        ("M", "Maximum",  Color(hex: "#C2006A"), Color(hex: "#740040")),
-        ("A", "Axess",    Color(hex: "#996200"), Color(hex: "#503300")),
-        ("G", "Garanti",  Color(hex: "#006838"), Color(hex: "#003D20")),
-        ("P", "Paraf",    Color(hex: "#475C1C"), Color(hex: "#26320E")),
-        ("S", "Sağlam",   Color(hex: "#0D3245"), Color(hex: "#061A25"))
-    ]
-    private let row2: [(String, String, Color, Color)] = [
-        ("N", "N Kolay",   Color(hex: "#0A1E6B"), Color(hex: "#050F38")),
-        ("O", "ON",        Color(hex: "#0A4830"), Color(hex: "#052618")),
-        ("T", "TEB",       Color(hex: "#0A3A50"), Color(hex: "#051E28")),
-        ("V", "Vakıf",     Color(hex: "#B55800"), Color(hex: "#6A3000")),
-        ("Y", "Yapı Kredi",Color(hex: "#1E204A"), Color(hex: "#0E1028"))
-    ]
-
     var body: some View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            // Illustration — two rows of bank card tiles
-            VStack(spacing: 14) {
-                bankRow(row1, baseDelay: 0.0)
-                bankRow(row2, baseDelay: 0.45)
-            }
-            .padding(.horizontal, 22)
-            .onAppear { appeared = true }
+            // Illustration — actual bank logos image
+            Image("OnboardingBanks")
+                .resizable()
+                .scaledToFit()
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .padding(.horizontal, 20)
+                .scaleEffect(appeared ? 1 : 0.88)
+                .opacity(appeared ? 1 : 0)
+                .animation(.spring(response: 0.5, dampingFraction: 0.72).delay(0.1), value: appeared)
+                .onAppear { appeared = true }
 
             Spacer()
 
@@ -557,59 +544,6 @@ private struct OnboardingBanksPage: View {
             .padding(.bottom, 18)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    @ViewBuilder
-    private func bankRow(_ items: [(String, String, Color, Color)], baseDelay: Double) -> some View {
-        HStack(spacing: 10) {
-            ForEach(Array(items.enumerated()), id: \.offset) { i, item in
-                BankCardTile(letter: item.0, name: item.1, color1: item.2, color2: item.3)
-                    .scaleEffect(appeared ? 1 : 0.55)
-                    .opacity(appeared ? 1 : 0)
-                    .animation(
-                        .spring(response: 0.42, dampingFraction: 0.72)
-                        .delay(baseDelay + Double(i) * 0.07),
-                        value: appeared
-                    )
-            }
-        }
-    }
-}
-
-private struct BankCardTile: View {
-    let letter: String
-    let name: String
-    let color1: Color
-    let color2: Color
-
-    var body: some View {
-        VStack(spacing: 6) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(LinearGradient(
-                        colors: [color1, color2],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ))
-                    .frame(height: 38)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.35), radius: 4, x: 0, y: 2)
-
-                Text(letter)
-                    .font(.system(size: 17, weight: .black))
-                    .foregroundStyle(.white.opacity(0.92))
-            }
-
-            Text(name)
-                .font(.system(size: 7.5, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.5))
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity)
     }
 }
 
