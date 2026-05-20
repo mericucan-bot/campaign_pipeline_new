@@ -384,27 +384,27 @@ private struct OnboardingRadarPage: View {
             ZStack {
                 // Background glow
                 RadialGradient(
-                    colors: [AppTheme.dashboardGreen.opacity(0.13), Color.clear],
+                    colors: [AppTheme.dashboardGreen.opacity(0.14), Color.clear],
                     center: .center,
                     startRadius: 0,
-                    endRadius: 130
+                    endRadius: 160
                 )
-                .frame(width: 290, height: 290)
+                .frame(width: 360, height: 360)
 
                 // Concentric rings
-                ForEach([260, 190, 130, 72] as [CGFloat], id: \.self) { d in
+                ForEach([320, 235, 158, 88] as [CGFloat], id: \.self) { d in
                     Circle()
-                        .stroke(AppTheme.dashboardGreen.opacity(d == 72 ? 0.55 : 0.2), lineWidth: 1)
+                        .stroke(AppTheme.dashboardGreen.opacity(d == 88 ? 0.55 : 0.2), lineWidth: 1)
                         .frame(width: d, height: d)
                 }
 
                 // Crosshair lines
                 Rectangle()
                     .fill(AppTheme.dashboardGreen.opacity(0.12))
-                    .frame(width: 260, height: 1)
+                    .frame(width: 320, height: 1)
                 Rectangle()
                     .fill(AppTheme.dashboardGreen.opacity(0.12))
-                    .frame(width: 1, height: 260)
+                    .frame(width: 1, height: 320)
 
                 // Radar sweep (sector + spoke)
                 ZStack {
@@ -419,14 +419,14 @@ private struct OnboardingRadarPage: View {
                                 center: .center
                             )
                         )
-                        .frame(width: 260, height: 260)
+                        .frame(width: 320, height: 320)
 
                     Path { p in
-                        p.move(to: CGPoint(x: 130, y: 130))
-                        p.addLine(to: CGPoint(x: 260, y: 130))
+                        p.move(to: CGPoint(x: 160, y: 160))
+                        p.addLine(to: CGPoint(x: 320, y: 160))
                     }
                     .stroke(AppTheme.dashboardGreen.opacity(0.9), lineWidth: 1.5)
-                    .frame(width: 260, height: 260)
+                    .frame(width: 320, height: 320)
                 }
                 .rotationEffect(.degrees(sweepAngle))
 
@@ -436,13 +436,13 @@ private struct OnboardingRadarPage: View {
                     .frame(width: 10, height: 10)
                     .shadow(color: AppTheme.dashboardGreen, radius: 6)
 
-                // Category chips
-                radarChip("cart.fill",    "Market",    dx: -98, dy: -62, delay: 0.30)
-                radarChip("fuelpump.fill","Yakıt",     dx:  86, dy: -80, delay: 0.50)
-                radarChip("airplane",     "Seyahat",   dx:  90, dy:  72, delay: 0.70)
-                radarChip("bag.fill",     "Alışveriş", dx: -88, dy:  85, delay: 0.90)
+                // Category chips — repositioned for larger radar
+                radarChip("cart.fill",    "Market",    dx: -120, dy: -75, delay: 0.30)
+                radarChip("fuelpump.fill","Yakıt",     dx:  108, dy: -98, delay: 0.50)
+                radarChip("airplane",     "Seyahat",   dx:  112, dy:  88, delay: 0.70)
+                radarChip("bag.fill",     "Alışveriş", dx: -110, dy: 104, delay: 0.90)
             }
-            .frame(width: 300, height: 300)
+            .frame(width: 360, height: 360)
             .onAppear {
                 appeared = true
                 withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
@@ -515,18 +515,19 @@ private struct OnboardingBanksPage: View {
         VStack(spacing: 0) {
             Spacer(minLength: 0)
 
-            // Illustration — actual bank logos image
+            // Illustration — actual bank logos image (3-row layout)
             Image("OnboardingBanks")
                 .resizable()
                 .scaledToFit()
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .padding(.horizontal, 20)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.horizontal, 4)
+                .frame(maxHeight: 400)
                 .scaleEffect(appeared ? 1 : 0.88)
                 .opacity(appeared ? 1 : 0)
                 .animation(.spring(response: 0.5, dampingFraction: 0.72).delay(0.1), value: appeared)
                 .onAppear { appeared = true }
 
-            Spacer()
+            Spacer(minLength: 8)
 
             // Text content
             VStack(alignment: .leading, spacing: 14) {
