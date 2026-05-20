@@ -411,7 +411,7 @@ private struct OnboardingCardsRadarPage: View {
 
     var body: some View {
         OnboardingScaffold(
-            visual: { OnboardingBankCardCloudView() },
+            visual: { OnboardingCardsRadarOriginalImage() },
             activePage: page,
             title: "Tüm fırsatlar\ntek radarında!",
             subtitle: "Bankalardan kartlara, avantajlardan kampanyalara kadar aradığın her şey burada.",
@@ -423,6 +423,16 @@ private struct OnboardingCardsRadarPage: View {
 }
 
 // MARK: - Onboarding Visuals
+
+private struct OnboardingCardsRadarOriginalImage: View {
+    var body: some View {
+        Image("OnboardingCardsRadarOriginal")
+            .resizable()
+            .scaledToFit()
+            .frame(maxWidth: .infinity, maxHeight: 500)
+            .shadow(color: AppTheme.dashboardGreen.opacity(0.18), radius: 28)
+    }
+}
 
 private struct OnboardingSectorRadarIllustration: View {
     private let sectors = [
