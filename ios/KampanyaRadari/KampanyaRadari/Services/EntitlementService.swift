@@ -105,4 +105,15 @@ enum EntitlementService {
         if plan.isPremiumLike { return "Sınırsız favori" }
         return "\(min(favorites.ids.count, freeFavoriteLimit))/\(freeFavoriteLimit) favori"
     }
+
+    static func canTrackCampaign(isGuest: Bool) -> EntitlementRule {
+        guard isGuest else {
+            return EntitlementRule(allowed: true, title: "", message: "")
+        }
+        return EntitlementRule(
+            allowed: false,
+            title: "Giriş gerekli",
+            message: "Kampanya takibini kaydetmek için hesap oluşturman veya giriş yapman gerekiyor."
+        )
+    }
 }

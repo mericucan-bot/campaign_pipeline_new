@@ -191,6 +191,31 @@ struct CampaignDetailView: View {
         .padding(16)
         .background(AppTheme.deepBlue)
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            if authState.isGuest {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .fill(Color.black.opacity(0.54))
+                    VStack(spacing: 8) {
+                        Image(systemName: "lock.fill")
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(AppTheme.dashboardGreen)
+                        Text("Giriş gerekli")
+                            .font(.headline.weight(.black))
+                            .foregroundStyle(.white)
+                        Text("Kampanya takibini kaydetmek için\nhesap oluşturman gerekiyor.")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white.opacity(0.72))
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(20)
+                }
+                .allowsHitTesting(true)
+                .onTapGesture {
+                    entitlementPrompt = EntitlementService.canTrackCampaign(isGuest: true)
+                }
+            }
+        }
     }
 
     private var joinedBinding: Binding<Bool> {
