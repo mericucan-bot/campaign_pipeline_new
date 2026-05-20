@@ -247,95 +247,35 @@ private struct DisplayNamePromptSheet: View {
     }
 }
 
+// MARK: - Onboarding
+
 private struct IntroView: View {
     @Bindable var authState: AuthStateStore
     let favorites: FavoritesStore
     let myCards: MyCardsStore
     let participation: ParticipationStore
     let enter: () -> Void
-    @State private var isShowingAuthOptions = false
-    @State private var onboardingPage = 0
 
-    private let steps = [
-        OnboardingStep(
-            icon: "magnifyingglass",
-            title: "Tüm kart fırsatlarını tek yerde keşfet",
-            text: "Bankalara tek tek bakmadan kampanyaları ara, filtrele ve karşılaştır."
-        ),
-        OnboardingStep(
-            icon: "creditcard.and.123",
-            title: "Kartlarına göre kişiselleştir",
-            text: "Kartlarım filtresiyle sadece sende olan banka ve kartlara uygun fırsatlara odaklan."
-        ),
-        OnboardingStep(
-            icon: "bell.badge.fill",
-            title: "Puanlarını kaçırma",
-            text: "Katıldığın kampanyalar için kazanç ve son kullanım hatırlatıcısı kur."
-        )
-    ]
+    @State private var currentPage = 0
+    @State private var isShowingAuthOptions = false
+    private let pageCount = 3
 
     var body: some View {
         ZStack {
-            AppTheme.blueBackground
-                .ignoresSafeArea()
+            AppTheme.blueBackground.ignoresSafeArea()
 
-            VStack(spacing: 22) {
-                Text("Kampanya Radarı")
-                    .font(.title.weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .padding(.top, 20)
-
-                TabView(selection: $onboardingPage) {
-                    ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                        OnboardingStepView(step: step)
-                            .tag(index)
-                    }
+            VStack(spacing: 0) {
+                TabView(selection: $currentPage) {
+                    OnboardingRadarPage().tag(0)
+                    OnboardingBanksPage().tag(1)
+                    OnboardingSavingsPage().tag(2)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .always))
-                .frame(height: 315)
+                .tabViewStyle(.page(indexDisplayMode: .never))
 
-                VStack(spacing: 12) {
-                    Button {
-                        authState.continueAsGuest()
-                        enter()
-                    } label: {
-                        Text("Misafir Olarak Devam Et")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(AppTheme.nearBlack)
-                            .frame(maxWidth: 280)
-                            .padding(.vertical, 18)
-                            .background(AppTheme.dashboardGreen)
-                            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                            .shadow(color: .black.opacity(0.2), radius: 18, x: 0, y: 10)
-                    }
-
-                    Button {
-                        isShowingAuthOptions = true
-                    } label: {
-                        Text("Giriş Seçenekleri")
-                            .font(.headline.weight(.bold))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: 280)
-                            .padding(.vertical, 16)
-                            .background(.white.opacity(0.10))
-                            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                    .stroke(.white.opacity(0.16), lineWidth: 1)
-                            }
-                    }
-                }
-                .padding(.top, 2)
-
-                Image("NewRadar")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 260)
-                    .shadow(color: AppTheme.dashboardGreen.opacity(0.26), radius: 28, x: 0, y: 12)
-                    .padding(.bottom, 8)
+                bottomBar
             }
-            .padding(24)
         }
+        .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: Binding(
             get: { isShowingAuthOptions || authState.passwordResetAccessToken != nil },
             set: {
@@ -345,49 +285,460 @@ private struct IntroView: View {
                 }
             }
         )) {
-            AuthOptionsSheet(authState: authState, favorites: favorites, myCards: myCards, participation: participation, enter: enter)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+            AuthOptionsSheet(
+                authState: authState,
+                favorites: favorites,
+                myCards: myCards,
+                participation: participation,
+                enter: enter
+            )
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+    }
+
+    private var bottomBar: some View {
+        HStack(alignment: .center, spacing: 0) {
+            // Page indicator dots
+            HStack(spacing: 7) {
+                ForEach(0..<pageCount, id: \.self) { i in
+                    Capsule()
+                        .fill(i == currentPage
+                              ? AppTheme.dashboardGreen
+                              : Color.white.opacity(0.22))
+                        .frame(width: i == currentPage ? 24 : 8, height: 8)
+                }
+            }
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
+
+            Spacer()
+
+            Button {
+                if currentPage < pageCount - 1 {
+                    withAnimation(.easeInOut(duration: 0.32)) { currentPage += 1 }
+                } else {
+                    isShowingAuthOptions = true
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Text(currentPage < pageCount - 1 ? "İleri" : "Başlayalım")
+                        .font(.system(size: 16, weight: .bold))
+                    if currentPage < pageCount - 1 {
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 14, weight: .bold))
+                    }
+                }
+                .foregroundStyle(AppTheme.nearBlack)
+                .padding(.horizontal, 26)
+                .padding(.vertical, 14)
+                .background(AppTheme.dashboardGreen)
+                .clipShape(Capsule())
+                .shadow(color: AppTheme.dashboardGreen.opacity(0.45), radius: 12, x: 0, y: 5)
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.top, 14)
+        .padding(.bottom, 44)
+    }
+}
+
+// MARK: - Onboarding Logo Badge
+
+private struct OnboardingLogoBadge: View {
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: "scope")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(AppTheme.dashboardGreen)
+            VStack(alignment: .leading, spacing: -1) {
+                Text("Kampanya")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.8))
+                Text("RADARI")
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+                    .tracking(1.8)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(
+            Capsule()
+                .fill(Color.white.opacity(0.07))
+                .overlay(Capsule().stroke(AppTheme.dashboardGreen.opacity(0.38), lineWidth: 1))
+        )
+    }
+}
+
+// MARK: - Page 1: Radar
+
+private struct OnboardingRadarPage: View {
+    @State private var sweepAngle: Double = 0
+    @State private var appeared = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+
+            // Illustration
+            ZStack {
+                // Background glow
+                RadialGradient(
+                    colors: [AppTheme.dashboardGreen.opacity(0.13), Color.clear],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: 130
+                )
+                .frame(width: 290, height: 290)
+
+                // Concentric rings
+                ForEach([260, 190, 130, 72] as [CGFloat], id: \.self) { d in
+                    Circle()
+                        .stroke(AppTheme.dashboardGreen.opacity(d == 72 ? 0.55 : 0.2), lineWidth: 1)
+                        .frame(width: d, height: d)
+                }
+
+                // Crosshair lines
+                Rectangle()
+                    .fill(AppTheme.dashboardGreen.opacity(0.12))
+                    .frame(width: 260, height: 1)
+                Rectangle()
+                    .fill(AppTheme.dashboardGreen.opacity(0.12))
+                    .frame(width: 1, height: 260)
+
+                // Radar sweep (sector + spoke)
+                ZStack {
+                    Circle()
+                        .fill(
+                            AngularGradient(
+                                stops: [
+                                    .init(color: .clear, location: 0.0),
+                                    .init(color: AppTheme.dashboardGreen.opacity(0.30), location: 0.25),
+                                    .init(color: .clear, location: 0.252),
+                                ],
+                                center: .center
+                            )
+                        )
+                        .frame(width: 260, height: 260)
+
+                    Path { p in
+                        p.move(to: CGPoint(x: 130, y: 130))
+                        p.addLine(to: CGPoint(x: 260, y: 130))
+                    }
+                    .stroke(AppTheme.dashboardGreen.opacity(0.9), lineWidth: 1.5)
+                    .frame(width: 260, height: 260)
+                }
+                .rotationEffect(.degrees(sweepAngle))
+
+                // Center dot
+                Circle()
+                    .fill(AppTheme.dashboardGreen)
+                    .frame(width: 10, height: 10)
+                    .shadow(color: AppTheme.dashboardGreen, radius: 6)
+
+                // Category chips
+                radarChip("cart.fill",    "Market",    dx: -98, dy: -62, delay: 0.30)
+                radarChip("fuelpump.fill","Yakıt",     dx:  86, dy: -80, delay: 0.50)
+                radarChip("airplane",     "Seyahat",   dx:  90, dy:  72, delay: 0.70)
+                radarChip("bag.fill",     "Alışveriş", dx: -88, dy:  85, delay: 0.90)
+            }
+            .frame(width: 300, height: 300)
+            .onAppear {
+                appeared = true
+                withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
+                    sweepAngle = 360
+                }
+            }
+
+            Spacer()
+
+            // Text content
+            VStack(alignment: .leading, spacing: 14) {
+                OnboardingLogoBadge()
+                Text("En iyi fırsatları\nradarınla yakala!")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("Binlerce kampanya içinden sana en uygun olanları radarında bul ve adım adım takip et.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.white.opacity(0.58))
+                    .lineSpacing(3)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 28)
+            .padding(.bottom, 18)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func radarChip(_ icon: String, _ label: String, dx: CGFloat, dy: CGFloat, delay: Double) -> some View {
+        OnboardingChip(icon: icon, label: label)
+            .offset(x: dx, y: dy)
+            .scaleEffect(appeared ? 1 : 0.3)
+            .opacity(appeared ? 1 : 0)
+            .animation(.spring(response: 0.45, dampingFraction: 0.65).delay(delay), value: appeared)
+    }
+}
+
+// MARK: - Radar Category Chip
+
+private struct OnboardingChip: View {
+    let icon: String
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(AppTheme.dashboardGreen)
+            Text(label)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.9))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(Color.white.opacity(0.09))
+                .overlay(Capsule().stroke(AppTheme.dashboardGreen.opacity(0.42), lineWidth: 1))
+        )
+        .shadow(color: AppTheme.dashboardGreen.opacity(0.22), radius: 6)
+    }
+}
+
+// MARK: - Page 2: Bank Cards
+
+private struct OnboardingBanksPage: View {
+    @State private var appeared = false
+
+    // (letter, display name, top color, bottom color)
+    private let row1: [(String, String, Color, Color)] = [
+        ("M", "Maximum",  Color(hex: "#C2006A"), Color(hex: "#740040")),
+        ("A", "Axess",    Color(hex: "#996200"), Color(hex: "#503300")),
+        ("G", "Garanti",  Color(hex: "#006838"), Color(hex: "#003D20")),
+        ("P", "Paraf",    Color(hex: "#475C1C"), Color(hex: "#26320E")),
+        ("S", "Sağlam",   Color(hex: "#0D3245"), Color(hex: "#061A25"))
+    ]
+    private let row2: [(String, String, Color, Color)] = [
+        ("N", "N Kolay",   Color(hex: "#0A1E6B"), Color(hex: "#050F38")),
+        ("O", "ON",        Color(hex: "#0A4830"), Color(hex: "#052618")),
+        ("T", "TEB",       Color(hex: "#0A3A50"), Color(hex: "#051E28")),
+        ("V", "Vakıf",     Color(hex: "#B55800"), Color(hex: "#6A3000")),
+        ("Y", "Yapı Kredi",Color(hex: "#1E204A"), Color(hex: "#0E1028"))
+    ]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+
+            // Illustration — two rows of bank card tiles
+            VStack(spacing: 14) {
+                bankRow(row1, baseDelay: 0.0)
+                bankRow(row2, baseDelay: 0.45)
+            }
+            .padding(.horizontal, 22)
+            .onAppear { appeared = true }
+
+            Spacer()
+
+            // Text content
+            VStack(alignment: .leading, spacing: 14) {
+                OnboardingLogoBadge()
+                Text("Sana özel\nöneriler!")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("Alışveriş alışkanlıklarını analiz eder, elindeki kartlara özel en iyi kampanyaları önerir.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.white.opacity(0.58))
+                    .lineSpacing(3)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 28)
+            .padding(.bottom, 18)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func bankRow(_ items: [(String, String, Color, Color)], baseDelay: Double) -> some View {
+        HStack(spacing: 10) {
+            ForEach(Array(items.enumerated()), id: \.offset) { i, item in
+                BankCardTile(letter: item.0, name: item.1, color1: item.2, color2: item.3)
+                    .scaleEffect(appeared ? 1 : 0.55)
+                    .opacity(appeared ? 1 : 0)
+                    .animation(
+                        .spring(response: 0.42, dampingFraction: 0.72)
+                        .delay(baseDelay + Double(i) * 0.07),
+                        value: appeared
+                    )
+            }
         }
     }
 }
 
-private struct OnboardingStep: Hashable {
-    let icon: String
-    let title: String
-    let text: String
-}
-
-private struct OnboardingStepView: View {
-    let step: OnboardingStep
+private struct BankCardTile: View {
+    let letter: String
+    let name: String
+    let color1: Color
+    let color2: Color
 
     var body: some View {
-        VStack(spacing: 18) {
-            Image(systemName: step.icon)
-                .font(.system(size: 36, weight: .bold))
-                .foregroundStyle(AppTheme.dashboardGreen)
-                .frame(width: 78, height: 78)
-                .background(AppTheme.dashboardGreen.opacity(0.14))
-                .clipShape(Circle())
-                .overlay {
-                    Circle()
-                        .stroke(AppTheme.dashboardGreen.opacity(0.22), lineWidth: 1)
-                }
+        VStack(spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(LinearGradient(
+                        colors: [color1, color2],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+                    .frame(height: 38)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.35), radius: 4, x: 0, y: 2)
 
-            Text(step.title)
-                .font(.system(size: 36, weight: .bold, design: .rounded))
-                .minimumScaleFactor(0.78)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.white)
+                Text(letter)
+                    .font(.system(size: 17, weight: .black))
+                    .foregroundStyle(.white.opacity(0.92))
+            }
 
-            Text(step.text)
-                .font(.headline.weight(.semibold))
-                .lineSpacing(3)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.white.opacity(0.72))
-                .padding(.horizontal, 14)
+            Text(name)
+                .font(.system(size: 7.5, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.5))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
-        .padding(.horizontal, 4)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Page 3: Savings
+
+private struct OnboardingSavingsPage: View {
+    @State private var appeared = false
+    @State private var pulseScale: CGFloat = 1.0
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 0)
+
+            // Illustration
+            ZStack {
+                // Pulsing ring
+                Circle()
+                    .stroke(AppTheme.dashboardGreen.opacity(0.18), lineWidth: 1.5)
+                    .frame(width: 220)
+                    .scaleEffect(pulseScale)
+                    .opacity(appeared ? 2.2 - pulseScale : 0)
+
+                // Ambient glow
+                RadialGradient(
+                    colors: [AppTheme.dashboardGreen.opacity(0.15), Color.clear],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: 100
+                )
+                .frame(width: 220, height: 220)
+                .blur(radius: 10)
+
+                // Main circle
+                Circle()
+                    .fill(LinearGradient(
+                        colors: [Color(hex: "#0B3020"), Color(hex: "#051810")],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+                    .frame(width: 158)
+                    .overlay(
+                        Circle()
+                            .stroke(AppTheme.dashboardGreen.opacity(0.48), lineWidth: 2)
+                            .frame(width: 158)
+                    )
+                    .shadow(color: AppTheme.dashboardGreen.opacity(0.32), radius: 20)
+
+                // Percent symbol
+                Text("%")
+                    .font(.system(size: 72, weight: .black, design: .rounded))
+                    .foregroundStyle(AppTheme.dashboardGreen)
+                    .shadow(color: AppTheme.dashboardGreen.opacity(0.7), radius: 14)
+                    .scaleEffect(appeared ? 1 : 0.4)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.15), value: appeared)
+
+                // Gold coin bubbles
+                savingsCoin(size: 40, dx: -105, dy: -38, delay: 0.35)
+                savingsCoin(size: 32, dx:  100, dy: -58, delay: 0.50)
+                savingsCoin(size: 26, dx:  108, dy:  58, delay: 0.65)
+                savingsCoin(size: 34, dx:  -95, dy:  68, delay: 0.80)
+
+                // Wallet icon
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: "#B97924").opacity(0.22))
+                        .frame(width: 46)
+                    Image(systemName: "wallet.bifold.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Color(hex: "#F8D27A"))
+                }
+                .offset(y: 108)
+                .scaleEffect(appeared ? 1 : 0.3)
+                .animation(.spring(response: 0.45, dampingFraction: 0.65).delay(0.25), value: appeared)
+            }
+            .frame(height: 310)
+            .onAppear {
+                appeared = true
+                withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
+                    pulseScale = 1.28
+                }
+            }
+
+            Spacer()
+
+            // Text content
+            VStack(alignment: .leading, spacing: 14) {
+                OnboardingLogoBadge()
+                Text("Tasarruf et,\nkazancını artır!")
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                Text("Kaçırdığın fırsatları bul, birikimini artır, her alışverişte ekstra kazanç sağla.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(.white.opacity(0.58))
+                    .lineSpacing(3)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 28)
+            .padding(.bottom, 18)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private func savingsCoin(size: CGFloat, dx: CGFloat, dy: CGFloat, delay: Double) -> some View {
+        CoinBubble(size: size)
+            .offset(x: dx, y: dy)
+            .scaleEffect(appeared ? 1 : 0.2)
+            .opacity(appeared ? 1 : 0)
+            .animation(.spring(response: 0.45, dampingFraction: 0.6).delay(delay), value: appeared)
+    }
+}
+
+private struct CoinBubble: View {
+    let size: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(LinearGradient(
+                    colors: [Color(hex: "#F8D27A"), Color(hex: "#B97924")],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
+                .frame(width: size, height: size)
+                .shadow(color: Color(hex: "#F8D27A").opacity(0.45), radius: 4)
+            Text("₺")
+                .font(.system(size: size * 0.44, weight: .black))
+                .foregroundStyle(Color(hex: "#050B12"))
+        }
     }
 }
 
