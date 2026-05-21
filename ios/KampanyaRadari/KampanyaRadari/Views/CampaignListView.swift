@@ -1704,11 +1704,25 @@ private struct AuthOptionsSheet: View {
                     }
                 }
 
-                    Picker("Hesap modu", selection: $isSignUp) {
-                        Text("Giriş").tag(false)
-                        Text("Kayıt").tag(true)
+                    HStack(spacing: 0) {
+                        ForEach([(false, "Giriş"), (true, "Kayıt")], id: \.0) { value, label in
+                            Button {
+                                withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) { isSignUp = value }
+                            } label: {
+                                Text(label)
+                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(isSignUp == value ? Color.black : AppTheme.dashboardGreen)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 9)
+                                    .background(isSignUp == value ? AppTheme.dashboardGreen : Color.clear)
+                                    .clipShape(Capsule())
+                            }
+                        }
                     }
-                    .pickerStyle(.segmented)
+                    .padding(4)
+                    .background(AppTheme.panelBlack)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().strokeBorder(AppTheme.dashboardGreen.opacity(0.35), lineWidth: 1))
 
                     VStack(spacing: 12) {
                         if isSignUp {
