@@ -326,8 +326,8 @@ private struct OnboardingScaffold<Visual: View>: View {
                 Text(title)
                     .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(AppTheme.textPrimary)
-                    .lineSpacing(3)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .shadow(color: .black.opacity(0.35), radius: 12, y: 8)
 
                 Text(subtitle)
@@ -400,7 +400,7 @@ private struct OnboardingCardsRadarPage: View {
         OnboardingScaffold(
             visual: { OnboardingCardsRadarOriginalImage() },
             activePage: page,
-            title: "Tüm fırsatlar\ntek radarında!",
+            title: "Tüm Fırsatlar Radarında!",
             subtitle: "Bankalardan kartlara, avantajlardan kampanyalara kadar aradığın her şey burada.",
             buttonTitle: "Keşfetmeye başla",
             showsArrow: true,
