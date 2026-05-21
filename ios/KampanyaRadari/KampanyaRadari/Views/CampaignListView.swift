@@ -1262,7 +1262,7 @@ private struct CampaignListScreen: View {
                         } label: {
                             Label("Tümünü kaldır", systemImage: "trash")
                                 .font(.subheadline.weight(.bold))
-                                .foregroundStyle(.red.opacity(0.82))
+                                .foregroundStyle(AppTheme.dashboardGreen.opacity(0.85))
                         }
                         .buttonStyle(.plain)
                     }
@@ -1276,17 +1276,69 @@ private struct CampaignListScreen: View {
         }
         .padding(.horizontal, 22)
         .padding(.top, 18)
-        .confirmationDialog(
-            "Tüm favorileri kaldır",
-            isPresented: $isShowingClearFavoritesConfirmation,
-            titleVisibility: .visible
-        ) {
-            Button("Tümünü Kaldır", role: .destructive) {
-                favorites.removeAll()
+        .overlay {
+            if isShowingClearFavoritesConfirmation {
+                ZStack {
+                    Color.black.opacity(0.55)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+                                isShowingClearFavoritesConfirmation = false
+                            }
+                        }
+                    VStack(spacing: 20) {
+                        Image(systemName: "trash.circle.fill")
+                            .font(.system(size: 44))
+                            .foregroundStyle(AppTheme.dashboardGreen)
+                        VStack(spacing: 6) {
+                            Text("Favorileri Temizle")
+                                .font(.headline.weight(.bold))
+                                .foregroundStyle(.white)
+                            Text("\(favorites.ids.count) kampanya favorilerden kaldırılacak.")
+                                .font(.subheadline)
+                                .foregroundStyle(.white.opacity(0.65))
+                                .multilineTextAlignment(.center)
+                        }
+                        VStack(spacing: 10) {
+                            Button {
+                                withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+                                    favorites.removeAll()
+                                    isShowingClearFavoritesConfirmation = false
+                                }
+                            } label: {
+                                Text("Tümünü Kaldır")
+                                    .font(.headline.weight(.semibold))
+                                    .foregroundStyle(AppTheme.nearBlack)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(AppTheme.dashboardGreen)
+                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            }
+                            Button {
+                                withAnimation(.spring(response: 0.28, dampingFraction: 0.8)) {
+                                    isShowingClearFavoritesConfirmation = false
+                                }
+                            } label: {
+                                Text("Vazgeç")
+                                    .font(.headline.weight(.semibold))
+                                    .foregroundStyle(.white.opacity(0.75))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(.white.opacity(0.08))
+                                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            }
+                        }
+                    }
+                    .padding(24)
+                    .background(Color(hex: "#0B1E26"))
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .strokeBorder(AppTheme.dashboardGreen.opacity(0.25), lineWidth: 1))
+                    .padding(.horizontal, 36)
+                    .transition(.scale(scale: 0.92).combined(with: .opacity))
+                }
+                .animation(.spring(response: 0.28, dampingFraction: 0.8), value: isShowingClearFavoritesConfirmation)
             }
-            Button("Vazgeç", role: .cancel) {}
-        } message: {
-            Text("\(favorites.ids.count) favori kampanya listeden kaldırılacak.")
         }
     }
 
