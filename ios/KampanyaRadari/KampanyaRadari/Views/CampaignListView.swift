@@ -354,22 +354,8 @@ private struct OnboardingScaffold<Visual: View>: View {
 
 private struct OnboardingPremiumBackground: View {
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [AppTheme.nearBlack, AppTheme.ink, AppTheme.nearBlack],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-
-            RadialGradient(
-                colors: [AppTheme.dashboardGreen.opacity(0.18), .clear],
-                center: .center,
-                startRadius: 20,
-                endRadius: 390
-            )
-            .blur(radius: 26)
-            .offset(y: -40)
-        }
+        // #060F11 — resim arka planlarıyla eşleşen koyu teal
+        Color(hex: "#060F11")
     }
 }
 
@@ -426,38 +412,12 @@ private struct OnboardingCardsRadarPage: View {
 
 private struct OnboardingCardsRadarOriginalImage: View {
     var body: some View {
-        ZStack {
-            RadialGradient(
-                colors: [
-                    AppTheme.dashboardGreen.opacity(0.18),
-                    AppTheme.deepBlue.opacity(0.20),
-                    .clear
-                ],
-                center: .center,
-                startRadius: 90,
-                endRadius: 320
-            )
-            .blur(radius: 18)
-
-            Image("OnboardingCardsRadarOriginal")
-                .resizable()
-                .scaledToFit()
-                .mask(
-                    RadialGradient(
-                        colors: [
-                            .white,
-                            .white,
-                            .white.opacity(0.82),
-                            .clear
-                        ],
-                        center: .center,
-                        startRadius: 190,
-                        endRadius: 430
-                    )
-                )
-                .shadow(color: AppTheme.dashboardGreen.opacity(0.18), radius: 28)
-        }
-        .frame(maxWidth: .infinity, maxHeight: 500)
+        Image("OnboardingCardsRadarOriginal")
+            .resizable()
+            .scaledToFit()
+            // Scaffold'un .padding(.horizontal, 18)'ini iptal et → tam genişlik
+            .padding(.horizontal, -18)
+            .frame(maxWidth: .infinity, maxHeight: 500)
     }
 }
 
@@ -517,34 +477,12 @@ private struct OnboardingSectorPillView: View {
 
 private struct OnboardingSavingsJarImage: View {
     var body: some View {
-        ZStack {
-            // Mint radial glow — arka planla kaynaştırmak için
-            RadialGradient(
-                colors: [
-                    AppTheme.dashboardGreen.opacity(0.32),
-                    AppTheme.dashboardGreen.opacity(0.08),
-                    .clear
-                ],
-                center: .center,
-                startRadius: 20,
-                endRadius: 260
-            )
-            .blur(radius: 22)
-
-            Image("OnboardingSavingsJar")
-                .resizable()
-                .scaledToFit()
-                .mask(
-                    // Kenarları yumuşatıp arka planla eriyor
-                    RadialGradient(
-                        colors: [.white, .white, .white.opacity(0.7), .clear],
-                        center: .center,
-                        startRadius: 120,
-                        endRadius: 340
-                    )
-                )
-        }
-        .frame(maxWidth: .infinity, maxHeight: 500)
+        Image("OnboardingSavingsJar")
+            .resizable()
+            .scaledToFit()
+            // Scaffold'un .padding(.horizontal, 18)'ini iptal et → tam genişlik
+            .padding(.horizontal, -18)
+            .frame(maxWidth: .infinity, maxHeight: 500)
     }
 }
 
