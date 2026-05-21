@@ -367,7 +367,7 @@ private struct OnboardingRadarPage: View {
         OnboardingScaffold(
             visual: { OnboardingSectorRadarIllustration() },
             activePage: page,
-            title: "En iyi fırsatları...",
+            title: "En İyi Fırsatları Yakala!",
             subtitle: "Binlerce kampanya içinden sana en uygun olanları radarına al.",
             buttonTitle: "İleri",
             showsArrow: true,
@@ -383,7 +383,7 @@ private struct OnboardingSavingsPage: View {
         OnboardingScaffold(
             visual: { OnboardingSavingsJarImage() },
             activePage: page,
-            title: "Tasarruf et,...",
+            title: "Tasarruf Et, Kazan!",
             subtitle: "Kaçırdığın fırsatları bul, birikimini artır, her alışverişte avantaj yakala.",
             buttonTitle: "İleri",
             showsArrow: true,
