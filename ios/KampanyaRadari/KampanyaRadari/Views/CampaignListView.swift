@@ -311,43 +311,45 @@ private struct OnboardingScaffold<Visual: View>: View {
     let buttonAction: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 22)
+        GeometryReader { geo in
+            VStack(spacing: 0) {
+                Spacer(minLength: 8)
 
-            visual()
-                .frame(height: 500)
-                .padding(.horizontal, 18)
+                visual()
+                    .frame(height: geo.size.height * 0.52)
+                    .padding(.horizontal, 18)
 
-            Spacer(minLength: 6)
+                Spacer(minLength: 4)
 
-            VStack(alignment: .leading, spacing: 22) {
-                OnboardingLogoBadge()
+                VStack(alignment: .leading, spacing: 12) {
+                    OnboardingLogoBadge()
 
-                Text(title)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundStyle(AppTheme.textPrimary)
-                    .lineSpacing(5)
-                    .shadow(color: .black.opacity(0.35), radius: 12, y: 8)
+                    Text(title)
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(AppTheme.textPrimary)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                Text(subtitle)
-                    .font(.system(size: 19, weight: .regular, design: .rounded))
-                    .foregroundStyle(AppTheme.textSecondary)
-                    .lineLimit(3)
-                    .lineSpacing(4)
+                    Text(subtitle)
+                        .font(.system(size: 16, weight: .regular, design: .rounded))
+                        .foregroundStyle(AppTheme.textSecondary)
+                        .lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                HStack(alignment: .center) {
-                    OnboardingPaginationDots(active: activePage, count: 3)
-                    Spacer()
-                    OnboardingPrimaryButton(
-                        title: buttonTitle,
-                        showsArrow: showsArrow,
-                        action: buttonAction
-                    )
+                    HStack(alignment: .center) {
+                        OnboardingPaginationDots(active: activePage, count: 3)
+                        Spacer()
+                        OnboardingPrimaryButton(
+                            title: buttonTitle,
+                            showsArrow: showsArrow,
+                            action: buttonAction
+                        )
+                    }
+                    .padding(.top, 6)
                 }
-                .padding(.top, 18)
+                .padding(.horizontal, 28)
+                .padding(.bottom, 28)
             }
-            .padding(.horizontal, 28)
-            .padding(.bottom, 42)
         }
     }
 }
