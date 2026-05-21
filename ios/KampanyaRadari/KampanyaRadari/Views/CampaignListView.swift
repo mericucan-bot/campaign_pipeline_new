@@ -426,11 +426,38 @@ private struct OnboardingCardsRadarPage: View {
 
 private struct OnboardingCardsRadarOriginalImage: View {
     var body: some View {
-        Image("OnboardingCardsRadarOriginal")
-            .resizable()
-            .scaledToFit()
-            .frame(maxWidth: .infinity, maxHeight: 500)
-            .shadow(color: AppTheme.dashboardGreen.opacity(0.18), radius: 28)
+        ZStack {
+            RadialGradient(
+                colors: [
+                    AppTheme.dashboardGreen.opacity(0.18),
+                    AppTheme.deepBlue.opacity(0.20),
+                    .clear
+                ],
+                center: .center,
+                startRadius: 90,
+                endRadius: 320
+            )
+            .blur(radius: 18)
+
+            Image("OnboardingCardsRadarOriginal")
+                .resizable()
+                .scaledToFit()
+                .mask(
+                    RadialGradient(
+                        colors: [
+                            .white,
+                            .white,
+                            .white.opacity(0.82),
+                            .clear
+                        ],
+                        center: .center,
+                        startRadius: 190,
+                        endRadius: 430
+                    )
+                )
+                .shadow(color: AppTheme.dashboardGreen.opacity(0.18), radius: 28)
+        }
+        .frame(maxWidth: .infinity, maxHeight: 500)
     }
 }
 
