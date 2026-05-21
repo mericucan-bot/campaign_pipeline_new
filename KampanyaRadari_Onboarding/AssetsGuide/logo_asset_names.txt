@@ -1,0 +1,20 @@
+Assets.xcassets içine önerilen logo isimleri:
+
+axess
+maximum
+garanti
+paraf
+saglam
+kolay
+onDigital
+vakifWorld
+qnb
+denizbank
+ziraat
+yapikrediWorld
+teb
+
+Öneri:
+- PNG kullanacaksan şeffaf arka planlı, yüksek çözünürlükte ekle.
+- Her logo için 1x, 2x, 3x versiyonları eklemek daha temiz sonuç verir.
+- Kartların içinde scaledToFit kullanıldığı için logolar yatay ve transparan canvas ile hazırlanmalı.
