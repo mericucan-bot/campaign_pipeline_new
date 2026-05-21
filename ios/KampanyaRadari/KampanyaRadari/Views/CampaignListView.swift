@@ -320,20 +320,21 @@ private struct OnboardingScaffold<Visual: View>: View {
 
             Spacer(minLength: 6)
 
-            VStack(alignment: .leading, spacing: 22) {
+            VStack(alignment: .leading, spacing: 10) {
                 OnboardingLogoBadge()
 
                 Text(title)
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(AppTheme.textPrimary)
-                    .lineSpacing(5)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
                     .shadow(color: .black.opacity(0.35), radius: 12, y: 8)
 
                 Text(subtitle)
-                    .font(.system(size: 19, weight: .regular, design: .rounded))
+                    .font(.system(size: 15, weight: .regular, design: .rounded))
                     .foregroundStyle(AppTheme.textSecondary)
-                    .lineLimit(3)
-                    .lineSpacing(4)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 HStack(alignment: .center) {
                     OnboardingPaginationDots(active: activePage, count: 3)
@@ -344,10 +345,10 @@ private struct OnboardingScaffold<Visual: View>: View {
                         action: buttonAction
                     )
                 }
-                .padding(.top, 18)
+                .padding(.top, 6)
             }
             .padding(.horizontal, 28)
-            .padding(.bottom, 42)
+            .padding(.bottom, 24)
         }
     }
 }
