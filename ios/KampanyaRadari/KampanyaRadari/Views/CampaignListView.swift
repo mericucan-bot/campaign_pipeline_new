@@ -394,7 +394,7 @@ private struct OnboardingSavingsPage: View {
 
     var body: some View {
         OnboardingScaffold(
-            visual: { OnboardingSavingsJarIllustration() },
+            visual: { OnboardingSavingsJarImage() },
             activePage: page,
             title: "Tasarruf et,...",
             subtitle: "Kaçırdığın fırsatları bul, birikimini artır, her alışverişte avantaj yakala.",
@@ -512,6 +512,39 @@ private struct OnboardingSectorPillView: View {
         .background(AppTheme.panelBlack.opacity(0.78), in: Capsule())
         .overlay(Capsule().stroke(AppTheme.dashboardGreen.opacity(0.45), lineWidth: 1.2))
         .shadow(color: AppTheme.dashboardGreen.opacity(0.18), radius: 18)
+    }
+}
+
+private struct OnboardingSavingsJarImage: View {
+    var body: some View {
+        ZStack {
+            // Mint radial glow — arka planla kaynaştırmak için
+            RadialGradient(
+                colors: [
+                    AppTheme.dashboardGreen.opacity(0.32),
+                    AppTheme.dashboardGreen.opacity(0.08),
+                    .clear
+                ],
+                center: .center,
+                startRadius: 20,
+                endRadius: 260
+            )
+            .blur(radius: 22)
+
+            Image("OnboardingSavingsJar")
+                .resizable()
+                .scaledToFit()
+                .mask(
+                    // Kenarları yumuşatıp arka planla eriyor
+                    RadialGradient(
+                        colors: [.white, .white, .white.opacity(0.7), .clear],
+                        center: .center,
+                        startRadius: 120,
+                        endRadius: 340
+                    )
+                )
+        }
+        .frame(maxWidth: .infinity, maxHeight: 500)
     }
 }
 
