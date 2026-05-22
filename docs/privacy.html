@@ -17,24 +17,26 @@
         <img class="brand-logo" src="./assets/radar-logo.svg" width="42" height="42" alt="" aria-hidden="true">
         <span>KAMPANYA RADARI</span>
       </a>
-      <a class="legal-back" href="./">Kampanyalara dön</a>
     </nav>
     <div class="legal-title">
-      <span>Yayın hazırlığı</span>
       <h1>Gizlilik Politikası</h1>
-      <p>Son güncelleme: 2026-05-11. Bu metin App Store yayını öncesi son kez gözden geçirilecektir.</p>
+      <p>Son güncelleme: 22 Mayıs 2026</p>
     </div>
   </header>
 
   <main class="legal-main">
     <section class="legal-card">
+      <h2>Genel Bilgi</h2>
+      <p>Kampanya Radarı uygulaması, Meriç Uçan tarafından geliştirilmiştir. Bu gizlilik politikası, uygulamayı kullanırken hangi verilerin toplandığını, nasıl kullanıldığını ve korunduğunu açıklamaktadır. Uygulamayı kullanarak bu politikayı kabul etmiş sayılırsınız.</p>
+    </section>
+
+    <section class="legal-card">
       <h2>Toplanan veriler</h2>
       <ul>
-        <li>E-posta adresi, kullanıcı hesabı oluşturmak, giriş yapmak ve şifre sıfırlama işlemleri için Supabase Auth üzerinden işlenir.</li>
-        <li>Favoriler, Kartlarım tercihleri ve kampanya katılım kayıtları cihazda saklanır; kullanıcı giriş yaptığında Supabase veritabanına senkronlanabilir.</li>
-        <li>Puan son kullanım tarihi, harcadım/kazandım bilgileri ve hatırlatıcı tercihleri kullanıcının kampanya takibini kolaylaştırmak için saklanır.</li>
-        <li>Bildirim izni, puan son kullanım hatırlatıcıları göndermek için iOS tarafından istenir.</li>
-        <li>Premium abonelik durumu, App Store veya ileride RevenueCat üzerinden doğrulanabilir.</li>
+        <li>E-posta adresi, kullanıcı hesabı oluşturmak, giriş yapmak ve şifre sıfırlama işlemleri için Supabase Auth üzerinden işlenir. Kayıt isteğe bağlıdır; misafir olarak da kullanılabilir.</li>
+        <li>Favoriler, Kartlarım tercihleri ve kampanya takip kayıtları cihazda saklanır; kullanıcı giriş yaptığında Supabase veritabanına senkronlanabilir.</li>
+        <li>Hatırlatıcı tercihleri ve bildirim ayarları, kullanıcının kampanya takibini kolaylaştırmak için saklanır.</li>
+        <li>Bildirim izni, kampanya bitiş tarihi hatırlatıcıları göndermek için Android tarafından istenir.</li>
       </ul>
     </section>
 
@@ -44,6 +46,7 @@
         <li>Banka kartı numarası, banka hesabı, müşteri numarası veya banka şifresi toplanmaz.</li>
         <li>Uygulama finansal işlem yapmaz ve kullanıcı adına kampanyaya katılmaz.</li>
         <li>Uygulama kullanıcının banka hesabına erişmez.</li>
+        <li>Konum, kamera, mikrofon veya rehber izni talep edilmez.</li>
       </ul>
     </section>
 
@@ -51,30 +54,41 @@
       <h2>Verilerin kullanım amacı</h2>
       <ul>
         <li>Kampanyaları kişiselleştirmek ve kullanıcının kendi kartlarına uygun fırsatları öne çıkarmak.</li>
-        <li>Favori, kart ve kazanç kayıtlarını cihazlar arasında senkronlamak.</li>
-        <li>Puan son kullanım hatırlatıcıları göndermek.</li>
-        <li>Free ve Premium plan kurallarını uygulamak.</li>
+        <li>Favori ve kart tercihlerini cihazlar arasında senkronlamak.</li>
+        <li>Kampanya bitiş tarihi hatırlatıcıları göndermek.</li>
         <li>Uygulamanın güvenliğini ve hizmet kalitesini korumak.</li>
       </ul>
+      <p>Verileriniz hiçbir koşulda üçüncü taraflara satılmaz veya reklam amaçlı kullanılmaz.</p>
     </section>
 
     <section class="legal-card">
       <h2>Üçüncü taraf hizmetler</h2>
       <ul>
-        <li>Supabase, kimlik doğrulama, kullanıcı profili ve senkron verileri için kullanılır.</li>
-        <li>Apple App Store ve StoreKit, iOS abonelik ve satın alma yönetimi için kullanılacaktır.</li>
-        <li>RevenueCat, ileride abonelik doğrulama ve platformlar arası abonelik durumu için değerlendirilebilir.</li>
+        <li><strong>Supabase</strong> — kimlik doğrulama, kullanıcı profili ve veri senkronizasyonu için kullanılır.</li>
+        <li><strong>Google Play Services</strong> — uygulama dağıtımı ve bildirim altyapısı.</li>
       </ul>
     </section>
 
     <section class="legal-card">
-      <h2>Reklam ve analitik</h2>
-      <p>Free planda ileride reklam gösterimi planlanmaktadır. Reklam veya analitik SDK'sı eklenirse bu politika, App Store gizlilik cevapları ve kullanıcı bilgilendirmesi güncellenecektir.</p>
+      <h2>Veri güvenliği</h2>
+      <p>Tüm sunucu iletişimleri HTTPS/TLS ile şifrelenir. Supabase üzerindeki kullanıcı verileri Row Level Security (RLS) ile korunmaktadır. Şifreler hiçbir zaman düz metin olarak saklanmaz.</p>
+    </section>
+
+    <section class="legal-card">
+      <h2>Misafir mod kullanımı</h2>
+      <p>Kayıt olmadan misafir olarak uygulamayı kullanabilirsiniz. Misafir modunda tüm veriler yalnızca cihazınızda yerel olarak saklanır; herhangi bir sunucuya gönderilmez.</p>
+    </section>
+
+    <section class="legal-card">
+      <h2>Çocukların gizliliği</h2>
+      <p>Uygulama 13 yaşın altındaki çocuklara yönelik değildir. Bilerek 13 yaş altı kullanıcılardan kişisel veri toplamıyoruz.</p>
     </section>
 
     <section class="legal-card">
       <h2>Kullanıcı hakları ve iletişim</h2>
-      <p>Kullanıcı hesabını, favorilerini, kart tercihlerini ve katılım kayıtlarını silme talebi gönderebilir. Destek e-posta adresi yayın öncesi netleştirilecektir.</p>
+      <p>Kullanıcı hesabını, favorilerini ve kart tercihlerini silme talebi gönderebilir. Bu politikayla ilgili sorularınız için:</p>
+      <p><strong>E-posta:</strong> <a href="mailto:mericucan@gmail.com">mericucan@gmail.com</a></p>
+      <p><strong>Geliştirici:</strong> Meriç Uçan</p>
     </section>
   </main>
 </body>
