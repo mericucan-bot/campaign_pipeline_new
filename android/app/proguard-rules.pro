@@ -17,3 +17,7 @@
 
 # Coil
 -dontwarn coil.**
+
+# Desugar lib — internal rules that don't match release builds
+-dontwarn j$.util.**
+-dontnote j$.util.**
