@@ -78,7 +78,6 @@ fun bankInitials(displayBank: String): String {
         nl.contains("on digital") || nl.contains("ondigital")  -> "ON"
         nl.contains("n kolay")    || nl.contains("nkolay")     -> "N"
         nl.contains("saglam")                                   -> "SK"
-        nl.contains("qnb")                                      -> "Q"
         nl.contains("fibabanka")  || nl.contains("fiba")       -> "FB"
         nl.contains("akbank")                                   -> "AK"
         nl.contains("isbank")     || nl.contains("is bank")    -> "İŞ"

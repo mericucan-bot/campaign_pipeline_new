@@ -95,11 +95,13 @@ class AuthService {
             .build()
 
         val response = client.newCall(request).execute()
-        val responseBody = response.body?.string() ?: throw Exception("Sunucudan yanıt alınamadı.")
+        val code = response.code
+        val responseBody = response.use { it.body?.string() }
+            ?: throw Exception("Sunucudan yanıt alınamadı.")
 
-        if (!response.isSuccessful) {
+        if (code !in 200..299) {
             val err = runCatching { json.decodeFromString<SupabaseError>(responseBody) }.getOrNull()
-            throw Exception(err?.displayMessage ?: "Kayıt başarısız. (${response.code})")
+            throw Exception(err?.displayMessage ?: "Kayıt başarısız. ($code)")
         }
 
         // Tam session varsa direkt kullan
@@ -157,11 +159,13 @@ class AuthService {
             .build()
 
         val response = client.newCall(request).execute()
-        val responseBody = response.body?.string() ?: throw Exception("Sunucudan yanıt alınamadı.")
+        val code = response.code
+        val responseBody = response.use { it.body?.string() }
+            ?: throw Exception("Sunucudan yanıt alınamadı.")
 
-        if (!response.isSuccessful) {
+        if (code !in 200..299) {
             val err = runCatching { json.decodeFromString<SupabaseError>(responseBody) }.getOrNull()
-            throw Exception(err?.displayMessage ?: "İşlem başarısız. (${response.code})")
+            throw Exception(err?.displayMessage ?: "İşlem başarısız. ($code)")
         }
 
         return json.decodeFromString<AuthSession>(responseBody)

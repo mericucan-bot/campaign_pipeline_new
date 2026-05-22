@@ -69,12 +69,8 @@ fun DashboardScreen(
     val syncLabel: String? = remember(lastSyncTime, isLoading) {
         if (isLoading) null
         else lastSyncTime?.let { ts ->
-            val diff = System.currentTimeMillis() - ts
-            if (diff < 60_000) "Az önce güncellendi"
-            else {
-                val fmt = SimpleDateFormat("HH:mm", Locale("tr"))
-                "${fmt.format(Date(ts))}'de güncellendi"
-            }
+            val fmt = SimpleDateFormat("HH:mm", Locale("tr"))
+            "${fmt.format(Date(ts))}'de güncellendi"
         }
     }
 

@@ -21,7 +21,6 @@ class PrefsStore(private val context: Context) {
     private val ONBOARDING_SEEN  = booleanPreferencesKey("onboarding_seen")
     private val DISPLAY_NAME     = stringPreferencesKey("display_name")
     private val IS_GUEST         = booleanPreferencesKey("is_guest")
-    private val SESSION_JSON     = stringPreferencesKey("session_json")  // SharedPrefs for session
 
     val onboardingSeen: Flow<Boolean> = context.appDataStore.data.map { it[ONBOARDING_SEEN] ?: false }
     val isGuest: Flow<Boolean>        = context.appDataStore.data.map { it[IS_GUEST] ?: true }

@@ -51,7 +51,10 @@ class CampaignService {
             .build()
 
         val response = client.newCall(request).execute()
-        val body = response.body?.string() ?: return emptyList()
+        val body = response.use { r ->
+            if (!r.isSuccessful) throw Exception("Sunucu hatası: ${r.code}")
+            r.body?.string()
+        } ?: return emptyList()
         return runCatching { json.decodeFromString<List<Campaign>>(body) }.getOrElse { emptyList() }
     }
 }

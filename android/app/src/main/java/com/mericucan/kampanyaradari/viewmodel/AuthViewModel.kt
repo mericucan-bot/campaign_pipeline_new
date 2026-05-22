@@ -157,13 +157,21 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun tryRefreshSession(session: AuthSession) {
         val refreshToken = session.refreshToken ?: return
-        val expiresAt    = session.expiresAt ?: return
-        val refreshLeeway = 5 * 60L // 5 min
-        if (expiresAt - System.currentTimeMillis() / 1000 < refreshLeeway) {
-            viewModelScope.launch(Dispatchers.IO) {
-                runCatching { authService.refreshSession(refreshToken) }
-                    .onSuccess { newSession -> withContext(Dispatchers.Main) { applySession(newSession) } }
-            }
+        val expiresAt    = session.expiresAt
+        // expiresAt null ise süre bilinmiyor → her zaman refresh dene
+        // Biliniyorsa: 5 dakika veya daha az kaldıysa refresh yap
+        val needsRefresh = expiresAt == null ||
+                (expiresAt - System.currentTimeMillis() / 1000) < 5 * 60L
+        if (!needsRefresh) return
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { authService.refreshSession(refreshToken) }
+                .onSuccess { newSession ->
+                    withContext(Dispatchers.Main) { applySession(newSession) }
+                }
+                .onFailure {
+                    // Refresh token da geçersiz (süresi dolmuş) → misafir moduna geç
+                    withContext(Dispatchers.Main) { continueAsGuest() }
+                }
         }
     }
 }

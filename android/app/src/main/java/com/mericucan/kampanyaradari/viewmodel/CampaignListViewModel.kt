@@ -107,7 +107,7 @@ class CampaignListViewModel : ViewModel() {
         _campaigns.value.firstOrNull { it.bank == bank }?.displayBank ?: bank
 
     fun categorySummaries(): List<CategorySummary> =
-        CampaignCategory.values().mapNotNull { cat ->
+        CampaignCategory.entries.mapNotNull { cat ->
             val count = _campaigns.value.count { getCategory(it) == cat.label }
             if (count > 0) CategorySummary(cat, count) else null
         }
@@ -168,7 +168,7 @@ class CampaignListViewModel : ViewModel() {
             h.any("akaryakit", "yakit", "petrol", "shell", "opet", "total") -> CampaignCategory.FUEL.label
             h.any("elektronik", "teknosa", "mediamarkt", "vatan", "bilgisayar", "telefon") -> CampaignCategory.ELECTRONICS.label
             h.any("giyim", "moda", "zara", "defacto", "lc waikiki", "ipekyol", "vakko") -> CampaignCategory.FASHION.label
-            h.any("market", "migros", "a101", "sok", "carrefour") -> CampaignCategory.MARKET.label
+            h.any("market", "migros", "a101", "sok", "carrefour", "bim", "file", "metro", "kipa", "hakmar", "makro") -> CampaignCategory.MARKET.label
             h.any("restoran", "restaurant", "cafe", "yemek", "bigchefs") -> CampaignCategory.RESTAURANT.label
             h.any("seyahat", "otel", "hotel", "ucak", "tatil", "havalimani", "lounge", "transfer",
                 "arac kiralama", "tatilbudur", "jolly", "yolcu360", "enuygun") -> CampaignCategory.TRAVEL.label

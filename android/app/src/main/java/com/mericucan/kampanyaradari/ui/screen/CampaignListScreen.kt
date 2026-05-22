@@ -705,7 +705,7 @@ private fun FiltrelerSheet(
                 showDivider = true
             )
             // Kategoriler
-            CampaignCategory.values().forEachIndexed { idx, cat ->
+            CampaignCategory.entries.forEachIndexed { idx, cat ->
                 val isSelected = selectedCategories.contains(cat.label)
                 FiltrelerSelectRow(
                     label       = cat.label,
@@ -849,7 +849,7 @@ private fun SiralamaSheet(
                 .background(PanelBlack)
                 .border(1.dp, BorderSubtle, RoundedCornerShape(14.dp))
         ) {
-            SortOption.values().forEachIndexed { idx, option ->
+            SortOption.entries.forEachIndexed { idx, option ->
                 if (idx > 0) HorizontalDivider(color = BorderSubtle)
                 val isSelected = currentSort == option
                 Row(
@@ -1181,6 +1181,7 @@ private fun GuestAuthGate(
         if (onBack != null) {
             Box(
                 modifier = Modifier
+                    .statusBarsPadding()
                     .padding(top = 16.dp, start = 20.dp)
                     .align(Alignment.TopStart)
                     .size(40.dp)

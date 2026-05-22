@@ -591,10 +591,10 @@ fun CampaignDetailScreen(
                         if (wantsOn) {
                             // Önce takip açık olmalı
                             if (!trackingState.isTracking) return@ReminderCard
-                            // Hatırlatıcı limiti kontrolü (bu kampanya henüz reminder eklememiş)
+                            // Hatırlatıcı limiti kontrolü
                             val rule = EntitlementService.canUseReminder(plan, activeReminderCount, isGuest)
                             if (!rule.allowed) { entitlementDialogRule = rule; return@ReminderCard }
-                            scope.launch { trackingStore.setReminder(campaign.id, true) }
+                            // setReminder(true) yapmıyoruz — tarih seçilince confirmButton'da yazılacak
                             tryOpenDatePicker()
                         } else {
                             scope.launch {

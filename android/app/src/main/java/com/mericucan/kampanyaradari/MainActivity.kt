@@ -202,6 +202,7 @@ private fun KampanyaRadariApp(app: KampanyaRadariApp) {
             AuthScreen(
                 authViewModel = authViewModel,
                 onDismiss     = {
+                    authViewModel.clearMessage()
                     scope.launch { authSheetState.hide() }
                         .invokeOnCompletion { showAuthSheet = false }
                 }
