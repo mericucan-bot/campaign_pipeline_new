@@ -297,7 +297,7 @@ private fun LoggedInContent(
             border = BorderStroke(1.dp, ErrorRed.copy(alpha = 0.5f)),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = ErrorRed)
         ) {
-            Icon(Icons.Filled.Logout, null, modifier = Modifier.size(18.dp))
+            Icon(Icons.AutoMirrored.Filled.Logout, null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text("Çıkış Yap", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
         }
