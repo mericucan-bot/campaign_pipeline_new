@@ -1,0 +1,30 @@
+# Build outputs
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Android Studio
+*.hprof
+.navigation/
+captures/
+
+# App build outputs
+app/build/
+app/release/
+app/debug/
+
+# Keystore (güvenlik)
+*.jks
+*.keystore
+
+# Google Services (hassas bilgi içerebilir)
+# google-services.json  ← projeye dahil etmek istersen yorum satırı yap
+
+# Test sonuçları
+test-results/
