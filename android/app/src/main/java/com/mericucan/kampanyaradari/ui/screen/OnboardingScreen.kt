@@ -213,6 +213,18 @@ private fun OnboardingPage2(onNext: () -> Unit) {
 
 @Composable
 private fun OnboardingPage3(onFinish: () -> Unit) {
+    val infiniteTransition = rememberInfiniteTransition(label = "radar3")
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(4000, easing = LinearEasing)),
+        label = "sweep3"
+    )
+    val pulse by infiniteTransition.animateFloat(
+        initialValue = 0.7f, targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(1500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "pulse3"
+    )
+
     Column(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
@@ -220,6 +232,7 @@ private fun OnboardingPage3(onFinish: () -> Unit) {
                 .weight(1.5f),
             contentAlignment = Alignment.Center
         ) {
+            // Banka görseli
             AsyncImage(
                 model = R.drawable.onboarding_banks,
                 contentDescription = null,
@@ -228,6 +241,27 @@ private fun OnboardingPage3(onFinish: () -> Unit) {
                     .padding(horizontal = 20.dp),
                 contentScale = ContentScale.Fit
             )
+
+            // ── Radar overlay ──────────────────────────────────────
+            Box(Modifier.width(360.dp).height(1.dp).background(DashboardGreen.copy(0.07f)))
+            Box(Modifier.width(1.dp).height(360.dp).background(DashboardGreen.copy(0.07f)))
+
+            Box(Modifier.size(360.dp).clip(CircleShape).border(1.dp, DashboardGreen.copy(0.10f), CircleShape))
+            Box(Modifier.size(258.dp).clip(CircleShape).border(1.dp, DashboardGreen.copy(0.18f), CircleShape))
+            Box(Modifier.size(154.dp).clip(CircleShape).border(1.dp, DashboardGreen.copy(0.30f), CircleShape))
+
+            // Dönen süpürme çizgisi
+            Box(Modifier.size(360.dp).rotate(rotation)) {
+                Box(
+                    modifier = Modifier
+                        .width(180.dp).height(2.dp)
+                        .align(Alignment.CenterEnd)
+                        .background(Brush.horizontalGradient(listOf(Color.Transparent, DashboardGreen.copy(0.85f))))
+                )
+            }
+
+            // Merkez nokta
+            Box(Modifier.size((12 * pulse).dp).clip(CircleShape).background(DashboardGreen))
         }
 
         Column(
