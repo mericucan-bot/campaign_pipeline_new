@@ -168,7 +168,7 @@ private fun OnboardingPage1(onNext: () -> Unit) {
 private fun OnboardingPage2(onNext: () -> Unit) {
     val infiniteTransition = rememberInfiniteTransition(label = "jar")
     val float by infiniteTransition.animateFloat(
-        initialValue = -6f, targetValue = 12f,
+        initialValue = -12f, targetValue = 12f,
         animationSpec = infiniteRepeatable(tween(2200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "float"
     )
