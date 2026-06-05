@@ -19,8 +19,10 @@ struct CampaignDetailView: View {
     @State private var isShowingActionScan = false
     @State private var hasPendingCommit = false
     @FocusState private var focusedMoneyField: MoneyField?
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
         ZStack {
             AppTheme.blueBackground
                 .ignoresSafeArea()
@@ -50,18 +52,18 @@ struct CampaignDetailView: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text(campaign.displayBank)
-                                .font(.subheadline.weight(.bold))
+                                .font((isPad ? Font.headline : .subheadline).weight(.bold))
                                 .foregroundStyle(AppTheme.dashboardGreen)
                             Text(campaign.title)
-                                .font(.title2.weight(.bold))
+                                .font((isPad ? Font.title : .title2).weight(.bold))
                                 .foregroundStyle(AppTheme.textPrimary)
                             Text(campaign.deadlineText)
-                                .font(.subheadline.weight(.semibold))
+                                .font((isPad ? Font.headline : .subheadline).weight(.semibold))
                                 .foregroundStyle(.orange)
                         }
 
                         Text(campaign.displaySummary)
-                            .font(.body)
+                            .font(isPad ? .title3 : .body)
                             .foregroundStyle(AppTheme.muted)
 
                         participationPanel
@@ -109,7 +111,10 @@ struct CampaignDetailView: View {
                     )
                     .shadow(color: .black.opacity(0.4), radius: 20, x: 0, y: 10)
                 }
-                .padding(18)
+                .frame(maxWidth: isPad ? AdaptiveLayout.contentMaxWidth : .infinity)
+                .padding(.horizontal, isPad ? 32 : 18)
+                .padding(.vertical, 18)
+                .frame(maxWidth: .infinity)
             }
             .scrollDismissesKeyboard(.interactively)
         }

@@ -1,169 +1,212 @@
-# Campaign Pipeline
+# Kampanya Radarı
 
-Turkiye'deki banka kampanyalarini tarayan ve dashboard'da gosteren yerel uygulama.
+Türkiye'deki banka ve kredi kartı kampanyalarını tek ekranda takip edin. En iyi fırsatları radarına alın, hiç birini kaçırmayın.
 
-## Tek tik calistirma
+**Kampanya Radarı**, 50+ banka ve finansal kuruluşun güncel kampanyalarını derleyerek, kullanıcıların hangi kartlarıyla hangi avantajları alabileceğini anında gösterir.
 
-Windows'ta `run_dashboard.bat` dosyasina cift tiklayin.
+---
 
-Mac'te Terminal'i proje klasorunde acip su komutu calistirin:
+## 📱 Uygulamalar
 
+### iOS
+- **App Store:** [Kampanya Radarı](https://apps.apple.com/tr/app/kampanya-radari/)
+- **Gereken iOS:** 15.0+
+- **Cihazlar:** iPhone (iPad görünüm optimize değil)
+
+### Android
+- **Google Play:** [Kampanya Radarı](https://play.google.com/store/apps/details?id=com.mericucan.kampanyaradari)
+- **Gereken Android:** 8.0+ (API 26)
+- **Özellikler:** Full responsive design, tablet desteği
+
+---
+
+## ✨ Ana Özellikler
+
+### Akıllı Filtreleme
+- **Kart filtresi:** Hangi kartlarınız varsa seçin, sizinle ilgili kampanyaları görelim
+- **Kategori filtresi:** Market, akaryakıt, giyim, restoran, elektronik, seyahat, online
+- **Banka filtresi:** Garanti, Akbank, Yapı Kredi, İş Bankası, Ziraat, VakıfBank ve 10+ banka
+
+### Akıllı Sıralama
+- **Bitiş tarihine göre:** Acil kampanyalar yukarıda
+- **Fırsat skoruna göre:** En değerli kampanyalar öne
+- **Banka adına göre:** Alfabetik sıralama
+- **Başlığa göre:** Hızlı arama
+
+### Favori Kampanyalar
+- Beğendiğin kampanyaları kaydet
+- Favorilerin sayısını ve tarafını göz at
+- Offline erişim (kayıtlı favoriler)
+
+### Hatırlatıcılar
+- Kampanyanın bitiş tarihine yaklaşınca bildirim al
+- Son gün sürprizinden kaçın
+- Akıllı timing: bitiş tarihine 3 gün kala hatırlat
+
+### Hesap ve Senkronizasyon (Premium)
+- Tüm cihazlarda favorileriniz senkronize olsun
+- Kampanya takip geçmişinizi koruyun
+- Cihaz değiştiğinde verileriniz sizinle gitsin
+
+---
+
+## 🚀 Nasıl Başlayacağım?
+
+### En Hızlı Başlangıç
+1. **Misafir Mod:** Hesap oluşturmadan uygulamayı keşfet
+2. **Kartlarımı Seç:** Hangi bankaların kartına sahipsen işaretle
+3. **Kampanyaları Gör:** Seninle ilgili kampanyalar anında listeden öne çıkacak
+
+### Hesap Oluştur
+- E-posta ile kayıt (veya Google/Apple ile gir)
+- Kartlarımı belirle
+- Kampanyaları takip etmeye başla
+- (Optional) Premium'a yükselt → cihazlar arası senkronizasyon
+
+---
+
+## 💰 Premium Özellikleri
+
+| Özellik | Ücretsiz | Premium |
+|---------|----------|---------|
+| Kampanya görüntüleme | ✅ | ✅ |
+| Favori kampanya | ✅ (50'ye kadar) | ✅ Sınırsız |
+| Hatırlatıcı | ✅ (3 kampanya) | ✅ Sınırsız |
+| Cihazlar arası senkronizasyon | ❌ | ✅ |
+| Kazanç raporu | ❌ | ✅ |
+| Reklam yok | ❌ | ✅ |
+
+**Fiyatlandırma:**
+- Aylık: 4.99 TL/ay
+- Yıllık: 39.99 TL/yıl (% 33 tasarruf)
+
+---
+
+## 🏗️ Mimarisi
+
+### iOS (Swift + SwiftUI)
+```
+ios/KampanyaRadari/
+├── Services/          # Supabase auth, campaign fetching, reminders
+├── Views/            # UI components (SwiftUI)
+├── ViewModels/       # State management
+└── Models/           # Data structures
+```
+
+**Teknoloji:**
+- SwiftUI (UI)
+- Combine (Reactive)
+- StoreKit 2 (In-app subscriptions)
+- Supabase (Backend/auth)
+- CloudKit (Backup)
+
+### Android (Kotlin + Jetpack Compose)
+```
+android/app/
+├── ui/
+│   ├── screen/       # Screens
+│   ├── component/    # Reusable components
+│   └── theme/        # Material 3 theme
+├── viewmodel/        # State management
+├── repository/       # Data layer
+└── di/              # Dependency injection
+```
+
+**Teknoloji:**
+- Jetpack Compose (UI)
+- MVVM + Repository pattern
+- Hilt (DI)
+- Room (Local DB)
+- Supabase (Backend)
+- Datastore (User preferences)
+
+### Backend (Supabase)
+- PostgreSQL veritabanı
+- Row Level Security (RLS)
+- PostgreSQL functions (campaign sync)
+- Auth (email, OAuth)
+
+---
+
+## 🛠️ Geliştirici Ortamı Kurulumu
+
+### iOS
 ```bash
-./run_dashboard.sh
+cd ios/KampanyaRadari
+open KampanyaRadari.xcodeproj
+# Xcode 15+ gerekli, iOS 15.0+
 ```
 
-Bu dosya:
-
-- `.env` yoksa `.env.example` dosyasindan olusturur
-- `.venv` sanal ortamini kurar
-- Python paketlerini yukler
-- dashboard'u `http://127.0.0.1:5050` adresinde acar
-
-Supabase bilgisi girilmezse veriler yerel SQLite veritabanina yazilir:
-
-`data/campaigns.db`
-
-Supabase kullanmak isterseniz `supabase_schema.sql` dosyasindaki tabloyu Supabase SQL editor'de calistirin ve `.env` icine proje URL/key bilgilerinizi yazin.
-
-Kullanici hesabi, kartlarim, favoriler ve kazanc takibi icin ikinci asamada `supabase_user_schema.sql` dosyasi calistirilir. Bu dosya mobil uygulama yayin hazirligi icin kullanici verilerini ayri ve RLS korumali tablolara ayirir.
-
-Pipeline veriyi yazmak icin `SUPABASE_SERVICE_KEY` kullanir. Bu key gizlidir; telefona, web istemcisine veya repo'ya konmaz. iOS uygulama sadece okuma icin `SUPABASE_ANON_KEY` / publishable key kullanir.
-
-```env
-SUPABASE_URL=https://proje-ref.supabase.co
-SUPABASE_SERVICE_KEY=service-role-veya-secret-key
-SUPABASE_ANON_KEY=anon-veya-publishable-key
-```
-
-Public okuma testini calistirmak icin:
-
+### Android
 ```bash
-python -m app.check_public_read
+cd android
+# Android Studio'da aç veya:
+./gradlew assembleDebug
 ```
 
-## Sadece veri cekmek
-
-`run_pipeline.bat` dosyasina cift tiklayin.
-
-Mac'te:
-
+### Backend (Local Supabase)
 ```bash
-./run_pipeline.sh
+# supabase_schema.sql ve supabase_user_schema.sql'i 
+# Supabase SQL editor'de çalıştır
 ```
 
-## Internete yayinlama: GitHub Actions + GitHub Pages
+---
 
-Bu repo artik statik dashboard olarak GitHub Pages'e yayinlanabilir.
+## 📊 Desteklenen Bankalar (50+)
 
-Eklenen dosyalar:
-
-- `.github/workflows/deploy-pages.yml`
-- `app/static_export.py`
-- `docs/index.html`
-- `docs/assets/app.js`
-- `docs/assets/styles.css`
-- `docs/data/campaigns.json`
-
-Workflow su islemleri yapar:
-
-- 6 saatte bir otomatik calisir
-- `python -m app.main` ile kampanyalari ceker
-- `python -m app.static_export` ile `docs/data/campaigns.json` uretir
-- Onceki `docs/data/campaigns.json` dosyasini okuyup artik yeni taramada gorunmeyen kampanyalari pasif isaretler
-- Guncel `docs/data/campaigns.json` dosyasini repo'ya geri commit eder
-- `docs/` klasorunu GitHub Pages'e deploy eder
-
-GitHub'da gerekli ayar:
-
-1. Repoyu GitHub'a push edin.
-2. Repository `Settings > Pages` bolumune girin.
-3. `Build and deployment > Source` alanini `GitHub Actions` yapin.
-4. `Actions` sekmesinden `Deploy Kampanya Radar` workflow'unu elle calistirin.
-
-Sonrasinda GitHub size su formda bir internet adresi verir:
-
-`https://kullaniciadi.github.io/repo-adi/`
-
-Bu repo icin beklenen adresler:
-
-- Dashboard: `https://mericucan-bot.github.io/campaign_pipeline_new/`
-- Gizlilik Politikasi: `https://mericucan-bot.github.io/campaign_pipeline_new/privacy.html`
-- Destek: `https://mericucan-bot.github.io/campaign_pipeline_new/support.html`
-
-Detayli yayin adimlari: `docs/pages-publishing.md`
-
-Not: GitHub Pages statik calisir. Bu nedenle internetteki versiyonda `Simdi Tara` butonu yoktur; veriler GitHub Actions calistikca guncellenir. Favoriler tarayici hafizasinda saklanir.
-
-## Dashboard ozellikleri
-
-- Benim Kartlarim filtresi: Axess, Maximum, Paraf, Paraf Premium, Vakif ve YKB kampanyalarini one cikarir.
-- Banka tarama sagligi: banka bazli aktif/pasif sayisini ve son gorulme tarihini gosterir.
-- Detay penceresi: kart icindeki bilgiyi dashboard'dan ayrilmadan okumayi saglar.
-- Manuel favori kampanya: elle eklenen kampanyalari direkt favorilere alir.
-- Sayfa basina don: uzun listelerde hizli yukari cikis saglar.
-- Tekillestirme: ayni banka icinde ayni URL veya ayni basliga sahip tekrar eden kampanyalari gizler.
-- Tarih etiketi: yakalanabilen tarihleri `Son katilim`, `Son X gun`, `Bugun bitiyor` formatinda gosterir.
-
-### Telegram hata bildirimi
-
-Workflow hata verirse Telegram mesaji gonderebilir. Basarili calismalarda mesaj atmaz.
-
-GitHub repo icinde:
-
-1. `Settings > Secrets and variables > Actions`
-2. `New repository secret`
-3. Su iki secret'i ekleyin:
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
-
-Secret isimleri tam bu sekilde olmalidir. Token ve chat id dosyalara yazilmaz, sadece GitHub Secrets icinde saklanir.
-
-## Elle calistirma
-
-Mac:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m app.dashboard
-```
-
-Windows:
-
-```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\activate
-python -m pip install -r requirements.txt
-python -m app.dashboard
-```
-
-Python 3.9 veya daha yeni surum yeterlidir.
-
-## Docker ile calistirma
-
-```powershell
-docker-compose up --build
-```
-
-## Banka kaynaklari
-
-Hazir kaynaklar:
-
-- Paraf
-- Paraf Premium (`https://www.paraf.com.tr/tr/kart-cesitleri/Paraf-Premium.html`)
-- Akbank Axess (`https://www.axess.com.tr/axess/kampanya/8/393/kampanyalar`)
-- Garanti BBVA Bonus
-- Is Bankasi Maximum (`https://www.maximum.com.tr/kampanyalar`)
-- Yapi Kredi World
+**Premium Kartlar:**
+- Garanti BBVA (Bonus, Premium Plus)
+- Akbank (Axess, Axess Premium)
+- Yapı Kredi (World, Platinum)
+- İş Bankası (Maximum, Premium)
 - Ziraat Bankkart
-- VakifBank (`https://www.vakifkart.com.tr/kampanyalar`)
-- Kuveyt Turk Saglam Kart
-- On Kart
+- VakıfBank
+
+**Fintech & Digital:**
+- Paraf, Paraf Premium
 - N Kolay
 - Halkbank
-- DenizBank Bonus
-- QNB CardFinans
-- TEB Bonus (`https://www.teb.com.tr/sizin-icin/kampanyalar/`)
+- DenizBank
+- TEB
+- QNB Finansbank
+- ING
+- Kuveyt Türk
+- Kolay
 
-Paraf JSON kaynagi kullanir. Diger bankalar resmi kampanya liste sayfalarindan genel HTML tarama ile okunur; banka siteleri tasarim degistirirse ilgili fetcher secicileri iyilestirilebilir.
+---
+
+## 🔒 Gizlilik & Güvenlik
+
+- **Gizlilik Politikası:** [privacy.html](https://mericucan-bot.github.io/campaign_pipeline_new/privacy.html)
+- **Kullanım Şartları:** [terms.html](https://mericucan-bot.github.io/campaign_pipeline_new/terms.html)
+- **Veri:** Sadece gerekli veriler saklanır (e-posta, kartlar, favori kampanyalar)
+- **Şifreleme:** HTTPS, database RLS ile korunmuş
+- **Silme:** Hesapla birlikte tüm verileriniz silinir
+
+---
+
+## 📈 v2 Yol Haritası
+
+Bkz: [ROADMAP.md](ROADMAP.md)
+
+---
+
+## 🤝 Katkı
+
+Kampanya Radarı şu an kapalı bir proje. Geri bildirim ve öneriler için:
+- **E-posta:** mericucan@gmail.com
+- **App Store:** Yorum/geri bildirim bırakabilirsiniz
+
+---
+
+## 📄 License
+
+Copyright © 2026 Meric Ucan. Tüm hakları saklıdır.
+
+---
+
+## 📞 Destek
+
+- **Web:** [mericucan-bot.github.io/campaign_pipeline_new](https://mericucan-bot.github.io/campaign_pipeline_new/)
+- **E-posta:** mericucan@gmail.com
+- **In-app:** Ayarlar → Destek / Feedback

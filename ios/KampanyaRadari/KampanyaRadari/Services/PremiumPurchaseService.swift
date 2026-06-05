@@ -22,6 +22,13 @@ enum PremiumProductID: String, CaseIterable, Identifiable {
         }
     }
 
+    var fallbackDurationText: String {
+        switch self {
+        case .monthly: return "Aylık"
+        case .yearly: return "Yıllık"
+        }
+    }
+
     var fallbackPriceText: String {
         switch self {
         case .monthly: return "App Store'da tanımlanacak"
@@ -34,6 +41,7 @@ struct PremiumOffering: Identifiable, Equatable {
     let id: PremiumProductID
     let title: String
     let subtitle: String
+    let durationText: String
     let priceText: String
     let isBestValue: Bool
     let isStoreProductReady: Bool
@@ -72,6 +80,7 @@ final class PremiumPurchaseService {
                     id: id,
                     title: product?.displayName.isEmpty == false ? product!.displayName : id.fallbackTitle,
                     subtitle: id.fallbackSubtitle,
+                    durationText: product?.subscription?.subscriptionPeriod.localizedDurationText ?? id.fallbackDurationText,
                     priceText: product?.displayPrice ?? id.fallbackPriceText,
                     isBestValue: id == .yearly,
                     isStoreProductReady: product != nil
@@ -180,6 +189,7 @@ final class PremiumPurchaseService {
                 id: id,
                 title: id.fallbackTitle,
                 subtitle: id.fallbackSubtitle,
+                durationText: id.fallbackDurationText,
                 priceText: id.fallbackPriceText,
                 isBestValue: id == .yearly,
                 isStoreProductReady: false
@@ -208,6 +218,23 @@ private enum PremiumPurchaseError: LocalizedError {
         switch self {
         case .unverifiedTransaction:
             return "App Store işlemi doğrulanamadı."
+        }
+    }
+}
+
+private extension Product.SubscriptionPeriod {
+    var localizedDurationText: String {
+        switch unit {
+        case .day:
+            return value == 1 ? "Günlük" : "\(value) günlük"
+        case .week:
+            return value == 1 ? "Haftalık" : "\(value) haftalık"
+        case .month:
+            return value == 1 ? "Aylık" : "\(value) aylık"
+        case .year:
+            return value == 1 ? "Yıllık" : "\(value) yıllık"
+        @unknown default:
+            return "\(value) dönem"
         }
     }
 }

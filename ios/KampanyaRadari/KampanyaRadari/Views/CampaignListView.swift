@@ -8,6 +8,15 @@ private enum AppRoute: Hashable {
     case account
 }
 
+enum AdaptiveLayout {
+    static let contentMaxWidth: CGFloat = 680
+    static let sheetMaxWidth: CGFloat = 640
+
+    static func isPad(_ horizontalSizeClass: UserInterfaceSizeClass?) -> Bool {
+        horizontalSizeClass == .regular
+    }
+}
+
 struct CampaignListView: View {
     @State private var viewModel = CampaignListViewModel()
     @State private var favorites = FavoritesStore()
@@ -18,51 +27,14 @@ struct CampaignListView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var hasEnteredApp = false
     @State private var path: [AppRoute] = []
+    @State private var selectedRoute: AppRoute?
     @State private var isShowingNamePrompt = false
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         Group {
             if hasCompletedOnboarding || hasEnteredApp {
-                NavigationStack(path: $path) {
-                    DashboardHomeView(viewModel: viewModel, favorites: favorites, myCards: myCards, participation: participation, authState: authState) {
-                        viewModel.showAllCampaigns()
-                        path.append(.list(lockCategoryFilter: false))
-                    } openFavorites: {
-                        viewModel.showFavoriteCampaigns()
-                        path.append(.list(lockCategoryFilter: false))
-                    } openMyCards: {
-                        path.append(.profile)
-                    } openMyCardCampaigns: {
-                        viewModel.showMyCardCampaigns()
-                        path.append(.list(lockCategoryFilter: false))
-                    } openEarnings: {
-                        path.append(.earnings)
-                    } openAccount: {
-                        path.append(.account)
-                    } openCategory: { category in
-                        viewModel.showCampaigns(category: category)
-                        path.append(.list(lockCategoryFilter: true))
-                    }
-                    .navigationDestination(for: AppRoute.self) { route in
-                        switch route {
-                        case .list(let lockCategoryFilter):
-                            CampaignListScreen(
-                                viewModel: viewModel,
-                                favorites: favorites,
-                                myCards: myCards,
-                                participation: participation,
-                                authState: authState,
-                                lockCategoryFilter: lockCategoryFilter
-                            )
-                        case .profile:
-                            ProfileCardsView(viewModel: viewModel, myCards: myCards)
-                        case .earnings:
-                            EarningsView(viewModel: viewModel, favorites: favorites, participation: participation, authState: authState)
-                        case .account:
-                            AccountView(authState: authState, favorites: favorites, myCards: myCards, participation: participation, purchaseService: purchaseService)
-                        }
-                    }
-                }
+                mainNavigation
             } else {
                 IntroView(authState: authState, favorites: favorites, myCards: myCards, participation: participation) {
                     hasCompletedOnboarding = true
@@ -142,6 +114,120 @@ struct CampaignListView: View {
         }
         .animation(.easeInOut(duration: 0.18), value: authState.isLoading || authState.isSyncing)
     }
+
+    @ViewBuilder
+    private var mainNavigation: some View {
+        if AdaptiveLayout.isPad(horizontalSizeClass) {
+            NavigationSplitView {
+                appSidebar
+            } detail: {
+                detailView(for: selectedRoute)
+            }
+        } else {
+            NavigationStack(path: $path) {
+                dashboard(push: { route in path.append(route) })
+                    .navigationDestination(for: AppRoute.self) { route in
+                        detailView(for: route)
+                    }
+            }
+        }
+    }
+
+    private var appSidebar: some View {
+        List(selection: $selectedRoute) {
+            Section("Kampanya Radarı") {
+                Button {
+                    selectedRoute = nil
+                } label: {
+                    Label("Dashboard", systemImage: "scope")
+                }
+                .tag(Optional<AppRoute>.none)
+
+                Button {
+                    viewModel.showAllCampaigns()
+                    selectedRoute = .list(lockCategoryFilter: false)
+                } label: {
+                    Label("Tüm Kampanyalar", systemImage: "rectangle.stack.fill")
+                }
+                .tag(Optional(AppRoute.list(lockCategoryFilter: false)))
+
+                Button {
+                    viewModel.showFavoriteCampaigns()
+                    selectedRoute = .list(lockCategoryFilter: false)
+                } label: {
+                    Label("Favorilerim", systemImage: "bookmark.fill")
+                }
+                .tag(Optional(AppRoute.list(lockCategoryFilter: false)))
+
+                Button {
+                    selectedRoute = .profile
+                } label: {
+                    Label("Kartlarım", systemImage: "creditcard.fill")
+                }
+                .tag(Optional(AppRoute.profile))
+
+                Button {
+                    selectedRoute = .earnings
+                } label: {
+                    Label("Kazançlarım", systemImage: "chart.line.uptrend.xyaxis")
+                }
+                .tag(Optional(AppRoute.earnings))
+
+                Button {
+                    selectedRoute = .account
+                } label: {
+                    Label("Hesap", systemImage: "person.crop.circle.fill")
+                }
+                .tag(Optional(AppRoute.account))
+            }
+        }
+        .navigationTitle("Menü")
+    }
+
+    private func dashboard(push: @escaping (AppRoute) -> Void) -> some View {
+        DashboardHomeView(viewModel: viewModel, favorites: favorites, myCards: myCards, participation: participation, authState: authState) {
+            viewModel.showAllCampaigns()
+            push(.list(lockCategoryFilter: false))
+        } openFavorites: {
+            viewModel.showFavoriteCampaigns()
+            push(.list(lockCategoryFilter: false))
+        } openMyCards: {
+            push(.profile)
+        } openMyCardCampaigns: {
+            viewModel.showMyCardCampaigns()
+            push(.list(lockCategoryFilter: false))
+        } openEarnings: {
+            push(.earnings)
+        } openAccount: {
+            push(.account)
+        } openCategory: { category in
+            viewModel.showCampaigns(category: category)
+            push(.list(lockCategoryFilter: true))
+        }
+    }
+
+    @ViewBuilder
+    private func detailView(for route: AppRoute?) -> some View {
+        switch route {
+        case .none:
+            dashboard { selectedRoute = $0 }
+        case .some(.list(let lockCategoryFilter)):
+            CampaignListScreen(
+                viewModel: viewModel,
+                favorites: favorites,
+                myCards: myCards,
+                participation: participation,
+                authState: authState,
+                lockCategoryFilter: lockCategoryFilter
+            )
+        case .some(.profile):
+            ProfileCardsView(viewModel: viewModel, myCards: myCards)
+        case .some(.earnings):
+            EarningsView(viewModel: viewModel, favorites: favorites, participation: participation, authState: authState)
+        case .some(.account):
+            AccountView(authState: authState, favorites: favorites, myCards: myCards, participation: participation, purchaseService: purchaseService)
+        }
+    }
 }
 
 private struct DisplayNamePromptSheet: View {
@@ -150,6 +236,7 @@ private struct DisplayNamePromptSheet: View {
     @State private var displayName = ""
     @State private var isSaving = false
     @FocusState private var isNameFocused: Bool
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         ZStack {
@@ -232,6 +319,7 @@ private struct DisplayNamePromptSheet: View {
                 Spacer(minLength: 0)
             }
             .padding(22)
+            .iPadSheetContainer(horizontalSizeClass)
         }
         .onAppear {
             if displayName.isEmpty,
@@ -258,6 +346,7 @@ private struct IntroView: View {
 
     @State private var currentPage = 0
     @State private var isShowingAuthOptions = false
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     private let pageCount = 3
 
     var body: some View {
@@ -275,6 +364,8 @@ private struct IntroView: View {
                 .tag(2)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(maxWidth: AdaptiveLayout.isPad(horizontalSizeClass) ? AdaptiveLayout.contentMaxWidth : .infinity)
+            .padding(.horizontal, AdaptiveLayout.isPad(horizontalSizeClass) ? 32 : 0)
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: Binding(
@@ -309,13 +400,15 @@ private struct OnboardingScaffold<Visual: View>: View {
     let buttonTitle: String
     let showsArrow: Bool
     let buttonAction: () -> Void
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
         VStack(spacing: 0) {
             Spacer(minLength: 22)
 
             visual()
-                .frame(height: 500)
+                .frame(height: isPad ? 560 : 500)
                 .padding(.horizontal, 18)
 
             Spacer(minLength: 6)
@@ -324,14 +417,14 @@ private struct OnboardingScaffold<Visual: View>: View {
                 OnboardingLogoBadge()
 
                 Text(title)
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.system(size: isPad ? 32 : 26, weight: .bold, design: .rounded))
                     .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .shadow(color: .black.opacity(0.35), radius: 12, y: 8)
 
                 Text(subtitle)
-                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .font(.system(size: isPad ? 18 : 15, weight: .regular, design: .rounded))
                     .foregroundStyle(AppTheme.textSecondary)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
@@ -412,17 +505,24 @@ private struct OnboardingCardsRadarPage: View {
 // MARK: - Onboarding Visuals
 
 private struct OnboardingCardsRadarOriginalImage: View {
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+
     var body: some View {
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
+        let maxHeight: CGFloat = isPad ? 560 : 500
+
         Image("OnboardingCardsRadarOriginal")
             .resizable()
             .scaledToFit()
             // Scaffold'un .padding(.horizontal, 18)'ini iptal et → tam genişlik
             .padding(.horizontal, -18)
-            .frame(maxWidth: .infinity, maxHeight: 500)
+            .frame(maxWidth: .infinity, maxHeight: maxHeight)
     }
 }
 
 private struct OnboardingSectorRadarIllustration: View {
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+
     private let sectors = [
         OnboardingSectorItem(title: "Market", icon: "cart.fill", x: -118, y: -112),
         OnboardingSectorItem(title: "Yakıt", icon: "fuelpump.fill", x: 118, y: -104),
@@ -432,13 +532,17 @@ private struct OnboardingSectorRadarIllustration: View {
 
     var body: some View {
         GeometryReader { geo in
+            let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
+            let scaleX = isPad ? 1.4 : 1.0
+            let scaleY = isPad ? 1.3 : 1.0
+
             ZStack {
                 OnboardingRadarCore(size: min(geo.size.width * 0.9, 360), strong: true)
                     .offset(y: 16)
 
                 ForEach(sectors) { sector in
-                    OnboardingSectorPillView(item: sector)
-                        .offset(x: sector.x, y: sector.y + 18)
+                    OnboardingSectorPillView(item: sector, isPad: isPad)
+                        .offset(x: sector.x * scaleX, y: sector.y * scaleY + 18)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -456,19 +560,25 @@ private struct OnboardingSectorItem: Identifiable {
 
 private struct OnboardingSectorPillView: View {
     let item: OnboardingSectorItem
+    let isPad: Bool
 
     var body: some View {
+        let iconSize: CGFloat = isPad ? 28 : 24
+        let textSize: CGFloat = isPad ? 22 : 24
+        let horizontalPadding: CGFloat = isPad ? 28 : 20
+        let height: CGFloat = isPad ? 70 : 62
+
         HStack(spacing: 14) {
             Image(systemName: item.icon)
-                .font(.system(size: 24, weight: .bold))
+                .font(.system(size: iconSize, weight: .bold))
                 .foregroundStyle(AppTheme.dashboardGreen)
 
             Text(item.title)
-                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .font(.system(size: textSize, weight: .bold, design: .rounded))
                 .foregroundStyle(AppTheme.textPrimary)
         }
-        .padding(.horizontal, 20)
-        .frame(height: 62)
+        .padding(.horizontal, horizontalPadding)
+        .frame(height: height)
         .background(.ultraThinMaterial.opacity(0.45), in: Capsule())
         .background(AppTheme.panelBlack.opacity(0.78), in: Capsule())
         .overlay(Capsule().stroke(AppTheme.dashboardGreen.opacity(0.45), lineWidth: 1.2))
@@ -477,13 +587,18 @@ private struct OnboardingSectorPillView: View {
 }
 
 private struct OnboardingSavingsJarImage: View {
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+
     var body: some View {
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
+        let maxHeight: CGFloat = isPad ? 560 : 500
+
         Image("OnboardingSavingsJar")
             .resizable()
             .scaledToFit()
             // Scaffold'un .padding(.horizontal, 18)'ini iptal et → tam genişlik
             .padding(.horizontal, -18)
-            .frame(maxWidth: .infinity, maxHeight: 500)
+            .frame(maxWidth: .infinity, maxHeight: maxHeight)
     }
 }
 
@@ -711,8 +826,10 @@ private struct DashboardHomeView: View {
     let openEarnings: () -> Void
     let openAccount: () -> Void
     let openCategory: (String) -> Void
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
         ZStack {
             AppTheme.blueBackground
                 .ignoresSafeArea()
@@ -726,24 +843,27 @@ private struct DashboardHomeView: View {
                     categoryGrid
                     calculatorPreview
                 }
-                .padding(.horizontal, 22)
+                .frame(maxWidth: isPad ? AdaptiveLayout.contentMaxWidth : .infinity)
+                .padding(.horizontal, isPad ? 32 : 22)
                 .padding(.top, 18)
                 .padding(.bottom, 30)
+                .frame(maxWidth: .infinity)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
+        return VStack(alignment: .leading, spacing: 14) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("Kampanya")
-                            .font(.system(size: 36, weight: .black))
+                            .font(.system(size: isPad ? 44 : 36, weight: .black))
                             .foregroundStyle(.white)
                         Text("Radarı")
-                            .font(.system(size: 36, weight: .black))
+                            .font(.system(size: isPad ? 44 : 36, weight: .black))
                             .foregroundStyle(AppTheme.dashboardGreen)
                     }
                     Text(authState.statusText)
@@ -763,7 +883,7 @@ private struct DashboardHomeView: View {
             }
 
             Text("Bugünün kart fırsatlarını kategoriye, bankaya ve kazanca göre keşfet.")
-                .font(.headline)
+                .font(isPad ? .title3 : .headline)
                 .foregroundStyle(.white.opacity(0.82))
 
             Button(action: openAllCampaigns) {
@@ -891,12 +1011,16 @@ private struct DashboardHomeView: View {
     }
 
     private var categoryGrid: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let columns = [
+            GridItem(.flexible(), spacing: 14),
+            GridItem(.flexible(), spacing: 14)
+        ]
+        return VStack(alignment: .leading, spacing: 14) {
             Text("Kategoriler")
                 .font(.title3.weight(.bold))
                 .foregroundStyle(.white)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
+            LazyVGrid(columns: columns, spacing: 14) {
                 ForEach(viewModel.topCategorySummaries) { summary in
                     CategoryTile(summary: summary, iconName: viewModel.iconName(for: summary.name)) {
                         openCategory(summary.name)
@@ -1008,10 +1132,12 @@ private struct CampaignListScreen: View {
     @State private var radarScanTask: Task<Void, Never>?
     @State private var isShowingClearFavoritesConfirmation = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         let filteredCampaigns = visibleCampaigns
         let favoriteIDs = favoriteIDsSnapshot
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
 
         ZStack(alignment: .bottomTrailing) {
             AppTheme.blueBackground
@@ -1046,7 +1172,7 @@ private struct CampaignListScreen: View {
                             favoriteQuickToggle
                             bankFilter
 
-                            LazyVStack(spacing: 16) {
+                            VStack(spacing: 16) {
                                 resultSummary(count: filteredCampaigns.count)
 
                                 if filteredCampaigns.isEmpty {
@@ -1054,20 +1180,23 @@ private struct CampaignListScreen: View {
                                         .padding(.vertical, 40)
                                 }
 
-                                ForEach(filteredCampaigns) { campaign in
-                                    Button {
-                                        openCampaign(campaign)
-                                    } label: {
-                                        CampaignCardView(
-                                            campaign: campaign,
-                                            isFavorite: favoriteIDs.contains(campaign.id)
-                                        )
-                                        .equatable()
+                                LazyVGrid(columns: campaignGridColumns, spacing: 16) {
+                                    ForEach(filteredCampaigns) { campaign in
+                                        Button {
+                                            openCampaign(campaign)
+                                        } label: {
+                                            CampaignCardView(
+                                                campaign: campaign,
+                                                isFavorite: favoriteIDs.contains(campaign.id)
+                                            )
+                                            .equatable()
+                                        }
+                                        .buttonStyle(.plain)
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
-                            .padding(18)
+                            .padding(isPad ? 22 : 18)
+                            .frame(maxWidth: isPad ? AdaptiveLayout.contentMaxWidth : .infinity)
                             .frame(maxWidth: .infinity)
                             .background(
                                 LinearGradient(
@@ -1081,7 +1210,10 @@ private struct CampaignListScreen: View {
                             )
                             .clipShape(UnevenRoundedRectangle(topLeadingRadius: 34, topTrailingRadius: 34))
                         }
+                        .frame(maxWidth: isPad ? AdaptiveLayout.contentMaxWidth : .infinity)
+                        .padding(.horizontal, isPad ? 32 : 0)
                         .padding(.top, 8)
+                        .frame(maxWidth: .infinity)
                     }
                     .coordinateSpace(name: "campaignListScroll")
                     .onPreferenceChange(ScrollOffsetPreferenceKey.self) { offset in
@@ -1207,6 +1339,11 @@ private struct CampaignListScreen: View {
         }
     }
 
+    private var campaignGridColumns: [GridItem] {
+        let count = AdaptiveLayout.isPad(horizontalSizeClass) ? 2 : 1
+        return Array(repeating: GridItem(.flexible(), spacing: 16), count: count)
+    }
+
     private func refreshSnapshotsAndVisibleCampaigns() {
         favoriteIDsSnapshot = favorites.ids
         myCardBanksSnapshot = myCards.banks
@@ -1274,8 +1411,10 @@ private struct CampaignListScreen: View {
 
             searchField
         }
-        .padding(.horizontal, 22)
+        .frame(maxWidth: AdaptiveLayout.isPad(horizontalSizeClass) ? AdaptiveLayout.contentMaxWidth : .infinity)
+        .padding(.horizontal, AdaptiveLayout.isPad(horizontalSizeClass) ? 0 : 22)
         .padding(.top, 18)
+        .frame(maxWidth: .infinity)
         .overlay {
             if isShowingClearFavoritesConfirmation {
                 ZStack {
@@ -1376,7 +1515,9 @@ private struct CampaignListScreen: View {
             }
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, 22)
+        .frame(maxWidth: AdaptiveLayout.isPad(horizontalSizeClass) ? AdaptiveLayout.contentMaxWidth : .infinity)
+        .padding(.horizontal, AdaptiveLayout.isPad(horizontalSizeClass) ? 0 : 22)
+        .frame(maxWidth: .infinity)
     }
 
     private var searchField: some View {
@@ -1440,6 +1581,8 @@ private struct CampaignListScreen: View {
             }
             .padding(.horizontal)
         }
+        .frame(maxWidth: AdaptiveLayout.isPad(horizontalSizeClass) ? AdaptiveLayout.contentMaxWidth : .infinity)
+        .frame(maxWidth: .infinity)
     }
 
     private func resultSummary(count: Int) -> some View {
@@ -1634,6 +1777,7 @@ private struct PasswordResetSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var password = ""
     @State private var passwordAgain = ""
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         ZStack {
@@ -1703,6 +1847,7 @@ private struct PasswordResetSheet: View {
                 Spacer(minLength: 0)
             }
             .padding(22)
+            .iPadSheetContainer(horizontalSizeClass)
         }
     }
 }
@@ -1719,6 +1864,7 @@ private struct AuthOptionsSheet: View {
     @State private var password = ""
     @State private var isSignUp = false
     @State private var appleSignInNonce: String?
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     private let syncService = UserDataSyncService()
 
     var body: some View {
@@ -1872,6 +2018,7 @@ private struct AuthOptionsSheet: View {
                     }
                 }
                 .padding(22)
+                .iPadSheetContainer(horizontalSizeClass)
                 }
             }
         }
@@ -2077,9 +2224,11 @@ private struct AccountView: View {
     @State private var isSyncing = false
     @State private var isShowingPaywall = false
     @State private var isShowingAuthOptions = false
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     private let syncService = UserDataSyncService()
 
     var body: some View {
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
         ZStack {
             AppTheme.blueBackground
                 .ignoresSafeArea()
@@ -2187,9 +2336,11 @@ private struct AccountView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 22)
+                .frame(maxWidth: isPad ? AdaptiveLayout.contentMaxWidth : .infinity)
+                .padding(.horizontal, isPad ? 32 : 22)
                 .padding(.top, 18)
                 .padding(.bottom, 30)
+                .frame(maxWidth: .infinity)
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -2308,6 +2459,7 @@ private struct AccountView: View {
 
 private struct AccountLegalLinks: View {
     @State private var document: LegalDocument?
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -2394,6 +2546,7 @@ private struct LegalSection: Identifiable {
 private struct LegalDocumentSheet: View {
     let document: LegalDocument
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         ZStack {
@@ -2452,6 +2605,7 @@ private struct LegalDocumentSheet: View {
                     }
                 }
                 .padding(22)
+                .iPadSheetContainer(horizontalSizeClass)
             }
         }
     }
@@ -2528,6 +2682,7 @@ private struct PaywallPreviewSheet: View {
     @Bindable var authState: AuthStateStore
     let purchaseService: PremiumPurchaseService
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         ZStack {
@@ -2578,6 +2733,10 @@ private struct PaywallPreviewSheet: View {
                             }
                             .buttonStyle(.plain)
                         }
+                    }
+
+                    if let selectedOffering {
+                        SubscriptionPurchaseSummary(offering: selectedOffering)
                     }
 
                     VStack(alignment: .leading, spacing: 10) {
@@ -2635,6 +2794,8 @@ private struct PaywallPreviewSheet: View {
                         }
                         .disabled(!purchaseService.hasStoreProducts || purchaseService.isLoading)
 
+                        PaywallLegalFooter()
+
                         Button {
                             Task {
                                 let didRestore = await purchaseService.restorePurchases()
@@ -2651,11 +2812,16 @@ private struct PaywallPreviewSheet: View {
                     }
                 }
                 .padding(22)
+                .iPadSheetContainer(horizontalSizeClass)
             }
         }
         .task {
             await purchaseService.loadOfferings()
         }
+    }
+
+    private var selectedOffering: PremiumOffering? {
+        purchaseService.offerings.first { $0.id == purchaseService.selectedProductID } ?? purchaseService.offerings.first
     }
 }
 
@@ -2690,6 +2856,9 @@ private struct PremiumOfferingCard: View {
                 Text(offering.subtitle)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.64))
+                Text(offering.durationText)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(AppTheme.dashboardGreen)
             }
 
             Spacer()
@@ -2716,6 +2885,84 @@ private struct PremiumOfferingCard: View {
                 .stroke(isSelected ? AppTheme.dashboardGreen.opacity(0.72) : (offering.isBestValue ? AppTheme.dashboardGreen.opacity(0.42) : .white.opacity(0.08)), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+}
+
+private struct SubscriptionPurchaseSummary: View {
+    let offering: PremiumOffering
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Seçili abonelik")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.white.opacity(0.62))
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(offering.title)
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Text(offering.priceText)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(AppTheme.dashboardGreen)
+                }
+
+                Text(offering.durationText)
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.white.opacity(0.76))
+
+                Text("Abonelik, mevcut dönem bitmeden en az 24 saat önce iptal edilmezse otomatik olarak yenilenir.")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.66))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(AppTheme.dashboardGreen.opacity(0.22), lineWidth: 1)
+        }
+    }
+}
+
+private struct PaywallLegalFooter: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        HStack(spacing: 18) {
+            Button {
+                openURL(AppLinks.privacy)
+            } label: {
+                Text("Gizlilik Politikası")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.56))
+                    .underline()
+            }
+
+            TermsOfUseView()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 2)
+        .buttonStyle(.plain)
+    }
+}
+
+private struct TermsOfUseView: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        Button {
+            openURL(AppLinks.terms)
+        } label: {
+            Text("Kullanım Koşulları")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.56))
+                .underline()
+        }
     }
 }
 
@@ -2755,8 +3002,10 @@ private struct ProfileCardsView: View {
     @State private var didLoadSelection = false
     @State private var isSavingCards = false
     @State private var didPersistSelection = false
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
         ZStack {
             AppTheme.blueBackground
                 .ignoresSafeArea()
@@ -2802,7 +3051,7 @@ private struct ProfileCardsView: View {
                             }
                         }
 
-                        VStack(spacing: 10) {
+                        LazyVGrid(columns: profileBankColumns, spacing: 10) {
                             ForEach(viewModel.banks, id: \.self) { bank in
                                 ProfileBankRow(
                                     title: viewModel.label(for: bank),
@@ -2821,9 +3070,11 @@ private struct ProfileCardsView: View {
                             .stroke(.white.opacity(0.14), lineWidth: 1)
                     }
                 }
-                .padding(.horizontal, 22)
+                .frame(maxWidth: isPad ? AdaptiveLayout.contentMaxWidth : .infinity)
+                .padding(.horizontal, isPad ? 32 : 22)
                 .padding(.top, 18)
                 .padding(.bottom, 30)
+                .frame(maxWidth: .infinity)
             }
         }
         .onAppear {
@@ -2855,6 +3106,11 @@ private struct ProfileCardsView: View {
         } else {
             selectedBanks.insert(bank)
         }
+    }
+
+    private var profileBankColumns: [GridItem] {
+        let count = AdaptiveLayout.isPad(horizontalSizeClass) ? 2 : 1
+        return Array(repeating: GridItem(.flexible(), spacing: 10), count: count)
     }
 
     private func saveAndDismiss() {
@@ -2940,6 +3196,7 @@ private struct EarningsView: View {
     @State private var radarScanMessage = "Hatırlatıcı detayı açılıyor."
     @State private var radarScanTask: Task<Void, Never>?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     private var reminderCampaigns: [(campaign: Campaign, record: CampaignParticipation)] {
         viewModel.campaigns.compactMap { campaign in
@@ -2970,6 +3227,7 @@ private struct EarningsView: View {
     }
 
     var body: some View {
+        let isPad = AdaptiveLayout.isPad(horizontalSizeClass)
         ZStack {
             AppTheme.blueBackground
                 .ignoresSafeArea()
@@ -3037,7 +3295,7 @@ private struct EarningsView: View {
                             .background(.white.opacity(0.08))
                             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                         } else {
-                            VStack(spacing: 12) {
+                            LazyVGrid(columns: earningsGridColumns, spacing: 12) {
                                 ForEach(trackedCampaigns, id: \.campaign.id) { item in
                                     EarningsCampaignRow(campaign: item.campaign, record: item.record)
                                 }
@@ -3045,9 +3303,11 @@ private struct EarningsView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 22)
+                .frame(maxWidth: isPad ? AdaptiveLayout.contentMaxWidth : .infinity)
+                .padding(.horizontal, isPad ? 32 : 22)
                 .padding(.top, 18)
                 .padding(.bottom, 30)
+                .frame(maxWidth: .infinity)
             }
         }
         .overlay {
@@ -3157,7 +3417,7 @@ private struct EarningsView: View {
                 .background(.white.opacity(0.07))
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             } else {
-                VStack(spacing: 12) {
+                LazyVGrid(columns: earningsGridColumns, spacing: 12) {
                     ForEach(reminderCampaigns, id: \.campaign.id) { item in
                         Button {
                             openReminderCampaign(item.campaign)
@@ -3176,6 +3436,11 @@ private struct EarningsView: View {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .stroke(AppTheme.dashboardGreen.opacity(0.24), lineWidth: 1)
         }
+    }
+
+    private var earningsGridColumns: [GridItem] {
+        let count = AdaptiveLayout.isPad(horizontalSizeClass) ? 2 : 1
+        return Array(repeating: GridItem(.flexible(), spacing: 12), count: count)
     }
 
     private func openReminderCampaign(_ campaign: Campaign) {
@@ -3447,6 +3712,7 @@ private struct FilterSheet: View {
     let myCardCount: Int
     let showsCategoryFilter: Bool
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         NavigationStack {
@@ -3543,6 +3809,7 @@ private struct FilterSheet: View {
                         }
                     }
                     .padding(22)
+                    .iPadSheetContainer(horizontalSizeClass)
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -3578,6 +3845,7 @@ private struct FilterSheet: View {
 private struct BankFilterSheet: View {
     @Bindable var viewModel: CampaignListViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         NavigationStack {
@@ -3636,6 +3904,7 @@ private struct BankFilterSheet: View {
                         }
                     }
                     .padding(22)
+                    .iPadSheetContainer(horizontalSizeClass)
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -3646,6 +3915,7 @@ private struct BankFilterSheet: View {
 private struct SortSheet: View {
     @Bindable var viewModel: CampaignListViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
 
     var body: some View {
         NavigationStack {
@@ -3702,6 +3972,7 @@ private struct SortSheet: View {
                     Spacer()
                 }
                 .padding(22)
+                .iPadSheetContainer(horizontalSizeClass)
             }
             .toolbar(.hidden, for: .navigationBar)
         }
@@ -3767,6 +4038,18 @@ private struct ScrollOffsetPreferenceKey: PreferenceKey {
 }
 
 private extension View {
+    @ViewBuilder
+    func iPadSheetContainer(_ horizontalSizeClass: UserInterfaceSizeClass?) -> some View {
+        if AdaptiveLayout.isPad(horizontalSizeClass) {
+            self
+                .frame(maxWidth: AdaptiveLayout.sheetMaxWidth)
+                .padding(.horizontal, 32)
+                .frame(maxWidth: .infinity)
+        } else {
+            self
+        }
+    }
+
     @ViewBuilder
     func scrollToTopGeometryTracking(_ updateVisibility: @escaping (Bool) -> Void) -> some View {
         if #available(iOS 18.0, *) {

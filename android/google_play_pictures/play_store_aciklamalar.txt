@@ -1,0 +1,79 @@
+=============================================
+KAMPANYA RADARI — GOOGLE PLAY STORE AÇIKLAMALAR
+=============================================
+
+
+─── KISA AÇIKLAMA (80 karakter) ───────────────
+
+Banka kampanyalarını keşfet, takip et ve fırsatları kaçırma!
+
+
+─── UZUN AÇIKLAMA (4000 karakter limiti) ───────
+
+Kampanya Radarı, Türkiye'deki tüm banka ve kredi kartı kampanyalarını tek bir ekranda toplayan akıllı bir fırsat takip uygulamasıdır.
+
+Artık hangi bankanın ne zaman indirim yaptığını takip etmek için saatlerce uğraşmanıza gerek yok. Kampanya Radarı sizin için her şeyi tarar, filtreler ve hatırlatır.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 NE YAPAR?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📡 Kampanyaları Keşfet
+Garanti, Akbank, Yapı Kredi, İş Bankası, Ziraat, Vakıfbank ve daha onlarca bankadan güncel kampanyaları anında görün. Market, akaryakıt, giyim, restoran, elektronik, seyahat ve online alışveriş kategorilerinde ayrı ayrı filtreleyin.
+
+⭐ Favorilere Ekle
+Beğendiğin kampanyaları kaydet, her zaman hızlıca ulaş. Önemli fırsatları kaçırmamak için favoriler listenizi oluşturun.
+
+🔔 Hatırlatıcı Kur
+Kampanyanın bitiş tarihine yaklaşınca bildirim al. Son gün sürprizi yaşamadan fırsatı zamanında kullan.
+
+💳 Kartlarımı Seç
+Hangi bankaların kartına sahip olduğunuzu belirtin; uygulama yalnızca sizinle ilgili kampanyaları öne çıkarsın.
+
+📊 Akıllı Sıralama
+Kampanyaları yakında bitene, fırsat skoruna, banka adına veya kampanya başlığına göre sıralayın.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 NEDEN KAMPANYA RADARI?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Tüm bankalar tek ekranda
+✅ Gerçek zamanlı güncelleme
+✅ Kategori bazlı akıllı filtreleme
+✅ Bitiş tarihine göre önceliklendirme
+✅ Sade ve hızlı arayüz
+✅ Ücretsiz kullanım
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏦 DESTEKLENEN BANKALAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Garanti BBVA · Akbank · Yapı Kredi · İş Bankası · Ziraat Bankası · VakıfBank · Halkbank · Denizbank · TEB · QNB Finansbank · ING · Paraf · ve daha fazlası…
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛒 KATEGORİLER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⛽ Akaryakıt  |  🛒 Market  |  👕 Giyim
+🍽️ Restoran  |  💻 Elektronik  |  ✈️ Seyahat  |  🌐 Online
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Her alışverişte en avantajlı kartınızı kullanın. Kampanya Radarı ile tasarruf etmek artık çok daha kolay.
+
+En iyi fırsatları radarına al! 🎯
+
+
+─── GİZLİLİK POLİTİKASI URL ───────────────────
+
+https://mericucan-bot.github.io/campaign_pipeline_new/privacy.html
+
+
+─── UYGULAMA BİLGİLERİ ─────────────────────────
+
+Uygulama adı   : Kampanya Radarı
+Paket adı      : com.mericucan.kampanyaradari
+Versiyon       : 1.0 (versionCode: 1)
+Kategori       : Finans
+İçerik puanı   : Herkes için (PEGI 3)
+Fiyat          : Ücretsiz
