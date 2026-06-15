@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from .generic import HEADERS, clean_text, fetch_detail_summary
+from .generic import HEADERS, clean_text, fetch_detail_summary, fetch_og_description
 
 
 def fetch_axess(max_pages=30):
@@ -213,7 +213,7 @@ def fetch_qnb_cardfinans():
                 "bank": "QNB CardFinans",
                 "external_id": detail_url,
                 "title": title,
-                "description": fetch_detail_summary(detail_url),
+                "description": fetch_og_description(detail_url) or fetch_detail_summary(detail_url),
                 "image_url": first_image(url, card),
                 "url": detail_url,
             }
@@ -313,6 +313,52 @@ def fetch_teb_bonus():
                 "url": full_url,
             }
         )
+    return items
+
+
+def fetch_garanti():
+    """Garanti BBVA Bonus kampanyaları — özet og:description'dan alınır.
+
+    bonus.com.tr detay sayfasının gövdesi menü/footer ile dolu; og:description
+    ise kampanyanın tarih ve harcama eşiğini içeren temiz özetini taşır.
+    """
+    url = "https://www.bonus.com.tr/kampanyalar"
+    response = requests.get(url, headers=HEADERS, timeout=(10, 60))
+    response.raise_for_status()
+    response.encoding = "utf-8"
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    items = []
+    seen = set()
+    for card in soup.select("li.campaign-box"):
+        link = card.select_one('a[href*="/kampanyalar/"]')
+        if not link:
+            continue
+        href = link.get("href") or ""
+        if not href or "/sektor/" in href or "/marka/" in href:
+            continue
+        full_url = urljoin(url, href)
+        if full_url in seen:
+            continue
+        seen.add(full_url)
+
+        title = clean_text(link.get_text(" ", strip=True))
+        if not title:
+            continue
+        image = card.select_one("img")
+        image_url = (image.get("src") or image.get("data-src")) if image else None
+
+        items.append(
+            {
+                "bank": "Garanti BBVA Bonus",
+                "external_id": full_url,
+                "title": title,
+                "description": fetch_og_description(full_url),
+                "image_url": urljoin(url, image_url) if image_url else None,
+                "url": full_url,
+            }
+        )
+
     return items
 
 

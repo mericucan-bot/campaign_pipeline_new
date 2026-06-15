@@ -1,15 +1,10 @@
-from .cards import fetch_axess, fetch_bankkart, fetch_kuveytturk, fetch_maximum, fetch_nkolay, fetch_on_kart, fetch_qnb_cardfinans, fetch_teb_bonus, fetch_worldcard
+from .cards import fetch_axess, fetch_bankkart, fetch_garanti, fetch_kuveytturk, fetch_maximum, fetch_nkolay, fetch_on_kart, fetch_qnb_cardfinans, fetch_teb_bonus, fetch_worldcard
 from .generic import fetch_campaign_listing
 from .paraf import fetch_paraf, fetch_paraf_premium
 from .vakifkart import fetch_vakifkart
 
 
 BANK_SOURCES = [
-    {
-        "name": "garanti",
-        "url": "https://www.bonus.com.tr/kampanyalar",
-        "display": "Garanti BBVA Bonus",
-    },
     {
         "name": "denizbank",
         "url": "https://www.denizbonus.com/bonus-kampanyalari",
@@ -35,6 +30,7 @@ BANK_FETCHERS = {
     "QNB CardFinans": fetch_qnb_cardfinans,
     "Yapi Kredi World": fetch_worldcard,
     "Kuveyt Turk Saglam Kart": fetch_kuveytturk,
+    "Garanti BBVA Bonus": fetch_garanti,
 }
 
 for source in BANK_SOURCES:

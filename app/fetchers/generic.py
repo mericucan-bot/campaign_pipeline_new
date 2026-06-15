@@ -167,6 +167,34 @@ def is_useful_detail_text(text):
     return not any(item in normalized for item in ignored)
 
 
+def fetch_og_description(url):
+    """Detay sayfasının og:description/meta description metnini döndürür.
+
+    Bazı bankalarda (ör. Garanti) sayfa gövdesi menü/footer ile dolu ama
+    og:description temiz kampanya özetini (çoğu zaman tarih ve harcama eşiğiyle)
+    içerir. Gömülü HTML etiketleri temizlenir; çöp metin reddedilir.
+    """
+    if not urlparse(url).scheme:
+        return None
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=(8, 25))
+        response.raise_for_status()
+        response.encoding = "utf-8"
+    except requests.RequestException:
+        return None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    for selector in ('meta[property="og:description"]', 'meta[name="description"]'):
+        meta = soup.select_one(selector)
+        raw = (meta.get("content") if meta else "") or ""
+        if not raw:
+            continue
+        text = clean_text(BeautifulSoup(raw, "html.parser").get_text(" ", strip=True))
+        if text and is_useful_detail_text(text):
+            return text
+    return None
+
+
 def truncate_text(text, max_chars):
     text = clean_text(text)
     if len(text) <= max_chars:
