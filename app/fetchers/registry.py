@@ -1,4 +1,4 @@
-from .cards import fetch_axess, fetch_bankkart, fetch_kuveytturk, fetch_maximum, fetch_nkolay, fetch_on_kart, fetch_teb_bonus, fetch_worldcard
+from .cards import fetch_axess, fetch_bankkart, fetch_kuveytturk, fetch_maximum, fetch_nkolay, fetch_on_kart, fetch_qnb_cardfinans, fetch_teb_bonus, fetch_worldcard
 from .generic import fetch_campaign_listing
 from .paraf import fetch_paraf, fetch_paraf_premium
 from .vakifkart import fetch_vakifkart
@@ -14,11 +14,6 @@ BANK_SOURCES = [
         "name": "denizbank",
         "url": "https://www.denizbonus.com/bonus-kampanyalari",
         "display": "DenizBank Bonus",
-    },
-    {
-        "name": "qnb",
-        "url": "https://www.qnbcard.com.tr/kampanyalar",
-        "display": "QNB CardFinans",
     },
 ]
 
@@ -37,6 +32,7 @@ BANK_FETCHERS = {
     "On Kart": fetch_on_kart,
     "N Kolay": fetch_nkolay,
     "TEB Bonus": fetch_teb_bonus,
+    "QNB CardFinans": fetch_qnb_cardfinans,
     "Yapi Kredi World": fetch_worldcard,
     "Kuveyt Turk Saglam Kart": fetch_kuveytturk,
 }

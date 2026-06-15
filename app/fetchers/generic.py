@@ -11,6 +11,8 @@ HEADERS = {
     )
 }
 
+DETAIL_CACHE = {}
+
 
 def fetch_campaign_listing(bank, url, selectors=None, limit=500):
     selectors = selectors or {}
@@ -51,6 +53,8 @@ def fetch_campaign_listing(bank, url, selectors=None, limit=500):
             continue
 
         seen.add(full_url)
+        if not description:
+            description = fetch_detail_summary(full_url)
         items.append(
             {
                 "bank": bank,
@@ -66,6 +70,97 @@ def fetch_campaign_listing(bank, url, selectors=None, limit=500):
             break
 
     return items
+
+
+def fetch_detail_summary(url, session=None, selectors=None, max_chars=460):
+    if not urlparse(url).scheme:
+        return None
+    if url in DETAIL_CACHE:
+        return DETAIL_CACHE[url]
+
+    client = session or requests
+    selectors = selectors or [
+        ".cmsContent",
+        ".campaign-detail",
+        ".campaignDetail",
+        ".detailText",
+        ".contentText",
+        ".campaign-detail-content",
+        ".kampanya-detay",
+        ".kampanyaDetay",
+        ".detail",
+        "article",
+        "main",
+    ]
+
+    try:
+        response = client.get(url, headers=HEADERS, timeout=(8, 20))
+        response.raise_for_status()
+        response.encoding = "utf-8"
+    except requests.RequestException:
+        DETAIL_CACHE[url] = None
+        return None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    for selector in selectors:
+        container = soup.select_one(selector)
+        if not container:
+            continue
+        summary = summarize_container(container, max_chars=max_chars)
+        if summary:
+            DETAIL_CACHE[url] = summary
+            return summary
+
+    for meta_selector in ('meta[property="og:description"]', 'meta[name="description"]'):
+        meta = soup.select_one(meta_selector)
+        summary = clean_text(meta.get("content") if meta else "")
+        if summary:
+            summary = truncate_text(summary, max_chars)
+            DETAIL_CACHE[url] = summary
+            return summary
+
+    DETAIL_CACHE[url] = None
+    return None
+
+
+def summarize_container(container, max_chars=460):
+    parts = []
+    for element in container.select("p, li"):
+        text = clean_text(element.get_text(" ", strip=True))
+        if is_useful_detail_text(text):
+            parts.append(text)
+        if len(" ".join(parts)) >= max_chars:
+            break
+
+    if not parts:
+        text = clean_text(container.get_text(" ", strip=True))
+        return truncate_text(text, max_chars) if is_useful_detail_text(text) else None
+
+    return truncate_text(" ".join(parts), max_chars)
+
+
+def is_useful_detail_text(text):
+    if not text or len(text) < 24:
+        return False
+    normalized = text.casefold()
+    ignored = [
+        "çerez",
+        "cookie",
+        "javascript",
+        "menü",
+        "arama",
+        "detaylı bilgi",
+        "hemen başvur",
+        "internet şubesi",
+    ]
+    return not any(item in normalized for item in ignored)
+
+
+def truncate_text(text, max_chars):
+    text = clean_text(text)
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars].rsplit(" ", 1)[0].rstrip(" .,;") + "..."
 
 
 def clean_text(value):

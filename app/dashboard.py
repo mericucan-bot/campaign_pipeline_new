@@ -1,4 +1,5 @@
 import re
+import traceback
 import unicodedata
 from datetime import date
 
@@ -16,11 +17,36 @@ CATEGORIES = {
     "Akaryakit": ["akaryakit", "yakit", "benzin", "petrol", "shell", "opet", "bp", "aytemiz", "total"],
     "Restoran": ["restoran", "yemek", "cafe", "kahve", "burger", "pizza", "getir", "yemeksepeti"],
     "Giyim": ["giyim", "moda", "ayakkabi", "tekstil", "lc waikiki", "boyner", "defacto"],
-    "Seyahat": ["tatil", "otel", "ucak", "seyahat", "havalimani", "lounge", "yurt disi", "yurtdisi", "harc", "transfer", "yurt disi cikis"],
+    "Seyahat": [
+        "tatil",
+        "otel",
+        "hotel",
+        "konaklama",
+        "ucak",
+        "ucak bileti",
+        "otobus bileti",
+        "obilet",
+        "seyahat",
+        "havalimani",
+        "lounge",
+        "transfer",
+        "arac kiralama",
+        "yurt disi cikis",
+        "cikis harci",
+        "pazaramatatil",
+        "tatilbudur",
+        "etstur",
+        "ets tur",
+        "ets'de",
+        "etsde",
+        "jolly",
+        "yolcu360",
+        "enuygun",
+    ],
     "Online": ["online", "e-ticaret", "eticaret", "internet", "amazon", "trendyol", "hepsiburada", "n11"],
     "Elektronik": ["elektronik", "teknoloji", "telefon", "bilgisayar", "beyaz esya"],
     "Saglik": ["saglik", "eczane", "hastane", "medikal"],
-    "Aidat/Harç": ["aidat", "harc", "yurt disi cikis harci", "vergi", "mtv"],
+    "Aidat/Harç": ["aidat", "harc pulu", "yurt disi cikis harci", "cikis harci", "vergi", "mtv"],
     "Premium": ["premium", "lounge", "otopark", "prime", "ayricalik"],
 }
 
@@ -59,7 +85,7 @@ BANK_LABELS = {
     "QNB CardFinans": "QNB",
     "TEB Bonus": "TEB",
     "VakifBank": "Vakif",
-    "Yapi Kredi World": "YKB",
+    "Yapi Kredi World": "Yapı Kredi",
     "Ziraat Bankkart": "Ziraat",
     "Manuel Favori": "Manuel",
 }
@@ -72,6 +98,38 @@ MY_CARD_BANKS = {
     "VakifBank",
     "Yapi Kredi World",
 }
+
+
+@app.errorhandler(Exception)
+def dashboard_error(exc):
+    traceback.print_exc()
+    return (
+        """
+        <!doctype html>
+        <html lang="tr">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Kampanya Radar - Hata</title>
+          <style>
+            body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #07100f; color: #f7fbfa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+            main { width: min(680px, calc(100vw - 32px)); padding: 28px; border: 1px solid rgba(99, 204, 170, .28); border-radius: 24px; background: rgba(255,255,255,.06); }
+            h1 { margin: 0 0 12px; font-size: 30px; }
+            p { color: rgba(247,251,250,.78); line-height: 1.55; }
+            code { color: #63ccaa; }
+          </style>
+        </head>
+        <body>
+          <main>
+            <h1>Dashboard açılırken hata oluştu</h1>
+            <p>Sayfa beyaz 500 ekranına düşmesin diye bu güvenli hata ekranını gösteriyorum. Asıl sebep terminalde traceback olarak yazıldı.</p>
+            <p>Genelde çözüm: terminalde dashboard'u <code>Ctrl+C</code> ile kapatıp güncel kodu çektikten sonra yeniden başlatmak.</p>
+          </main>
+        </body>
+        </html>
+        """,
+        500,
+    )
 
 
 @app.get("/")
@@ -126,7 +184,7 @@ def api_campaigns():
     return jsonify(campaigns)
 
 
-@app.post("/favorite/<int:campaign_id>")
+@app.post("/favorite/<campaign_id>")
 def favorite(campaign_id):
     is_favorite = toggle_favorite(campaign_id)
     if request.headers.get("accept") == "application/json":

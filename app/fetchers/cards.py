@@ -1,13 +1,15 @@
+import re
+from datetime import date
 from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
 
-from .generic import HEADERS, clean_text
+from .generic import HEADERS, clean_text, fetch_detail_summary
 
 
 def fetch_axess(max_pages=30):
-    base_url = "https://www.axess.com.tr/axess/kampanya/8/393/kampanyalar"
+    base_url = "https://www.axess.com.tr/axess/kampanya/8/395/kampanyalar"
     ajax_url = "https://www.axess.com.tr/ajax/kampanya-ajax.aspx"
     session = requests.Session()
     session.headers.update(
@@ -38,7 +40,7 @@ def fetch_axess(max_pages=30):
             break
 
         for card in cards:
-            link = card.select_one('a[href*="/kampanyadetay/"]')
+            link = card.select_one('a[href*="/kampanyalar/"], a[href*="/kampanyadetay/"]')
             if not link:
                 continue
             detail_url = urljoin(base_url, link.get("href"))
@@ -82,8 +84,15 @@ def fetch_axess_detail(session, url):
     title_el = soup.select_one(".pageTitle") or soup.select_one("h2") or soup.select_one("title")
     title = clean_text(title_el.get_text(" ", strip=True) if title_el else "")
     title = title.replace("| Axess", "").strip()
-    description_el = soup.select_one(".campaignDetail, .detailText, .contentText")
-    description = clean_text(description_el.get_text(" ", strip=True) if description_el else "")
+    description = ""
+    description_el = soup.select_one(".cmsContent, .campaignDetail, .detailText, .contentText")
+    if description_el:
+        first_paragraph = description_el.select_one("p")
+        description = clean_text(
+            first_paragraph.get_text(" ", strip=True)
+            if first_paragraph
+            else description_el.get_text(" ", strip=True)
+        )
 
     image = None
     for img in soup.select("img"):
@@ -170,11 +179,46 @@ def fetch_nkolay():
                 "bank": "N Kolay",
                 "external_id": full_url,
                 "title": text,
-                "description": None,
+                "description": fetch_detail_summary(full_url),
                 "image_url": first_image(url, link),
                 "url": full_url,
             }
         )
+    return items
+
+
+def fetch_qnb_cardfinans():
+    url = "https://www.qnbcard.com.tr/kampanyalar"
+    response = requests.get(url, headers=HEADERS, timeout=(10, 60))
+    response.raise_for_status()
+    response.encoding = "utf-8"
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    items = []
+    seen = set()
+    for card in soup.select("#campaignBody .box-item"):
+        link = card.select_one('a[href^="/kampanyalar/"]')
+        title_el = card.select_one("figcaption")
+        title = clean_text(title_el.get_text(" ", strip=True) if title_el else "")
+        if not link or not title or title.lower() == "biten kampanyalar":
+            continue
+
+        detail_url = urljoin(url, link.get("href"))
+        if "/biten-kampanyalar" in detail_url or detail_url in seen:
+            continue
+
+        seen.add(detail_url)
+        items.append(
+            {
+                "bank": "QNB CardFinans",
+                "external_id": detail_url,
+                "title": title,
+                "description": fetch_detail_summary(detail_url),
+                "image_url": first_image(url, card),
+                "url": detail_url,
+            }
+        )
+
     return items
 
 
@@ -202,6 +246,7 @@ def fetch_worldcard(max_pages=40):
 
         for item in page_items:
             detail_url = item.get("Url")
+            detail_url = urljoin("https://www.worldcard.com.tr", detail_url) if detail_url else None
             title = clean_text(item.get("Title") or item.get("PageTitle") or item.get("SpotTitle"))
             if not detail_url or not title or detail_url in seen:
                 continue
@@ -212,7 +257,8 @@ def fetch_worldcard(max_pages=40):
                     "bank": "Yapi Kredi World",
                     "external_id": detail_url,
                     "title": title,
-                    "description": clean_text(item.get("DaysLeft") or ""),
+                    "description": fetch_detail_summary(detail_url, session=session)
+                    or clean_text(item.get("DaysLeft") or ""),
                     "image_url": urljoin("https://www.worldcard.com.tr", image_url) if image_url else None,
                     "url": detail_url,
                 }
@@ -262,12 +308,120 @@ def fetch_teb_bonus():
                 "bank": "TEB Bonus",
                 "external_id": full_url,
                 "title": title,
-                "description": None,
+                "description": fetch_detail_summary(full_url),
                 "image_url": first_image(url, link),
                 "url": full_url,
             }
         )
     return items
+
+
+_TR_MONTHS_NUM = {
+    1: "Ocak", 2: "Şubat", 3: "Mart", 4: "Nisan", 5: "Mayıs", 6: "Haziran",
+    7: "Temmuz", 8: "Ağustos", 9: "Eylül", 10: "Ekim", 11: "Kasım", 12: "Aralık",
+}
+_MAX_DETAIL_CACHE = {}
+
+
+def _iso_date(day, month, year):
+    try:
+        return date(int(year), int(month), int(day)).isoformat()
+    except ValueError:
+        return None
+
+
+def _human_date(day, month, year):
+    return f"{int(day)} {_TR_MONTHS_NUM.get(int(month), month)} {year}"
+
+
+def _first_sentences(text, max_chars=200):
+    text = (text or "").strip()
+    if not text:
+        return ""
+    out = ""
+    for sentence in re.split(r"(?<=[.!])\s+", text):
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+        if out and len(out) + len(sentence) + 1 > max_chars:
+            break
+        out = (out + " " + sentence).strip()
+        if len(out) >= max_chars:
+            break
+    if len(out) > max_chars:
+        out = out[:max_chars].rsplit(" ", 1)[0].rstrip(" .,;") + "…"
+    return out
+
+
+def fetch_maximum_detail(url):
+    """Maximum kampanya detay sayfasından açıklama, tarih aralığı ve standart özet çıkarır."""
+    if url in _MAX_DETAIL_CACHE:
+        return _MAX_DETAIL_CACHE[url]
+
+    result = {"description": None, "summary": None, "valid_from": None, "valid_to": None}
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=(8, 25))
+        response.raise_for_status()
+        response.encoding = "utf-8"
+    except requests.RequestException:
+        _MAX_DETAIL_CACHE[url] = result
+        return result
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    body_el = soup.select_one("div.campaign-detail-desc")
+    if body_el:
+        body = body_el.get_text(" ", strip=True)
+    else:
+        heading = soup.select_one("h1")
+        body = heading.get_text(" ", strip=True) if heading else ""
+
+    # Görünmez/boşluk karakterlerini normalize et
+    body = re.sub(r"[​‌‍﻿\xa0]+", " ", body)
+    body = clean_text(body)
+
+    # Tarih aralığı: önce ayrı div.date, bulunmazsa gövdedeki "KAMPANYA TARİHLERİ : ..."
+    date_label = ""
+    date_el = soup.select_one("div.date")
+    date_source = date_el.get_text(" ", strip=True) if date_el else body
+    match = re.search(
+        r"(\d{1,2})\.(\d{1,2})\.(\d{4})\s*[-–]\s*(\d{1,2})\.(\d{1,2})\.(\d{4})",
+        date_source,
+    )
+    if match:
+        result["valid_from"] = _iso_date(match.group(1), match.group(2), match.group(3))
+        result["valid_to"] = _iso_date(match.group(4), match.group(5), match.group(6))
+        date_label = (
+            f"{_human_date(match.group(1), match.group(2), match.group(3))} – "
+            f"{_human_date(match.group(4), match.group(5), match.group(6))}"
+        )
+
+    # Gövdeye sızan standart etiketleri temizle (tarih başlığı, "SON X GÜN", "Kampanya Ayrıntıları")
+    body = re.sub(
+        r"KAMPANYA\s+TARİHLERİ\s*:\s*\d{1,2}\.\d{1,2}\.\d{4}\s*[-–]\s*\d{1,2}\.\d{1,2}\.\d{4}",
+        " ", body, flags=re.IGNORECASE,
+    )
+    body = re.sub(r"SON\s+\d+\s+GÜN", " ", body, flags=re.IGNORECASE)
+    body = re.sub(r"Kampanya\s+(?:Ayrıntıları|Detayları)", " ", body, flags=re.IGNORECASE)
+    body = re.sub(r"\s+", " ", body).strip()
+
+    offer = _first_sentences(body, max_chars=200)
+    if date_label and offer:
+        # Başta tarihi zaten gösterdiğimiz için gövdedeki tekrar tarih ifadesini kırp
+        offer = re.sub(
+            r"^\d{1,2}\s*[-–]\s*\d{1,2}\s+\S+\s+\d{4}\s+tarihleri\s+arasında\s*",
+            "",
+            offer,
+            flags=re.IGNORECASE,
+        ).strip()
+        offer = offer[:1].upper() + offer[1:] if offer else offer
+        result["summary"] = f"{date_label} · {offer}"
+    else:
+        result["summary"] = offer or (date_label or None)
+    result["description"] = body or None
+
+    _MAX_DETAIL_CACHE[url] = result
+    return result
 
 
 def fetch_maximum():
@@ -314,11 +468,15 @@ def fetch_maximum():
             continue
         full_url = urljoin(url, href)
         title = title.replace("Son 30 Gün", "").replace("Detaylı Bilgi", "").strip()
+        detail = fetch_maximum_detail(full_url)
         candidate = {
             "bank": "Is Bankasi Maximum",
             "external_id": full_url,
             "title": title,
-            "description": None,
+            "description": detail["description"],
+            "summary": detail["summary"],
+            "valid_from": detail["valid_from"],
+            "valid_to": detail["valid_to"],
             "image_url": first_image_near(url, link),
             "url": full_url,
         }
@@ -345,7 +503,7 @@ def card_item(bank, page_url, card):
         "bank": bank,
         "external_id": full_url,
         "title": title,
-        "description": None,
+        "description": fetch_detail_summary(full_url),
         "image_url": first_image(page_url, card),
         "url": full_url,
     }

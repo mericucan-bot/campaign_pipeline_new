@@ -196,6 +196,10 @@ h1 {
   white-space: nowrap;
 }
 
+#activeCount {
+  color: #22c55e;
+}
+
 .snapshot i {
   bottom: 7px;
   color: rgba(32, 181, 159, 0.22);
@@ -756,6 +760,16 @@ input:focus {
 
 .campaign-card:hover .media img {
   transform: scale(1.035);
+}
+
+.campaign-card p {
+  display: -webkit-box;
+  line-height: 1.45;
+  margin: 0;
+  max-height: 5.8em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
 
 .media span {
