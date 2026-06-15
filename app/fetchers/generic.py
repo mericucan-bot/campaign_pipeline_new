@@ -152,6 +152,17 @@ def is_useful_detail_text(text):
         "detaylı bilgi",
         "hemen başvur",
         "internet şubesi",
+        # Footer / yasal / navigasyon çöpü
+        "tüm hakları saklıdır",
+        "copyright",
+        "site haritası",
+        "gizlilik sözleşmesi",
+        "gizlilik politikası",
+        "kurumsal gizlilik",
+        "çağrı merkezi",
+        # Banka navigasyon menüleri
+        "qnb xtra",
+        "sanal kart qnb",
     ]
     return not any(item in normalized for item in ignored)
 
