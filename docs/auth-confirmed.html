@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kampanya Radarı — E-posta Doğrulandı</title>
+  <title>Kampanya Radarı — Hesap Bağlantısı</title>
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
@@ -39,10 +39,43 @@
     <p class="brand">Kampanya Radarı</p>
     <p class="tagline">Banka & kart kampanyaları tek ekranda</p>
     <div class="check">✓</div>
-    <h1>E-postan doğrulandı!</h1>
-    <p>Hesabın başarıyla etkinleştirildi. Artık <strong>Kampanya Radarı</strong> uygulamasına dönüp giriş yapabilirsin.</p>
-    <a class="btn" href="kampanyaradari://auth-callback">Uygulamayı Aç</a>
-    <p class="small">Bu sayfayı kapatıp uygulamadan da giriş yapabilirsin.</p>
+    <h1 id="title">E-postan doğrulandı!</h1>
+    <p id="message">Hesabın başarıyla etkinleştirildi. Artık <strong>Kampanya Radarı</strong> uygulamasına dönüp giriş yapabilirsin.</p>
+    <a id="open-app" class="btn" href="kampanyaradari://auth-callback">Uygulamayı Aç</a>
+    <p id="hint" class="small">Bu sayfayı kapatıp uygulamadan da giriş yapabilirsin.</p>
   </div>
+  <script>
+    (function () {
+      var hash = window.location.hash || "";
+      var search = window.location.search || "";
+      var rawParams = hash ? hash.slice(1) : search.slice(1);
+      var params = new URLSearchParams(rawParams);
+      var type = params.get("type");
+      var hasAccessToken = params.has("access_token") || params.has("token");
+      var isRecovery = type === "recovery" || (!type && hasAccessToken);
+      var openApp = document.getElementById("open-app");
+      var title = document.getElementById("title");
+      var message = document.getElementById("message");
+      var hint = document.getElementById("hint");
+
+      if (isRecovery && !type) {
+        params.set("type", "recovery");
+      }
+
+      if (hash || search) {
+        var prefix = hash ? "#" : "?";
+        openApp.href = "kampanyaradari://auth-callback" + prefix + params.toString();
+      }
+
+      if (isRecovery) {
+        document.title = "Kampanya Radarı — Şifre Sıfırlama";
+        title.textContent = "Şifre sıfırlama bağlantısı hazır";
+        message.innerHTML = "Yeni şifreni belirlemek için <strong>Kampanya Radarı</strong> uygulamasına dön.";
+        hint.textContent = "Uygulama açılmazsa bu sayfayı kapatıp maildeki bağlantıyı tekrar deneyebilirsin.";
+      } else if (type === "signup") {
+        document.title = "Kampanya Radarı — E-posta Doğrulandı";
+      }
+    }());
+  </script>
 </body>
 </html>
