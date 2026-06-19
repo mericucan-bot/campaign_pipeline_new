@@ -62,9 +62,11 @@
         params.set("type", "recovery");
       }
 
-      if (hash || search) {
+      if (isRecovery) {
         var prefix = hash ? "#" : "?";
         openApp.href = "kampanyaradari://auth-callback" + prefix + params.toString();
+      } else if (type === "signup") {
+        openApp.href = "kampanyaradari://auth-callback?type=signup";
       }
 
       if (isRecovery) {
