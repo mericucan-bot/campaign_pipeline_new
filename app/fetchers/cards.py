@@ -1,6 +1,6 @@
 import os
 import re
-from datetime import date
+from datetime import date, datetime
 from urllib.parse import urljoin
 
 import requests
@@ -158,7 +158,18 @@ def fetch_bankkart():
 
 
 def fetch_nkolay():
-    url = "https://www.nkolay.com/kampanyalar"
+    # N Kolay (Next.js App Router): sunucu HTML'i sadece ilk ~6 aktifi render
+    # ediyor; tamamı RSC payload'ında (text/x-component). RSC'den tüm kampanya
+    # objelerini (title/path/metaDesc + start/end tarih + cdn görseli) çıkarıp
+    # şu an geçerli olanları (start <= bugün <= end) alıyoruz. Parse başarısızsa
+    # eski HTML scrape'e (ilk 6) düşüyoruz.
+    base_url = "https://www.nkolay.com"
+    url = f"{base_url}/kampanyalar"
+
+    items = nkolay_from_rsc(base_url, url)
+    if items:
+        return items
+
     response = requests.get(url, headers=HEADERS, timeout=(10, 60))
     response.raise_for_status()
     response.encoding = "utf-8"
@@ -183,6 +194,87 @@ def fetch_nkolay():
                 "description": fetch_detail_summary(full_url),
                 "image_url": first_image(url, link),
                 "url": full_url,
+            }
+        )
+    return items
+
+
+def nkolay_iso_date(value):
+    # "DD.MM.YYYY" -> "YYYY-MM-DD"
+    try:
+        return datetime.strptime(value, "%d.%m.%Y").date().isoformat()
+    except (ValueError, TypeError):
+        return None
+
+
+def nkolay_from_rsc(base_url, url):
+    headers = {**HEADERS, "RSC": "1"}
+    try:
+        response = requests.get(headers=headers, url=url, timeout=(10, 30))
+        response.raise_for_status()
+        response.encoding = "utf-8"
+    except requests.RequestException:
+        return []
+    text = response.text
+
+    # Pozisyonlu: tarih bileşenleri (kampanyadan ÖNCE), cdn görseli (SONRA)
+    end_dates = [(m.start(), m.group(1)) for m in re.finditer(
+        r'"slug":"end-date","componentType":"SingleLine"[^}]*?"data":"(\d{2}\.\d{2}\.\d{4})"', text)]
+    start_dates = [(m.start(), m.group(1)) for m in re.finditer(
+        r'"slug":"start-date","componentType":"SingleLine"[^}]*?"data":"(\d{2}\.\d{2}\.\d{4})"', text)]
+    images = [(m.start(), m.group(1)) for m in re.finditer(
+        r'(https://cdn\.nkolay\.com/Photos/[^"\\ ]+\.(?:webp|jpg|jpeg|png))', text)]
+
+    def nearest_before(pos, lst):
+        best = None
+        for p, v in lst:
+            if p <= pos:
+                best = v
+            else:
+                break
+        return best
+
+    def nearest_after(pos, lst):
+        for p, v in lst:
+            if p >= pos:
+                return v
+        return None
+
+    today = date.today()
+    items = []
+    seen = set()
+    for m in re.finditer(
+        r'"campaign":\{"id":\d+,"title":"(.*?)","icon".*?"path":"(kampanyalar/[^"]+)".*?"metaDesc":"(.*?)","', text):
+        title = clean_text(m.group(1))
+        path = m.group(2)
+        meta_desc = clean_text(m.group(3))
+        if not title or not path:
+            continue
+        full_url = f"{base_url}/{path}"
+        if full_url in seen:
+            continue
+
+        end_raw = nearest_before(m.start(), end_dates)
+        start_raw = nearest_before(m.start(), start_dates)
+        valid_to = nkolay_iso_date(end_raw)
+        valid_from = nkolay_iso_date(start_raw)
+        # Sadece şu an geçerli olanlar (bitmiş veya henüz başlamamış olanları ele)
+        if valid_to and valid_to < today.isoformat():
+            continue
+        if valid_from and valid_from > today.isoformat():
+            continue
+
+        seen.add(full_url)
+        items.append(
+            {
+                "bank": "N Kolay",
+                "external_id": full_url,
+                "title": title,
+                "description": meta_desc or None,
+                "image_url": nearest_after(m.start(), images),
+                "url": full_url,
+                "valid_from": valid_from,
+                "valid_to": valid_to,
             }
         )
     return items
