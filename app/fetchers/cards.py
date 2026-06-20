@@ -1,3 +1,4 @@
+import os
 import re
 from datetime import date
 from urllib.parse import urljoin
@@ -268,12 +269,19 @@ def fetch_worldcard(max_pages=40):
 
 
 def fetch_kuveytturk():
+    try:
+        items = fetch_kuveytturk_api()
+        if items:
+            return items
+    except Exception:
+        # API/WAF/curl_cffi başarısız → HTML scrape fallback (pipeline donmaz)
+        pass
+
     url = "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin"
     response = requests.get(url, headers=HEADERS, timeout=(10, 60))
     response.raise_for_status()
     response.encoding = "utf-8"
     soup = BeautifulSoup(response.text, "html.parser")
-
     items = []
     seen = set()
     for card in soup.select(".campaign-item"):
@@ -283,6 +291,89 @@ def fetch_kuveytturk():
         seen.add(item["external_id"])
         items.append(item)
     return items
+
+
+def fetch_kuveytturk_api(max_pages=8, page_size=24):
+    # Kuveyt Türk tam listesi WAF korumalı bir JSON endpoint'inden geliyor.
+    # Endpoint TLS/fingerprint'e değil IP'ye bakıyor: TR/residential IP -> 200,
+    # datacenter/yurtdışı IP (GitHub Actions) -> bağlantı askıda kalıyor.
+    # Sıkı timeout (5,15) + üst fonksiyondaki hata fallback'i ile pipeline ASLA
+    # donmaz. KUVEYT_PROXY env tanımlıysa (TR residential proxy) istek oradan
+    # geçer -> CI'da da tam liste (74) gelir; yoksa CI HTML fallback'e düşer.
+    base_url = "https://www.kuveytturk.com.tr"
+    listing_url = f"{base_url}/kampanyalar/kendim-icin"
+    api_url = f"{base_url}/ck0d84?12078A5155AB8EB05557BBCAD58BCB84"
+    session = requests.Session()
+    session.headers.update(
+        {
+            **HEADERS,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Referer": listing_url,
+            "X-Bone-Language": "tr",
+        }
+    )
+    proxy = os.environ.get("KUVEYT_PROXY")
+    proxies = {"http": proxy, "https": proxy} if proxy else None
+
+    items = []
+    seen = set()
+    for page in range(1, max_pages + 1):
+        response = session.get(
+            api_url,
+            params={"p1": "56"},
+            headers={"Page": str(page), "PageSize": str(page_size)},
+            timeout=(5, 15),
+            proxies=proxies,
+        )
+        response.raise_for_status()
+        data = response.json()
+        campaigns = data if isinstance(data, list) else []
+        if not campaigns:
+            break
+
+        for campaign in campaigns:
+            item = kuveytturk_api_item(base_url, campaign)
+            if not item or item["external_id"] in seen:
+                continue
+            seen.add(item["external_id"])
+            items.append(item)
+
+        if len(campaigns) < page_size:
+            break
+
+    return items
+
+
+def kuveytturk_api_item(base_url, campaign):
+    title = clean_text(campaign.get("Title") or "")
+    href = campaign.get("Url") or ""
+    if not title or not href:
+        return None
+
+    detail_url = urljoin(base_url, href)
+    image = campaign.get("Image") or {}
+    image_url = image.get("LargeUrl") or image.get("Url")
+    description = clean_text(
+        BeautifulSoup(campaign.get("ShortDescription") or "", "html.parser").get_text(" ", strip=True)
+    )
+    return {
+        "bank": "Kuveyt Turk Saglam Kart",
+        "external_id": detail_url,
+        "title": title,
+        "description": description or None,
+        "image_url": urljoin(base_url, image_url) if image_url else None,
+        "url": detail_url,
+        "valid_from": kuveytturk_iso_date(campaign.get("StartDate")),
+        "valid_to": kuveytturk_iso_date(campaign.get("EndDate")),
+    }
+
+
+def kuveytturk_iso_date(value):
+    if not value:
+        return None
+    match = re.match(r"(\d{4}-\d{2}-\d{2})", str(value))
+    return match.group(1) if match else None
 
 
 def fetch_teb_bonus():
