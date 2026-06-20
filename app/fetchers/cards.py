@@ -269,13 +269,25 @@ def fetch_worldcard(max_pages=40):
 
 
 def fetch_kuveytturk():
-    try:
-        items = fetch_kuveytturk_api()
-        if items:
-            return items
-    except Exception:
-        # API/WAF/curl_cffi başarısız → HTML scrape fallback (pipeline donmaz)
-        pass
+    # WAF 'tarpit' (veriyi damla damla göndererek) requests read-timeout'unu
+    # atlatıyor; bu yüzden API çağrısını daemon thread'de MUTLAK süreyle sınırla.
+    # Aşılırsa thread terk edilir (daemon -> process çıkışını bloklamaz) ve
+    # aşağıdaki HTML fallback'e düşülür (listeleme sayfası CI'da tarpit yapmıyor).
+    import threading
+
+    result = {}
+
+    def _run():
+        try:
+            result["items"] = fetch_kuveytturk_api()
+        except Exception:
+            result["items"] = None
+
+    worker = threading.Thread(target=_run, daemon=True)
+    worker.start()
+    worker.join(timeout=20)
+    if not worker.is_alive() and result.get("items"):
+        return result["items"]
 
     url = "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin"
     response = requests.get(url, headers=HEADERS, timeout=(10, 60))
