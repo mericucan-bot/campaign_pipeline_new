@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from .generic import HEADERS, clean_text, fetch_detail_summary, fetch_og_description
+from .generic import HEADERS, clean_text, fetch_detail_summary, fetch_og_description, truncate_text
 
 
 def fetch_axess(max_pages=30):
@@ -189,36 +189,72 @@ def fetch_nkolay():
 
 
 def fetch_qnb_cardfinans():
-    url = "https://www.qnbcard.com.tr/kampanyalar"
-    response = requests.get(url, headers=HEADERS, timeout=(10, 60))
-    response.raise_for_status()
-    response.encoding = "utf-8"
-    soup = BeautifulSoup(response.text, "html.parser")
+    # Aktif kampanyalar JSON API'den; sayfalama HTTP "Page" header'ı ile
+    # (Kuveyt ile aynı desen). Listeleme HTML'i sadece ilk 12'yi gösteriyordu
+    # ("daha fazla göster" gerisini AJAX ile yüklüyor) → tam liste ~53.
+    base_url = "https://www.qnbcard.com.tr"
+    api_url = f"{base_url}/api/Campaigns"
+    listing_url = f"{base_url}/kampanyalar"
+    session = requests.Session()
+    session.headers.update(
+        {
+            **HEADERS,
+            "Accept": "application/json",
+            "Referer": listing_url,
+        }
+    )
 
     items = []
     seen = set()
-    for card in soup.select("#campaignBody .box-item"):
-        link = card.select_one('a[href^="/kampanyalar/"]')
-        title_el = card.select_one("figcaption")
-        title = clean_text(title_el.get_text(" ", strip=True) if title_el else "")
-        if not link or not title or title.lower() == "biten kampanyalar":
-            continue
-
-        detail_url = urljoin(url, link.get("href"))
-        if "/biten-kampanyalar" in detail_url or detail_url in seen:
-            continue
-
-        seen.add(detail_url)
-        items.append(
-            {
-                "bank": "QNB CardFinans",
-                "external_id": detail_url,
-                "title": title,
-                "description": fetch_og_description(detail_url) or fetch_detail_summary(detail_url),
-                "image_url": first_image(url, card),
-                "url": detail_url,
-            }
+    for page in range(1, 15):
+        response = session.get(
+            api_url,
+            params={"isArchived": "false"},
+            headers={"Page": str(page)},
+            timeout=(10, 30),
         )
+        response.raise_for_status()
+        data = response.json()
+        campaigns = data.get("Items") or []
+        if not campaigns:
+            break
+
+        for campaign in campaigns:
+            seo = campaign.get("SeoProperty") or {}
+            slug = seo.get("Name")
+            title = clean_text(campaign.get("Title") or "")
+            if not slug or not title:
+                continue
+            detail_url = f"{base_url}/kampanyalar/{slug}"
+            if detail_url in seen:
+                continue
+            seen.add(detail_url)
+
+            # Açıklama API'nin Content alanından gelir (og:description QNB'de
+            # generic/çöp; gerçek metin Content'tedir, tarih eşiği vb. içerir).
+            content_text = clean_text(
+                BeautifulSoup(campaign.get("Content") or "", "html.parser").get_text(" ", strip=True)
+            )
+            campaign_id = campaign.get("Id")
+            image_url = (
+                f"{base_url}/medium/Campaign-ListImage-{campaign_id}.vsf"
+                if campaign_id
+                else None
+            )
+
+            items.append(
+                {
+                    "bank": "QNB CardFinans",
+                    "external_id": detail_url,
+                    "title": title,
+                    "description": truncate_text(content_text, 460) or None,
+                    "image_url": image_url,
+                    "url": detail_url,
+                }
+            )
+
+        if len(seen) >= (data.get("TotalItems") or 0):
+            break
 
     return items
 
