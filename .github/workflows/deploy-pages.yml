@@ -21,7 +21,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20   # emniyet kemeri: bir fetcher takılırsa pipeline 20 dk'da kesilir
+    timeout-minutes: 90   # emniyet kemeri: normal run 32-49 dk sürüyor; sadece gerçek sonsuz takılmayı keser
     steps:
       - name: Checkout
         uses: actions/checkout@v4
