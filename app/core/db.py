@@ -168,6 +168,10 @@ def ensure_local_columns(conn):
         "valid_from": "TEXT",
         "valid_to": "TEXT",
         "opportunity_score": "INTEGER",
+        # Faz 1 — Bonus/elle giriş: 'scraper' = bot, 'manual' = editör.
+        "source": "TEXT NOT NULL DEFAULT 'scraper'",
+        "is_featured": "INTEGER NOT NULL DEFAULT 0",
+        "featured_at": "TEXT",
     }
     for name, column_type in columns.items():
         if name not in existing:
@@ -394,7 +398,9 @@ def mark_inactive_local(bank, active_external_ids):
     active_set = set(active_external_ids)
 
     with get_connection() as conn:
-        rows = conn.execute("SELECT id, external_id FROM campaigns WHERE bank = ?", (bank,)).fetchall()
+        rows = conn.execute(
+            "SELECT id, external_id FROM campaigns WHERE bank = ? AND source = 'scraper'", (bank,)
+        ).fetchall()
         for row in rows:
             if row["external_id"] not in active_set:
                 conn.execute(
@@ -404,7 +410,12 @@ def mark_inactive_local(bank, active_external_ids):
 
 
 def mark_inactive_supabase(bank, active_external_ids):
-    existing = supabase.table("campaigns").select("id, external_id").eq("bank", bank).execute()
+    # source='scraper' filtresi: elle girilen ('manual') Bonus kampanyaları
+    # "bu run'da görülmedi" diye pasifleme.
+    existing = (
+        supabase.table("campaigns").select("id, external_id")
+        .eq("bank", bank).eq("source", "scraper").execute()
+    )
     timestamp = now_iso()
     active_set = set(active_external_ids)
 
