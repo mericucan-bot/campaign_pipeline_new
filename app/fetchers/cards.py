@@ -207,7 +207,28 @@ def nkolay_iso_date(value):
         return None
 
 
+def nkolay_detail_dates(base_url, path):
+    # Detay sayfası RSC'sinde TEK kampanya var -> start/end-date belirsizliği yok.
+    # (Liste RSC'sinde tarih bileşenleri kart sınırını korumadığından pozisyon
+    # eşleştirmesi yanlış kampanyaya tarih atıyordu; ör. Anneler Günü'ne başka
+    # kartın tarihi gelip süresi geçmiş kampanya aktif görünüyordu.)
+    try:
+        resp = requests.get(f"{base_url}/{path}", headers={**HEADERS, "RSC": "1"}, timeout=(8, 20))
+        resp.encoding = "utf-8"
+        dt = resp.text
+    except requests.RequestException:
+        return (None, None)
+    sd = re.search(r'"slug":"start-date"[^}]*?"data":"(\d{2}\.\d{2}\.\d{4})"', dt)
+    ed = re.search(r'"slug":"end-date"[^}]*?"data":"(\d{2}\.\d{2}\.\d{4})"', dt)
+    return (
+        nkolay_iso_date(sd.group(1)) if sd else None,
+        nkolay_iso_date(ed.group(1)) if ed else None,
+    )
+
+
 def nkolay_from_rsc(base_url, url):
+    from concurrent.futures import ThreadPoolExecutor
+
     headers = {**HEADERS, "RSC": "1"}
     try:
         response = requests.get(headers=headers, url=url, timeout=(10, 30))
@@ -217,22 +238,9 @@ def nkolay_from_rsc(base_url, url):
         return []
     text = response.text
 
-    # Pozisyonlu: tarih bileşenleri (kampanyadan ÖNCE), cdn görseli (SONRA)
-    end_dates = [(m.start(), m.group(1)) for m in re.finditer(
-        r'"slug":"end-date","componentType":"SingleLine"[^}]*?"data":"(\d{2}\.\d{2}\.\d{4})"', text)]
-    start_dates = [(m.start(), m.group(1)) for m in re.finditer(
-        r'"slug":"start-date","componentType":"SingleLine"[^}]*?"data":"(\d{2}\.\d{2}\.\d{4})"', text)]
+    # cdn görseli kampanyadan SONRA geliyor (doğrulandı, title ile eşleşiyor).
     images = [(m.start(), m.group(1)) for m in re.finditer(
         r'(https://cdn\.nkolay\.com/Photos/[^"\\ ]+\.(?:webp|jpg|jpeg|png))', text)]
-
-    def nearest_before(pos, lst):
-        best = None
-        for p, v in lst:
-            if p <= pos:
-                best = v
-            else:
-                break
-        return best
 
     def nearest_after(pos, lst):
         for p, v in lst:
@@ -240,38 +248,43 @@ def nkolay_from_rsc(base_url, url):
                 return v
         return None
 
-    today = date.today()
-    items = []
+    # title/path/metaDesc = campaign objesinin ALANLARI (güvenilir). Tarih DEĞİL.
+    candidates = []
     seen = set()
     for m in re.finditer(
         r'"campaign":\{"id":\d+,"title":"(.*?)","icon".*?"path":"(kampanyalar/[^"]+)".*?"metaDesc":"(.*?)","', text):
         title = clean_text(m.group(1))
         path = m.group(2)
-        meta_desc = clean_text(m.group(3))
-        if not title or not path:
+        if not title or path in seen:
             continue
-        full_url = f"{base_url}/{path}"
-        if full_url in seen:
-            continue
+        seen.add(path)
+        candidates.append({
+            "title": title,
+            "path": path,
+            "meta_desc": clean_text(m.group(3)),
+            "image_url": nearest_after(m.start(), images),
+        })
 
-        end_raw = nearest_before(m.start(), end_dates)
-        start_raw = nearest_before(m.start(), start_dates)
-        valid_to = nkolay_iso_date(end_raw)
-        valid_from = nkolay_iso_date(start_raw)
-        # Sadece şu an geçerli olanlar (bitmiş veya henüz başlamamış olanları ele)
-        if valid_to and valid_to < today.isoformat():
-            continue
-        if valid_from and valid_from > today.isoformat():
-            continue
+    # Gerçek tarihleri detay sayfalarından PARALEL çek (güvenilir).
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        dates = list(ex.map(lambda c: nkolay_detail_dates(base_url, c["path"]), candidates))
 
-        seen.add(full_url)
+    today = date.today().isoformat()
+    items = []
+    for c, (valid_from, valid_to) in zip(candidates, dates):
+        # Süresi geçmiş veya henüz başlamamışları ele (tarihi yoksa evergreen -> kalsın)
+        if valid_to and valid_to < today:
+            continue
+        if valid_from and valid_from > today:
+            continue
+        full_url = f"{base_url}/{c['path']}"
         items.append(
             {
                 "bank": "N Kolay",
                 "external_id": full_url,
-                "title": title,
-                "description": meta_desc or None,
-                "image_url": nearest_after(m.start(), images),
+                "title": c["title"],
+                "description": c["meta_desc"] or None,
+                "image_url": c["image_url"],
                 "url": full_url,
                 "valid_from": valid_from,
                 "valid_to": valid_to,
