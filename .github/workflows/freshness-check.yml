@@ -1,0 +1,75 @@
+name: Veri Tazeligi Kontrolu
+
+# Amac: Ana pipeline (deploy-pages.yml) "basarili" gorunup sessizce veri yazmayi
+# birakirsa (or. bir aylik donma olayi gibi) haber ver. Cokme alarmi zaten
+# deploy-pages.yml icindeki notify job'unda var; bu, SESSIZ DURMA icin.
+on:
+  workflow_dispatch:
+  schedule:
+    # Ana pipeline saat 0/6/12/18'de calisiyor. Bu kontrol 2 saat sonra (2/8/14/20)
+    # calisir; boylece pipeline yeni veriyi yazmissa taze gorur, yanlis alarm vermez.
+    - cron: "0 2,8,14,20 * * *"
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Veri tazeligini kontrol et, bayatsa Telegram uyar
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          STALE_HOURS: "15"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions
+        run: |
+          python3 - <<'PY'
+          import os, json, urllib.request, urllib.parse
+          from datetime import datetime, timezone
+
+          url = os.environ["SUPABASE_URL"].rstrip("/")
+          key = os.environ["SUPABASE_SERVICE_KEY"]
+          stale_hours = float(os.environ.get("STALE_HOURS", "15"))
+          run_url = os.environ.get("RUN_URL", "")
+
+          def telegram(msg):
+              tok = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+              chat = os.environ.get("TELEGRAM_CHAT_ID", "")
+              if not tok or not chat:
+                  print("Telegram secret'lari yok, uyari atlaniyor.")
+                  return
+              data = urllib.parse.urlencode({
+                  "chat_id": chat, "text": msg, "disable_web_page_preview": "true",
+              }).encode()
+              urllib.request.urlopen(
+                  f"https://api.telegram.org/bot{tok}/sendMessage", data=data, timeout=20)
+
+          # Sorgu basarisiz olursa (gecici ag/API sorunu) YANLIS ALARM verme, sessizce cik.
+          try:
+              req = urllib.request.Request(
+                  f"{url}/rest/v1/campaigns?select=last_seen&order=last_seen.desc&limit=1",
+                  headers={"apikey": key, "Authorization": f"Bearer {key}"})
+              rows = json.load(urllib.request.urlopen(req, timeout=20))
+          except Exception as e:
+              print(f"Sorgu basarisiz (ag/API), yanlis alarmi onlemek icin cikiliyor: {e}")
+              raise SystemExit(0)
+
+          if not rows:
+              telegram("Kampanya Radar: veritabaninda hic kampanya yok! Kontrol et.\n" + run_url)
+              print("ALARM: hic kampanya yok.")
+              raise SystemExit(0)
+
+          newest = rows[0]["last_seen"]
+          dt = datetime.fromisoformat(newest.replace("Z", "+00:00"))
+          age_h = (datetime.now(timezone.utc) - dt).total_seconds() / 3600
+          print(f"En yeni last_seen: {newest} ({age_h:.1f} saat once). Esik: {stale_hours:.0f} saat.")
+
+          if age_h > stale_hours:
+              telegram(
+                  f"Kampanya Radar UYARI: veri {age_h:.0f} saattir guncellenmedi "
+                  f"(esik {stale_hours:.0f}s). Scraper sessizce durmus olabilir.\n" + run_url)
+              print("ALARM gonderildi (veri bayat).")
+          else:
+              print("Taze, sorun yok.")
+          PY
