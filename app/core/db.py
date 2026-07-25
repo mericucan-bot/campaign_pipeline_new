@@ -762,18 +762,53 @@ def safe_date(year, month, day):
         return None
 
 
+# Taksitin GERÇEKTEN değerli olduğu sektörler (büyük/ertelenebilir harcama).
+# Diğer taksitler (market, giyim, ayakkabı vb.) skoru şişirmemeli — taksit
+# tek başına "kazanç" değil, ödeme erteleme. (normalize_search'e göre sade yazım.)
+_INSTALLMENT_VALUABLE_KEYWORDS = [
+    "egitim", "okul", "universite", "kurs", "sinav", "kitap",
+    "sigorta", "kasko", "bes", "bireysel emeklilik",
+    "saglik", "hastane", "dis", "goz", "optik", "estetik", "eczane", "medikal",
+    "vergi", "mtv", "harc", "sgk", "ceza", "kira", "aidat",
+    "seyahat", "ucak", "ucus", "tur", "otel", "tatil", "bilet",
+    "mobilya", "beyaz esya", "elektronik", "telefon", "bilgisayar", "laptop", "tablet",
+    "mucevher", "pirlanta", "altin", "kuyum",
+]
+
+
 def calculate_opportunity_score(text, reward_type, reward_value, valid_to):
-    score = 40
+    """Fırsat skoru (0-100). Ödülün GERÇEK para faydasına göre puanlar.
+    Taksit yalnız ertelenebilir/büyük harcama sektörlerinde değerlidir."""
+    score = 50  # taban
     normalized = normalize_search(text)
-    if reward_value:
-        score += min(30, int(float(reward_value) // 100) if reward_type != "Taksit" else int(float(reward_value) * 3))
-    if any(keyword in normalized for keyword in ["market", "akaryakit", "restoran", "online", "seyahat"]):
-        score += 10
+
+    try:
+        val = float(reward_value) if reward_value is not None else 0.0
+    except (TypeError, ValueError):
+        val = 0.0
+    rt = (reward_type or "").strip().lower()
+
+    if rt in ("puan", "nakit iade", "nakit"):
+        # Para faydası: ~her 18 puan/TL = +1, en fazla +28
+        score += min(28, int(val / 18))
+    elif rt == "indirim":
+        # İndirim değeri genelde yüzde: %10=+7, %40=+30 (para faydası doğrudan)
+        score += min(30, int(val * 0.75))
+    elif rt == "taksit":
+        # Taksit yalnız değerli sektörlerde puan alır; diğerlerinde taban kalır.
+        if any(k in normalized for k in _INSTALLMENT_VALUABLE_KEYWORDS):
+            score += 15 + min(8, max(0, int(val) - 3))
+    # "Firsat"/diğer jenerik: taban kalır
+
+    # Aciliyet — az kaldıysa öne çıksın
     if valid_to:
         try:
             days_left = (date.fromisoformat(valid_to) - date.today()).days
-            if 0 <= days_left <= 7:
-                score += 10
+            if 0 <= days_left <= 3:
+                score += 8
+            elif 4 <= days_left <= 7:
+                score += 4
         except ValueError:
             pass
+
     return max(0, min(score, 100))
