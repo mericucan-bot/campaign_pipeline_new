@@ -172,6 +172,8 @@ def ensure_local_columns(conn):
         "source": "TEXT NOT NULL DEFAULT 'scraper'",
         "is_featured": "INTEGER NOT NULL DEFAULT 0",
         "featured_at": "TEXT",
+        # Sağlayıcı tipi: 'banka' | 'cuzdan' | 'magaza' (varsayılan 'banka').
+        "provider_type": "TEXT NOT NULL DEFAULT 'banka'",
     }
     for name, column_type in columns.items():
         if name not in existing:
@@ -189,6 +191,10 @@ def normalize_item(item):
     summary = item.get("summary") or build_summary(description)
 
     return {
+        # Sağlayıcı tipi: 'banka' (kart), 'cuzdan' (Paycell/Vodafone Pay),
+        # ileride 'magaza' (Gratis/Rossmann…). Fetcher set etmezse 'banka'.
+        # Uygulama filtrede bu tipe göre gruplar; boş tip görünmez.
+        "provider_type": item.get("provider_type") or "banka",
         "bank_label": item.get("bank_label") or BANK_LABELS.get(bank, bank),
         "bank": item["bank"],
         "external_id": item["external_id"],

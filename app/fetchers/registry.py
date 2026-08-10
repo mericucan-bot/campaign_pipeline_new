@@ -1,7 +1,9 @@
 from .cards import fetch_axess, fetch_bankkart, fetch_garanti, fetch_kuveytturk, fetch_maximum, fetch_nkolay, fetch_on_kart, fetch_qnb_cardfinans, fetch_teb_bonus, fetch_worldcard
 from .generic import fetch_campaign_listing
 from .paraf import fetch_paraf, fetch_paraf_premium
+from .paycell import fetch_paycell
 from .vakifkart import fetch_vakifkart
+from .vodafonepay import fetch_vodafonepay
 
 
 BANK_SOURCES = [
@@ -31,6 +33,9 @@ BANK_FETCHERS = {
     "Yapi Kredi World": fetch_worldcard,
     "Kuveyt Turk Saglam Kart": fetch_kuveytturk,
     "Garanti BBVA Bonus": fetch_garanti,
+    # Dijital cüzdanlar (provider_type='cuzdan' — fetcher item'larında set edilir)
+    "Paycell": fetch_paycell,
+    "Vodafone Pay": fetch_vodafonepay,
 }
 
 for source in BANK_SOURCES:
