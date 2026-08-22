@@ -432,6 +432,33 @@ def mark_inactive_supabase(bank, active_external_ids):
             ).execute()
 
 
+def mark_expired_inactive_all():
+    """Banka fark etmeksizin süresi geçmiş TÜM aktif kampanyaları pasifler.
+
+    mark_expired_inactive(bank) yalnız o turda taranan bankaları temizler;
+    artık taranmayan eski kaynakların (ör. kapanmış bir fetcher) süresi geçmiş
+    kayıtları sonsuza dek aktif kalıyordu. Bu, her turun sonunda çağrılır.
+    """
+    today = date.today().isoformat()
+    if USE_SUPABASE:
+        sonuc = (
+            supabase.table("campaigns")
+            .update({"is_active": False, "last_seen": now_iso()})
+            .eq("is_active", True)
+            .lt("valid_to", today)
+            .execute()
+        )
+        return len(sonuc.data or [])
+    init_local_db()
+    with get_connection() as conn:
+        imlec = conn.execute(
+            "UPDATE campaigns SET is_active = 0, last_seen = ? "
+            "WHERE is_active = 1 AND valid_to IS NOT NULL AND valid_to < ?",
+            (now_iso(), today),
+        )
+        return imlec.rowcount
+
+
 def mark_expired_inactive(bank):
     return mark_expired_inactive_supabase(bank) if USE_SUPABASE else mark_expired_inactive_local(bank)
 

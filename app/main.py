@@ -1,5 +1,6 @@
 import sys
 
+from app.core.db import mark_expired_inactive_all
 from app.core.pipeline import run_pipeline
 from app.fetchers.registry import BANK_FETCHERS
 
@@ -17,6 +18,13 @@ def main():
             print(stats)
         except Exception as exc:
             print(f"{bank_name} failed: {exc}")
+
+    # Tur sonu: artık taranmayan kaynaklardaki süresi geçmiş kayıtlar da temizlensin.
+    try:
+        temizlenen = mark_expired_inactive_all()
+        print(f"\n=== Süresi geçmiş kampanya temizliği: {temizlenen} kayıt pasiflendi ===")
+    except Exception as exc:
+        print(f"Süresi geçmiş temizliği başarısız: {exc}")
 
 if __name__ == "__main__":
     main()
