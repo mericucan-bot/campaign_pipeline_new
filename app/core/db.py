@@ -746,9 +746,26 @@ def classify_category(text):
     return "Genel"
 
 
+# Türkçe para biçimi: binlik ayıracı NOKTA, ondalık ayıracı VİRGÜL.
+#   "1.250 TL" -> 1250      "34,95 TL" -> 34.95
+# Eski regex \b(\d{2,5}) "1.250"den "250"yi, "34,95"ten "95"i alıyordu:
+# hem tutar yanlış gösteriliyor hem fırsat skoru yanlış hesaplanıyordu.
+_MONEY_RE = re.compile(
+    r"(?<![\d.,])(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d{1,2}))?\s*(?:tl|\u20ba)"
+    r"\s*(?:chip|para|parafpara|bonus|worldpuan|maxipuan|puan|iade|indirim)?"
+)
+
+
+def _parse_money(match):
+    """Eslesmeyi float'a cevirir: binlik noktalarini atar, virgulu ondalik yapar."""
+    tam = match.group(1).replace(".", "")
+    kurus = match.group(2)
+    return float(f"{tam}.{kurus}") if kurus else float(tam)
+
+
 def detect_reward(text):
     normalized = normalize_search(text)
-    money = re.search(r"\b(\d{2,5})\s*(?:tl|₺)\s*(?:chip|para|parafpara|bonus|worldpuan|maxipuan|puan|iade|indirim)?", normalized)
+    money = _MONEY_RE.search(normalized)
     percent = re.search(r"%\s?(\d{1,2}(?:[.,]\d+)?)", text)
     installment = re.search(r"\b(\d{1,2})\s*(?:taksit|ay)\b", normalized)
 
@@ -757,9 +774,9 @@ def detect_reward(text):
     if percent:
         return "Indirim", float(percent.group(1).replace(",", "."))
     if "puan" in normalized or "bonus" in normalized or "chip" in normalized:
-        return "Puan", float(money.group(1)) if money else None
+        return "Puan", _parse_money(money) if money else None
     if money:
-        return "Indirim", float(money.group(1))
+        return "Indirim", _parse_money(money)
     return "Firsat", None
 
 
