@@ -756,6 +756,17 @@ _MONEY_RE = re.compile(
 )
 
 
+# ÖDÜL-İŞARETLİ para: tutardan hemen sonra (kısa pencerede) bir ödül kelimesi
+# geçiyorsa o tutar gerçekten ödüldür. Bu ayrım iki kalıbı birden çözer:
+#   "2.500 TL Jest Lira ve 9 Taksit"        -> 2500 (eskiden taksit=9 dönüyordu)
+#   "2.500 TL ve üzeri harcamaya 500 TL iade" -> 500 (eşik değil, ödül)
+_ODUL_KELIMELERI = r"(?:iade|puan|bonus|chip|para|lira|indirim|hediye|kazan)"
+_MONEY_REWARD_RE = re.compile(
+    r"(?<![\d.,])(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d{1,2}))?\s*(?:tl|\u20ba)"
+    r"[^.!?]{0,15}?" + _ODUL_KELIMELERI
+)
+
+
 def _parse_money(match):
     """Eslesmeyi float'a cevirir: binlik noktalarini atar, virgulu ondalik yapar."""
     tam = match.group(1).replace(".", "")
@@ -766,9 +777,19 @@ def _parse_money(match):
 def detect_reward(text):
     normalized = normalize_search(text)
     money = _MONEY_RE.search(normalized)
+    odul_para = _MONEY_REWARD_RE.search(normalized)
     percent = re.search(r"%\s?(\d{1,2}(?:[.,]\d+)?)", text)
-    installment = re.search(r"\b(\d{1,2})\s*(?:taksit|ay)\b", normalized)
+    # "6 aya varan taksit" gibi çekimli hâller de sayılsın ("3 ayrı" gibi
+    # alakasız kelimelere kaymamak için ek açıkça listelenir).
+    installment = re.search(r"\b(\d{1,2})\s*(?:taksit\b|ay\b|aya\b|ayda\b)", normalized)
 
+    # Açıkça ödül olarak işaretlenmiş bir tutar varsa hep onu tercih et —
+    # taksit sayısı ya da harcama eşiği onun önüne geçmemeli.
+    if odul_para:
+        deger = _parse_money(odul_para)
+        if "puan" in normalized or "bonus" in normalized or "chip" in normalized:
+            return "Puan", deger
+        return "Indirim", deger
     if installment:
         return "Taksit", float(installment.group(1))
     if percent:
